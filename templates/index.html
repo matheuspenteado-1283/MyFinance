@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload e Revisão de Extratos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tom Select para categorias pesquisáveis -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary: #8b5cf6;
+            --secondary-hover: #7c3aed;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-light);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: fadeIn 0.6s ease-out;
+            transition: all 0.5s ease;
+        }
+
+        .container.expanded {
+            max-width: 1550px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(59, 130, 246, 0.5);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            background: rgba(15, 23, 42, 0.4);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        #fileInput { display: none; }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-family: inherit;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn.secondary { background: var(--secondary); box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.5); }
+        .btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4); }
+        .btn.secondary:hover { background: var(--secondary-hover); }
+        .btn:disabled { background: var(--text-muted); cursor: not-allowed; opacity: 0.7; }
+
+        /* Tabela de Revisão */
+        #reviewSection {
+            display: none; width: 100%; animation: fadeIn 0.8s ease-out; margin-top: 2rem;
+        }
+
+        .table-container {
+            width: 100%; overflow-x: auto; background: rgba(15, 23, 42, 0.6);
+            border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 2rem;
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--glass-border); }
+        th { background: rgba(255, 255, 255, 0.05); font-weight: 600; color: var(--text-muted); white-space: nowrap; vertical-align: top; }
+        td { font-size: 0.95rem; color: var(--text-light); }
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        .filter-input {
+            width: 100%;
+            margin-top: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            color: var(--text-light);
+            padding: 0.4rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .filter-input:focus { border-color: var(--primary); outline: none; }
+
+        tfoot th {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            background: rgba(0,0,0,0.3);
+            border-top: 2px solid var(--glass-border);
+        }
+
+        .val-badge {
+            background: rgba(59, 130, 246, 0.15); color: #93c5fd; padding: 0.3rem 0.6rem;
+            border-radius: 6px; font-weight: 500; font-family: monospace; display: inline-block;
+        }
+        .val-badge.debit {
+            background: rgba(239, 68, 68, 0.15); color: #fca5a5;
+        }
+
+        .currency-badge {
+            background: rgba(245, 158, 11, 0.15); color: #fcd34d; padding: 0.3rem 0.6rem;
+            border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+        }
+
+        .val-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            color: var(--text-light);
+            padding: 0.6rem;
+            border-radius: 8px;
+            width: 80px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .val-input:focus { outline: none; border-color: var(--primary); background: rgba(15, 23, 42, 0.8); }
+
+        /* Estilizando o Tom Select para Dark Theme */
+        .ts-control {
+            background: rgba(0, 0, 0, 0.2) !important;
+            border: 1px solid var(--glass-border) !important;
+            border-radius: 8px !important;
+            color: var(--text-light) !important;
+            min-width: 250px;
+        }
+        .ts-control input { color: var(--text-light) !important; }
+        .ts-dropdown {
+            background: #1e293b !important;
+            border: 1px solid var(--glass-border) !important;
+            color: var(--text-light) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+        }
+        .ts-dropdown .option { color: var(--text-light) !important; }
+        .ts-dropdown .option:hover, .ts-dropdown .option.active {
+            background: rgba(59, 130, 246, 0.5) !important;
+            color: white !important;
+        }
+
+        .save-indicator {
+            font-size: 0.75rem; color: var(--success); opacity: 0; transition: opacity 0.3s;
+            display: flex; align-items: center; gap: 4px; margin-top: 4px;
+        }
+        .save-indicator.show { opacity: 1; }
+        .btn-group { display: flex; gap: 1rem; justify-content: center; }
+        
+        .loader {
+            display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Auth Styles */
+        #loginContainer {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: fadeIn 0.6s ease-out;
+            margin-top: 5vh;
+        }
+        
+        #mainContainer {
+            display: none; /* Escondido por padrão, mostrado após o login */
+        }
+
+        .user-nav {
+            display: none; /* Mostrado após o login */
+            width: 100%;
+            max-width: 1550px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-nav-text {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 1.5rem;
+        }
+        .auth-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            color: var(--text-light);
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .auth-links {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .auth-links:hover {
+            color: var(--primary);
+        }
+        #loginError {
+            color: var(--error);
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .back-icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .back-icon-btn:hover {
+            background: var(--glass-bg);
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        /* Menu Styles */
+        #menuContainer {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            animation: fadeIn 0.6s ease-out;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .menu-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 20px 30px -5px rgba(59, 130, 246, 0.3);
+        }
+        .menu-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+        .menu-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        
+        /* Modulos Wrapper */
+        .module-container {
+            display: none;
+            width: 100%;
+        }
+
+        #placeholderModule {
+            text-align: center;
+            padding: 5rem 2rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="user-nav" id="userNav" style="display: none;">
+        <button class="back-icon-btn" id="backMenuBtn" onclick="returnToMenu()" style="display: none;" title="Voltar ao Início">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <div style="display: flex; align-items: center; gap: 15px; margin-left: auto;">
+            <span class="user-nav-text" id="userNameLabel">Carregando...</span>
+            <button class="logout-btn" id="logoutBtn" onclick="logOut()">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair
+            </button>
+        </div>
+    </div>
+
+    <!-- Container de Login -->
+    <div id="loginContainer">
+        <h1 style="font-size: 1.8rem;">MyFinance</h1>
+        <p style="font-size: 1rem;" id="authSubtitle">Faça login para acessar o sistema.</p>
+        
+        <form class="auth-form" id="authForm" onsubmit="handleAuth(event)">
+            <input type="email" id="authEmail" class="auth-input" placeholder="Seu e-mail" required>
+            <input type="password" id="authPassword" class="auth-input" placeholder="Sua senha" required>
+            <button type="submit" class="btn" id="authBtn">Entrar</button>
+            <div id="loginError"></div>
+        </form>
+        
+        <div class="auth-links" id="toggleAuthMode" onclick="toggleAuthMode()">
+            Não tem uma conta? Crie uma aqui.
+        </div>
+    </div>
+
+    <!-- Container Principal do Menu -->
+    <div id="menuContainer">
+        <h1 style="text-align: center; margin-bottom: 2rem;">MyFinance</h1>
+        <div class="menu-grid">
+            <div class="menu-card" onclick="openModule('extratos')">
+                <i class="fa-solid fa-file-invoice-dollar menu-icon"></i>
+                <div class="menu-title">Upload de Extratos</div>
+            </div>
+            <div class="menu-card" onclick="openModule('receitas')">
+                <i class="fa-solid fa-hand-holding-dollar menu-icon"></i>
+                <div class="menu-title">Atualizar Receitas</div>
+            </div>
+            <div class="menu-card" onclick="openModule('investimentos')">
+                <i class="fa-solid fa-chart-line menu-icon"></i>
+                <div class="menu-title">Atualizar Investimentos</div>
+            </div>
+            <div class="menu-card" onclick="openModule('relatorio_mes')">
+                <i class="fa-solid fa-calendar-days menu-icon"></i>
+                <div class="menu-title">Relatório Mensal</div>
+            </div>
+            <div class="menu-card" onclick="openModule('relatorio_ano')">
+                <i class="fa-solid fa-calendar-check menu-icon"></i>
+                <div class="menu-title">Relatório Anual</div>
+            </div>
+            <div class="menu-card" onclick="openModule('dashboard')">
+                <i class="fa-solid fa-chart-pie menu-icon"></i>
+                <div class="menu-title">Dashboard</div>
+            </div>
+            <div class="menu-card" onclick="openModule('controles')">
+                <i class="fa-solid fa-sliders menu-icon"></i>
+                <div class="menu-title">Controles</div>
+            </div>
+            <div class="menu-card" onclick="openModule('despesas_flex')">
+                <i class="fa-solid fa-wallet menu-icon"></i>
+                <div class="menu-title">Despesas Flex</div>
+            </div>
+            <div class="menu-card" onclick="openModule('impostos')">
+                <i class="fa-solid fa-building-columns menu-icon"></i>
+                <div class="menu-title">Impostos</div>
+            </div>
+            <div class="menu-card" onclick="openModule('emprestimos')">
+                <i class="fa-solid fa-money-bill-transfer menu-icon"></i>
+                <div class="menu-title">Empréstimos</div>
+            </div>
+            <div class="menu-card" onclick="openModule('patrimonio')">
+                <i class="fa-solid fa-vault menu-icon"></i>
+                <div class="menu-title">Patrimônio</div>
+            </div>
+            <div class="menu-card" onclick="openModule('acessos')">
+                <i class="fa-solid fa-users-gear menu-icon"></i>
+                <div class="menu-title">Acessos</div>
+            </div>
+            <div class="menu-card" onclick="openModule('configuracoes')">
+                <i class="fa-solid fa-gear menu-icon"></i>
+                <div class="menu-title">Configurações</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo Temporário (Em Construção) -->
+    <div class="container module-container" id="placeholderModule">
+        <i class="fa-solid fa-person-digging" style="font-size: 4rem; color: var(--warning); margin-bottom: 1rem;"></i>
+        <h1 id="placeholderTitle">Módulo</h1>
+        <p>Este módulo está atualmente em desenvolvimento.</p>
+    </div>
+
+    <!-- Módulo Configurações -->
+    <div class="container module-container" id="configuracoesModule">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Configurações</h1>
+        <div class="menu-grid">
+            <div class="menu-card" onclick="openModule('cad_despesas')">
+                <i class="fa-solid fa-list-check menu-icon"></i>
+                <div class="menu-title">Cadastro de Despesas</div>
+            </div>
+            <div class="menu-card" onclick="openModule('cad_contas')">
+                <i class="fa-solid fa-building-columns menu-icon"></i>
+                <div class="menu-title">Cadastro de Contas Bancárias</div>
+            </div>
+            <div class="menu-card" onclick="openModule('cad_receitas')">
+                <i class="fa-solid fa-file-invoice-dollar menu-icon"></i>
+                <div class="menu-title">Cadastro de Receitas</div>
+            </div>
+            <div class="menu-card" onclick="openModule('cad_investimentos')">
+                <i class="fa-solid fa-chart-pie menu-icon"></i>
+                <div class="menu-title">Cadastro de Investimentos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo Cadastro de Despesas -->
+    <div class="container module-container" id="cadDespesasModule">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Despesas</h1>
+        
+        <!-- Formulário Manual -->
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+            <h3>Cadastro Rápido Manual</h3>
+            <form id="cadDespesaForm" onsubmit="addDespesa(event)" style="display: flex; gap: 25px; align-items: flex-end; flex-wrap: wrap; margin-top: 1rem;">
+                <input type="hidden" id="cd_id" value="">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Despesa</label>
+                    <input type="text" id="cd_nome" class="auth-input" style="width: 100%;" required>
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Tipo de Despesa</label>
+                    <input type="text" id="cd_tipo" class="auth-input" style="width: 100%;" required>
+                </div>
+                <div style="width: 120px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Fator (1-10)</label>
+                    <select id="cd_fator" class="auth-input" style="width: 100%;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                        <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+                <div style="width: 150px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Prioridade</label>
+                    <select id="cd_prio" class="auth-input" style="width: 100%;">
+                        <option value="Baixa">Baixa</option>
+                        <option value="Média">Média</option>
+                        <option value="Alta">Alta</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="btn" id="cadDespesaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela -->
+        <h3>Despesas Cadastradas</h3>
+        <div class="table-container" style="max-height: 400px; overflow-y: auto; margin-bottom: 1rem;">
+            <table id="despesasTable">
+                <thead>
+                    <tr>
+                        <th>Despesa</th>
+                        <th>Tipo</th>
+                        <th>Fator de Divisão</th>
+                        <th>Prioridade</th>
+                        <th style="width: 80px; text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="despesasTableBody">
+                    <!-- Dinamismo via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 2rem;">
+            <!-- Upload Area -->
+            <div style="flex: 1; border: 2px dashed var(--glass-border); border-radius: 12px; padding: 1.5rem; text-align: center; position: relative;">
+                <input type="file" id="cd_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx,.xml" onchange="uploadDespesasFile(this)">
+                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
+                <div>Arraste uma planilha ou clique para <b>Sobrescrever tudo</b> (Upload)</div>
+                <div id="cd_upload_status" style="color: var(--warning); margin-top: 5px; font-size: 0.9rem;"></div>
+            </div>
+
+            <!-- Export -->
+            <button class="btn secondary" onclick="window.location.href='/api/cad_despesas/export'">
+                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
+            </button>
+        </div>
+    </div>
+
+    <div class="container module-container" id="extratosModule">
+        
+        <div id="uploadSection">
+            <h1>Extração de Extratos</h1>
+            <p>Faça upload de PDFs ou Planilhas. Valores serão convertidos e divididos (Pag1 / Pag2).</p>
+
+            <div class="upload-area" id="dropZone">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste e solte seus arquivos aqui</div>
+                <div class="upload-subtext">ou clique para selecionar (PDF, CSV, Excel, XML)</div>
+                <input type="file" id="fileInput" multiple accept=".pdf,.csv,.xls,.xlsx,.xml">
+            </div>
+
+            <div class="file-list" id="fileList"></div>
+
+            <button class="btn" id="uploadBtn" disabled>
+                <div class="loader" id="loader"></div>
+                <i class="fa-solid fa-wand-magic-sparkles" id="btnIcon"></i>
+                <span id="btnText">Processar Base Documental</span>
+            </button>
+            <div id="statusMessage" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div id="reviewSection">
+            <h1>Revisão e Categorização</h1>
+            <p>Revise suas categorias, ajuste os filtros e as cotas "Pag1/Pag2".</p>
+
+            <div class="table-container">
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Data<br><input type="text" class="filter-input" data-col="0" placeholder="Filtrar..."></th>
+                            <th>Histórico<br><input type="text" class="filter-input" data-col="1" placeholder="Filtrar..."></th>
+                            <th>Original</th>
+                            <th>Câmbio</th>
+                            <th>Valor (EUR)</th>
+                            <th>Pag1 (Orig)</th>
+                            <th>Pag2 (Orig)</th>
+                            <th>Diferença</th>
+                            <th>Status<br><input type="text" class="filter-input" data-col="8" placeholder="Filtrar..."></th>
+                            <th>Categoria<br><input type="text" class="filter-input" data-col="9" placeholder="Filtrar..."></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Linhas dinâmicas -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="2" style="text-align: right">Subtotal Visível:</th>
+                            <th id="sumOrig">0,00</th>
+                            <th></th>
+                            <th id="sumEur">0,00</th>
+                            <th id="sumPag1">0,00</th>
+                            <th id="sumPag2">0,00</th>
+                            <th id="sumDiff">0,00</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn secondary" id="exportBtn">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX
+                </button>
+                <button class="btn" onclick="location.reload()">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Processar Novos Arquivos
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+// =====================================================================
+        // LOCAL AUTHENTICATION LOGIC
+        // =====================================================================
+        let isLoginMode = true;
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authSubtitle').innerText = isLoginMode ? "Faça login para acessar o sistema." : "Crie sua conta para acessar.";
+            document.getElementById('authBtn').innerText = isLoginMode ? "Entrar" : "Criar Conta";
+            document.getElementById('toggleAuthMode').innerText = isLoginMode ? "Não tem uma conta? Crie uma aqui." : "Já tem uma conta? Faça login.";
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        async function handleAuth(event) {
+            event.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            const btn = document.getElementById('authBtn');
+            const oldText = btn.innerText;
+
+            btn.disabled = true;
+            btn.innerText = "Aguarde...";
+            errorDiv.style.display = 'none';
+
+            const endpoint = isLoginMode ? '/login' : '/register';
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+                if(res.ok) {
+                    checkAuthStatus(); // Update UI
+                } else {
+                    errorDiv.innerText = data.error || 'Erro na autenticação.';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.innerText = 'Erro ao contatar o servidor.';
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = oldText;
+            }
+        }
+
+        const MODULE_NAMES = {
+            'extratos': 'Upload de Extratos',
+            'receitas': 'Atualizar Receitas',
+            'investimentos': 'Atualizar Investimentos',
+            'relatorio_mes': 'Relatório Mensal',
+            'relatorio_ano': 'Relatório Anual',
+            'dashboard': 'Dashboard',
+            'controles': 'Controles',
+            'despesas_flex': 'Despesas Flex',
+            'impostos': 'Impostos',
+            'emprestimos': 'Empréstimos',
+            'patrimonio': 'Patrimônio',
+            'acessos': 'Acessos',
+            'configuracoes': 'Configurações',
+            'cad_despesas': 'Cadastro de Despesas',
+            'cad_contas': 'Cadastro de Contas',
+            'cad_receitas': 'Cadastro de Receitas',
+            'cad_investimentos': 'Cadastro de Investimentos'
+        };
+
+        async function checkAuthStatus() {
+            try {
+                const res = await fetch('/api/me');
+                if(res.ok) {
+                    const data = await res.json();
+                    if(data.logged_in) {
+                        document.getElementById('userNameLabel').innerText = `Bem-vindo(a), ${data.email}`;
+                        returnToMenu(); // Mostra o menu inicial
+                    } else {
+                        showLoginUI();
+                    }
+                } else {
+                    showLoginUI();
+                }
+            } catch(e) {
+                showLoginUI();
+            }
+        }
+
+        function openModule(moduleKey) {
+            document.getElementById('menuContainer').style.display = 'none';
+            document.querySelectorAll('.module-container').forEach(el => el.style.display = 'none');
+            
+            document.getElementById('backMenuBtn').style.display = 'flex';
+            let nav = document.getElementById('userNav');
+            nav.style.maxWidth = '1550px'; // Força ficar largo ao abrir módulos pra caber bem
+
+            if (moduleKey === 'extratos') {
+                document.getElementById('extratosModule').style.display = 'block';
+            } else if (moduleKey === 'configuracoes') {
+                document.getElementById('configuracoesModule').style.display = 'block';
+                nav.style.maxWidth = '1200px';
+            } else if (moduleKey === 'cad_despesas') {
+                document.getElementById('cadDespesasModule').style.display = 'block';
+                nav.style.maxWidth = '1200px';
+                loadDespesas();
+            } else {
+                document.getElementById('placeholderModule').style.display = 'block';
+                document.getElementById('placeholderTitle').innerText = MODULE_NAMES[moduleKey] || 'Módulo';
+            }
+        }
+
+        async function loadDespesas() {
+            try {
+                const res = await fetch('/api/cad_despesas');
+                const data = await res.json();
+                const tbody = document.getElementById('despesasTableBody');
+                tbody.innerHTML = '';
+                data.forEach(d => {
+                    tbody.innerHTML += `<tr>
+                        <td>${d.despesa}</td>
+                        <td>${d.tipo_despesa}</td>
+                        <td style="text-align: center;">${d.fator_divisao}</td>
+                        <td><span class="val-badge">${d.prioridade}</span></td>
+                        <td style="text-align: center;">
+                            <button class="btn secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="editDespesa(${d.id}, '${d.despesa.replace(/'/g, "\\'")}', '${d.tipo_despesa.replace(/'/g, "\\'")}', '${d.fator_divisao}', '${d.prioridade}')" title="Editar Despesa">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+            } catch(e) {}
+        }
+
+        function editDespesa(id, despesa, tipo, fator, prio) {
+            document.getElementById('cd_id').value = id;
+            document.getElementById('cd_nome').value = despesa;
+            document.getElementById('cd_tipo').value = tipo;
+            document.getElementById('cd_fator').value = fator;
+            document.getElementById('cd_prio').value = prio;
+            
+            const btn = document.getElementById('cadDespesaBtn');
+            btn.innerHTML = '<i class="fa-solid fa-save"></i> Atualizar';
+            // btn.style.background = 'var(--warning)';
+        }
+
+        async function addDespesa(e) {
+            e.preventDefault();
+            const idToUpdate = document.getElementById('cd_id').value;
+            const payload = {
+                despesa: document.getElementById('cd_nome').value,
+                tipo_despesa: document.getElementById('cd_tipo').value,
+                fator_divisao: document.getElementById('cd_fator').value,
+                prioridade: document.getElementById('cd_prio').value
+            };
+            
+            let url = '/api/cad_despesas';
+            let method = 'POST';
+            if (idToUpdate) {
+                url = `/api/cad_despesas/${idToUpdate}`;
+                method = 'PUT';
+            }
+
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) {
+                document.getElementById('cadDespesaForm').reset();
+                document.getElementById('cd_id').value = '';
+                const btn = document.getElementById('cadDespesaBtn');
+                btn.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+                
+                loadDespesas();
+            }
+        }
+
+        async function uploadDespesasFile(input) {
+            if(!input.files.length) return;
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const statusDiv = document.getElementById('cd_upload_status');
+            statusDiv.innerText = 'Fazendo upload e processando...';
+            
+            try {
+                const res = await fetch('/api/cad_despesas/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    statusDiv.innerText = data.message;
+                    statusDiv.style.color = 'var(--success)';
+                    loadDespesas();
+                } else {
+                    statusDiv.innerText = data.error || 'Erro.';
+                    statusDiv.style.color = 'var(--error)';
+                }
+            } catch (e) {
+                statusDiv.innerText = 'Erro de conexão.';
+                statusDiv.style.color = 'var(--error)';
+            }
+            input.value = '';
+        }
+
+        function returnToMenu() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.querySelectorAll('.module-container').forEach(el => el.style.display = 'none');
+            document.getElementById('menuContainer').style.display = 'block';
+            
+            let nav = document.getElementById('userNav');
+            nav.style.display = 'flex';
+            nav.style.maxWidth = '1200px'; 
+            document.getElementById('backMenuBtn').style.display = 'none';
+        }
+
+        function showLoginUI() {
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('menuContainer').style.display = 'none';
+            document.querySelectorAll('.module-container').forEach(el => el.style.display = 'none');
+            document.getElementById('userNav').style.display = 'none';
+        }
+
+        async function logOut() {
+            await fetch('/logout', { method: 'POST' });
+            parsedTransactions = [];
+            document.getElementById('tableBody').innerHTML = '';
+            showLoginUI();
+        }
+
+        // Run on mount
+        checkAuthStatus();
+        // =====================================================================
+
+        const CATEGORIES = [
+            "Não Categorizado",
+            "Compras MVP", "Restaurante Diversão MVP", "Diversão MVP", "Assinaturas Serviços", 
+            "Escola Giovanna", "Pensão Alimenticia", "Cursos Daniel", "Auxilio Daniel", 
+            "Cursos Matheus", "Aluguel - Lisboa", "Prestação Casa", "Seguro de Saúde PT", 
+            "Manutenção / Decoração Casa", "Mercado Casa", "TV a Cabo Internet", "Eletricidade / Gás", 
+            "Água", "Diarista", "Celulares", "Gastos Saúde", "Fármacia MVP", "Dentista MVP", 
+            "Academia MVP", "Salão Beleza MVP", "Férias MVP / Viagens", "Manutenção Carros", 
+            "Seguro Carro", "Impostos Carros", "Combustível MVP", "Sem Parar Via verde", 
+            "Uber / Táxi MVP", "Investimentos MVP", "Seguro de Vida MVP", "Previdência MVP", 
+            "Estacionamento / Metro MVP", "Restaurante Trabalho MVP", "Contador MVP", "GPS MVP", 
+            "Impostos Empresa MVP", "Reembolso MVP", "Encargos", "Saques MVP", "Juros", 
+            "Empréstimo Familia MVP", "Tia Tata", "Outros - Especificar MVP", "Cartão de Crédito MVP", 
+            "Aluguel Carros", "Parcela Carro", "Casamento"
+        ];
+
+        let selectedFiles = [];
+        let parsedTransactions = [];
+
+        function formatCurrency(val) {
+            return parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function parseCurrencyBR(str) {
+            if(!str) return 0;
+            // Remove pontuação de milhar e troca virgula por ponto
+            let num = String(str).replace(/\./g, '').replace(',', '.');
+            return parseFloat(num) || 0;
+        }
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+            dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }, false);
+            document.body.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }, false);
+        });
+
+        dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() { handleFiles(this.files); });
+
+        function handleFiles(files) {
+            Array.from(files).forEach(f => {
+                if(!selectedFiles.some(x => x.name === f.name)) selectedFiles.push(f);
+            });
+            updateFileList();
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = selectedFiles.map((f, i) => `
+                <div class="file-item" style="background: rgba(255,255,255,0.05); padding: 8px; margin-bottom: 4px; border-radius: 8px; display:flex; justify-content:space-between">
+                    <div><i class="fa fa-file"></i> ${f.name}</div>
+                    <i class="fa fa-xmark" style="cursor:pointer; color:var(--error)" onclick="selectedFiles.splice(${i}, 1); updateFileList()"></i>
+                </div>
+            `).join('');
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+
+        // Filtros
+        document.querySelectorAll('.filter-input').forEach(inp => {
+            inp.addEventListener('keyup', applyFilters);
+        });
+
+        function applyFilters() {
+            const inputs = document.querySelectorAll('.filter-input');
+            const rows = tableBody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                let show = true;
+                inputs.forEach(inp => {
+                    let val = inp.value.toLowerCase().trim();
+                    if(!val) return;
+                    let colIdx = parseInt(inp.getAttribute('data-col'));
+                    let cell = row.children[colIdx];
+                    let text = "";
+                    
+                    let select = cell.querySelector('select');
+                    if(select && select.tomselect) {
+                        text = select.tomselect.getValue().toLowerCase();
+                    } else {
+                        text = cell.textContent.toLowerCase();
+                    }
+                    if(!text.includes(val)) show = false;
+                });
+                row.style.display = show ? '' : 'none';
+            });
+            calcTotals();
+        }
+
+        function updateStatusUI(tr, trx) {
+            let p1 = parseFloat(trx.pag1) || 0;
+            let p2 = parseFloat(trx.pag2) || 0;
+            let orig = parseFloat(trx.valor_original) || 0;
+            
+            let st = tr.querySelector(`#st_${trx.id}`);
+            let df = tr.querySelector(`#diff_${trx.id}`);
+            
+            let diffValue = orig - (p1 + p2);
+            df.textContent = formatCurrency(Math.abs(diffValue));
+            
+            if(Math.abs(diffValue) < 0.01) {
+                st.textContent = "OK";
+                st.style.background = "rgba(16, 185, 129, 0.15)";
+                st.style.color = "var(--success)";
+            } else {
+                st.textContent = "NOK";
+                st.style.background = "rgba(239, 68, 68, 0.15)";
+                st.style.color = "var(--error)";
+            }
+        }
+
+        function calcTotals() {
+            let sumOrig = 0, sumEur = 0, sumPag1 = 0, sumPag2 = 0, sumDiff = 0;
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach((row, i) => {
+                if(row.style.display === 'none') return;
+                
+                let trx = parsedTransactions.find(t => t.id === row.getAttribute('data-id'));
+                if(!trx) return;
+                
+                sumOrig += trx.valor_original;
+                sumEur += trx.valor_eur;
+                sumPag1 += trx.pag1;
+                sumPag2 += trx.pag2;
+                sumDiff += Math.abs(trx.valor_original - (trx.pag1 + trx.pag2));
+            });
+            document.getElementById('sumOrig').textContent = formatCurrency(sumOrig);
+            document.getElementById('sumEur').textContent = '€ ' + formatCurrency(sumEur);
+            document.getElementById('sumPag1').textContent = formatCurrency(sumPag1);
+            document.getElementById('sumPag2').textContent = formatCurrency(sumPag2);
+            document.getElementById('sumDiff').textContent = formatCurrency(sumDiff);
+        }
+
+        function showReviewScreen() {
+            uploadSection.style.display = 'none';
+            reviewSection.style.display = 'block';
+            document.getElementById('extratosModule').classList.add('expanded');
+            let nav = document.getElementById('userNav');
+            if (nav) nav.style.maxWidth = '1550px';
+            
+            tableBody.innerHTML = '';
+            parsedTransactions.forEach((trx, i) => {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', trx.id);
+                const badgeClass = trx.is_debit ? 'val-badge debit' : 'val-badge';
+
+                tr.innerHTML = `
+                    <td>${trx.data}</td>
+                    <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${trx.descricao}">${trx.descricao}</td>
+                    <td>
+                        <span class="${badgeClass}">${formatCurrency(trx.valor_original)}</span>
+                        <span class="currency-badge">${trx.moeda}</span>
+                    </td>
+                    <td>${trx.cambio !== 1 ? '1 EUR = ' + formatCurrency(trx.cambio) : '-'}</td>
+                    <td>
+                        <span class="${badgeClass}">
+                            € ${formatCurrency(trx.valor_eur)}
+                        </span>
+                    </td>
+                    <td><input type="text" class="val-input pag1-input" id="p1_${trx.id}" value="${formatCurrency(trx.pag1)}"></td>
+                    <td><input type="text" class="val-input pag2-input" id="p2_${trx.id}" value="${formatCurrency(trx.pag2)}"></td>
+                    <td><span class="val-badge" id="diff_${trx.id}"></span></td>
+                    <td><span class="val-badge" id="st_${trx.id}"></span></td>
+                    <td>
+                        <select id="cat_${trx.id}" style="width: 250px;">
+                            ${CATEGORIES.map(c => `<option value="${c}" ${trx.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                        <div class="save-indicator" id="ind_${trx.id}"><i class="fa-solid fa-check"></i> Salvo DB</div>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+
+                updateStatusUI(tr, trx);
+
+                // Initialize Searchable Dropdown with TomSelect
+                new TomSelect(`#cat_${trx.id}`, {
+                    create: false,
+                    sortField: { field: "text", direction: "asc" },
+                    onChange: function(value) {
+                        trx.categoria = value;
+                        if(value !== 'Não Categorizado') saveCategoryRule(trx.descricao, value, trx.id);
+                        applyFilters(); // atualiza caso haja filtro de cat ativo
+                    }
+                });
+
+                // Listeners Pag1 and Pag2
+                tr.querySelector(`#p1_${trx.id}`).addEventListener('blur', (e) => { 
+                    trx.pag1 = parseCurrencyBR(e.target.value);
+                    e.target.value = formatCurrency(trx.pag1);
+                    updateStatusUI(tr, trx);
+                    calcTotals();
+                });
+                tr.querySelector(`#p2_${trx.id}`).addEventListener('blur', (e) => { 
+                    trx.pag2 = parseCurrencyBR(e.target.value);
+                    e.target.value = formatCurrency(trx.pag2);
+                    updateStatusUI(tr, trx);
+                    calcTotals();
+                });
+            });
+            
+            calcTotals(); // Initial calc
+        }
+
+        uploadBtn.addEventListener('click', () => {
+            const formData = new FormData();
+            selectedFiles.forEach(f => formData.append('files[]', f));
+
+            uploadBtn.disabled = true;
+            loader.style.display = 'inline-block';
+            btnIcon.style.display = 'none';
+            btnText.textContent = 'Aguarde... Processamento Automático e Câmbio...';
+
+            fetch('/upload', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(res => {
+                if (res.transactions) {
+                    parsedTransactions = res.transactions;
+                    showReviewScreen();
+                } else {
+                    alert(res.error || 'Erro processando');
+                    uploadBtn.disabled = false;
+                    loader.style.display = 'none';
+                    btnIcon.style.display = 'inline-block';
+                }
+            });
+        });
+
+        function saveCategoryRule(description, category, id) {
+            fetch('/save_category', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description, category })
+            }).then(r => {
+                if(r.ok) {
+                    const ind = document.getElementById(`ind_${id}`);
+                    ind.classList.add('show');
+                    setTimeout(() => ind.classList.remove('show'), 2000);
+                }
+            });
+        }
+
+        exportBtn.addEventListener('click', () => {
+            const visibleIds = [];
+            document.querySelectorAll('#tableBody tr').forEach((tr, i) => {
+                if(tr.style.display !== 'none') {
+                    visibleIds.push(tr.getAttribute('data-id'));
+                }
+            });
+            
+            const toExport = parsedTransactions.filter(t => visibleIds.includes(t.id));
+
+            exportBtn.innerHTML = 'Gerando XLSX...'; exportBtn.disabled = true;
+            fetch('/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ transactions: toExport })
+            })
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url;
+                a.download = "Extratos_Processados.xlsx"; a.click();
+            })
+            .finally(() => {
+                exportBtn.innerHTML = '<i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX'; 
+                exportBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,771 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns:msxsl="urn:schemas-microsoft-com:xslt" xmlns:user="urn:my-scripts">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <LastAuthor>MATHEUS VINICIUS PENTEADO</LastAuthor>
+  <Created>2026-04-16T09:10:09Z</Created>
+  <LastSaved>2026-04-16T09:09:52Z</LastSaved>
+  <Version>16.00</Version>
+ </DocumentProperties>
+ <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
+  <AllowPNG/>
+ </OfficeDocumentSettings>
+ <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
+  <WindowHeight>16320</WindowHeight>
+  <WindowWidth>29400</WindowWidth>
+  <WindowTopX>32767</WindowTopX>
+  <WindowTopY>660</WindowTopY>
+  <ProtectStructure>False</ProtectStructure>
+  <ProtectWindows>False</ProtectWindows>
+ </ExcelWorkbook>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Aptos Narrow" x:Family="Swiss" ss:Size="12"
+    ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s62">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Aptos Narrow" x:Family="Swiss" ss:Size="12"
+    ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat ss:Format="dd\-mm\-yyyy\ hh:mm"/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s63">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Aptos Narrow" x:Family="Swiss" ss:Size="12"
+    ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat ss:Format="Standard"/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s64">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"
+     ss:Color="#000000"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"
+     ss:Color="#000000"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"
+     ss:Color="#000000"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"
+     ss:Color="#000000"/>
+   </Borders>
+   <Font ss:FontName="Arial" x:Family="Swiss" ss:Bold="1"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s65">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Aptos Narrow" x:Family="Swiss" ss:Size="12"
+    ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat ss:Format="dd\-mm\-yyyy"/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s66">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Aptos Narrow" x:Family="Swiss" ss:Size="12"
+    ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="ConsultaSaldosMovimentos">
+  <Table ss:ExpandedColumnCount="12" ss:ExpandedRowCount="66" x:FullColumns="1"
+   x:FullRows="1" ss:DefaultColumnWidth="65" ss:DefaultRowHeight="16">
+   <Column ss:Width="81"/>
+   <Column ss:Width="92"/>
+   <Column ss:Width="300"/>
+   <Column ss:Width="81" ss:Span="5"/>
+   <Column ss:Index="10" ss:Width="120"/>
+   <Column ss:Width="140"/>
+   <Column ss:Width="80"/>
+   <Row>
+    <Cell><Data ss:Type="String">Conta:</Data></Cell>
+    <Cell><Data ss:Type="String">000566863733</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Moeda:</Data></Cell>
+    <Cell><Data ss:Type="String">EUR</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Data:</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="DateTime">2026-04-06T16:25:40.000</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Contabilístico:</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12746.26</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Cativo:</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Disponível:</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12746.26</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Autorizado:</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12746.26</Data></Cell>
+   </Row>
+   <Row ss:Index="10" ss:AutoFitHeight="0" ss:Height="14">
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Data Operação</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Data Valor</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Descrição</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Débito</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">MVP</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">DANI</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">CT</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Crédito</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Saldo Controlo</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-06T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-06T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE DANILO GOUVEA MESQUITA</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">62</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12746.26</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-03T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-01T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* ANJODOCE LD PADARIA      LT 48 F S</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-5.39</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=-RC[-1]"><Data ss:Type="Number">5.39</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">RES</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12684.26</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-03T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-31T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* LA CASA LAS CARCASAS     ALMADA</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-23.99</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=-RC[-1]"><Data ss:Type="Number">23.99</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">COM</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12689.65</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-02T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-31T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* CONTINENTE BOM DIA       FAVAIS</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-3.45</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=-RC[-1]"><Data ss:Type="Number">3.45</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">MER</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12713.64</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-02T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-02T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE XTB SPOLKA AKCYJNA</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">1170</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12717.09</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-02T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-02T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF CRED INTRAB DE MATHEUS VINICIUS PENTEADO</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">1868</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">11547.09</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-02T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-02T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">DEVOLUCAO COMPRA MBWAY CARTAO **** 602* DRUNI</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12.95</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9679.09</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-01T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-01T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MBWAY CARTAO **** 602* DRUNI               PARIS</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-31.7</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=-RC[-1]"><Data ss:Type="Number">31.7</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">COM</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9666.14</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-01T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-01T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MBWAY CARTAO **** 602* EASYPAY             LISBOA</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-89.94</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9697.84</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-01T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-04-01T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COBRANCA SDD ROTINAS AVELUDADAS  ADC 002121400100935</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-37.89</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=-RC[-1]"><Data ss:Type="Number">37.89</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">ACA</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9787.7800000000007</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-29T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-28T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">IMPOSTO DO SELO SOBRE MANUTENCAO DE CONTA PACOTE</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-0.32</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9825.67</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-29T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-28T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">MANUTENCAO CONTA PACOTE 100 01/03/2026 A 28/03/2026</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-7.9</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9825.99</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-23T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-23T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE DANIELA RODRIGUES AGUIAR</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">111</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9833.89</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-23T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-23T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COBRANCA SDD GAMALIFE-COMPANHIA  ADC 99101007831</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-4.74</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=64.43/2"><Data ss:Type="Number">32.215000000000003</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=RC[-1]"><Data ss:Type="Number">32.215000000000003</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">DIV</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9722.89</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-15T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-13T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRANSACAO VISA ORDEM CLIENTE CARTAO ****602* Revolut  2683</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-4200</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">SALAO</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9727.6299999999992</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-14T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-12T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA INTERNET CARTAO ****602* BARBEARIA DOM CLUB       QUI</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-12.6</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">12.8</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">RES</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">13927.63</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-14T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-12T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* ECCO Outlet Freeport     Alcochete</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-133.4</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=15.67+9.17"><Data ss:Type="Number">24.84</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">FARM</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">13940.23</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-14T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-11T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* DECATHLON SETUBAL        SETUBAL</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-76.55</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=290.06/2"><Data ss:Type="Number">145.03</Data></Cell>
+    <Cell ss:StyleID="s63" ss:Formula="=290.06/2"><Data ss:Type="Number">145.03</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">ENER</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">14073.63</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-13T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF CRED INTRAB DE MATHEUS VINICIUS PENTEADO</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">4200</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">14150.18</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-11T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-11T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE KLEBER CHIARAMONTE</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">50</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9950.18</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-11T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* adidas MBFO Freeport     Alcochete</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-30</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63" ss:Formula="=R[-19]C[-2]+R[-5]C[-2]"><Data
+      ss:Type="Number">-17.989999999999998</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">RES</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9900.18</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-11T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRANSACAO VISA ORDEM CLIENTE CARTAO ****602* Revolut  2683</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-750</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63" ss:Formula="=R[-19]C[-2]+R[-14]C[-2]+R[-13]C[-2]"><Data
+      ss:Type="Number">-145.63</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Comp</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9930.18</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-10T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-10T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE RICARDO MARCELINO DA SILVA</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">23.96</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10680.18</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE DANILO GOUVEA MESQUITA</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">95.84</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10656.22</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE RAFAEL ZOLET KURIKE</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">47.92</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10560.38</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE IGOR SILVA BARRETO</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">23.96</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10512.46</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE JEFFERSON GOUVEA SILVA</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">48</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10488.5</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-09T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-07T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* P. Colossal Bar 25       Lisboa</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-17.5</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10440.5</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-08T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-06T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA INTERNET CARTAO ****602* CONTINENTE BOM DIA       FAV</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-4.8</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10458</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-07T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-04T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA INTERNET CARTAO ****602* FPCA FARMACIA, LDA       SET</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-119.93</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10462.799999999999</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-06T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-06T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COBRANCA SDD ENDESA ENERGIA      ADC 50225527882</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-219.41</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10582.73</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-02T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-02T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE DANIELA RODRIGUES AGUIAR</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">231.93</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10802.14</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-02T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-02T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF CRED INTRAB DE MATHEUS VINICIUS PENTEADO</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">1050</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">10570.21</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-02T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-02T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE XTB SA</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">1052</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">9520.2099999999991</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-02T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-02T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COBRANCA SDD ROTINAS AVELUDADAS  ADC 002121400100935</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-37.89</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8468.2099999999991</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-01T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-28T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">IMPOSTO DO SELO SOBRE MANUTENCAO DE CONTA PACOTE</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-0.32</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8506.1</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-03-01T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-28T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">MANUTENCAO CONTA PACOTE 100 29/01/2026 A 28/02/2026</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-7.9</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8506.42</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-24T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-22T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* RESTAURANTE MONTEVER     MONSANTO</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-55</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8514.32</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-24T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-22T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* RESTAURANTE MONTEVER     MONSANTO</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-15</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8569.32</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-24T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-22T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* RESTAURANTE MONTEVER     MONSANTO</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-3</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8584.32</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-24T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-22T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* RESTAURANTE MONTEVER     MONSANTO</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-40</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8587.32</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-23T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-23T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF CRED INTRAB App 634730597  P/ MATHEUS VINICIUS PENTEADO</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-80</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8627.32</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-23T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-23T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COBRANCA SDD GAMALIFE-COMPANHIA  ADC 99101007831</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-4.74</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8707.32</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-23T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-20T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* GATSBY  GATSBY COCKTAI   SETUBAL</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-12.3</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8712.06</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-22T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-20T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* BARBEARIA DOM CLUB       QUINTA DO</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-12</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8724.36</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-21T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-21T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COM S/ TRF IMEDIATA C/CARTAO (MBWAY)-APP TERCEIROS</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-0.12</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8736.36</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-21T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-21T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA C/CARTAO (MBWAY)-APP TERCEIROS P/ PAULO JOSE SI</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-60</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8736.48</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-21T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-21T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA C/CARTAO (MBWAY)-APP TERCEIROS P/ NATHAN RODRIG</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-30</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8796.48</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-18T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-18T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE DANIELA RODRIGUES AGUIAR</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">693.9</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8826.48</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-16T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-16T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO **** 602* SUPERPALMELA SUPERMEPALMELA</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-46.67</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8132.58</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-16T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-16T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MBWAY CARTAO **** 602* PAYPAYUE            RIBEIRA BR</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-1</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8179.25</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-12T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-10T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRANSACAO VISA ORDEM CLIENTE CARTAO ****602* Revolut  2683</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-250</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8180.25</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-10T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-08T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* FORUM CAFE               QUINTA DO</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-2.7</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8430.25</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-07T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-04T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">COMPRA MB CARTAO ****602* FPCA FARMACIA, LDA       SETUBAL</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">-14.99</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8432.9500000000007</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-06T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="DateTime">2026-02-06T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">TRF IMEDIATA SEPA+ DE DANIELA RODRIGUES AGUIAR</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">-</Data></Cell>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s66"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">399.46</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">8447.94</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String"></Data></Cell>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Header x:Margin="0.4921259845"/>
+    <Footer x:Margin="0.4921259845"/>
+    <PageMargins x:Bottom="0.984251969" x:Left="0.78740157499999996"
+     x:Right="0.78740157499999996" x:Top="0.984251969"/>
+   </PageSetup>
+   <Selected/>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>11</ActiveRow>
+     <ActiveCol>4</ActiveCol>
+     <RangeSelection>R12C5:R28C5</RangeSelection>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>
+</Workbook>

@@ -1,0 +1,77 @@
+Tipo,Produto,Data de início,Data de Conclusão,Descrição,Montante,Comissão,Moeda,Estado,Saldo
+Transferência,Atual,2026-03-02 10:42:41,2026-03-02 10:42:41,Balance migration to another region or legal entity,-25.72,0.00,EUR,CONCLUÍDA,0.00
+Transferência,Atual,2026-03-02 10:42:41,2026-03-02 10:42:41,Balance migration to another region or legal entity,25.72,0.00,EUR,CONCLUÍDA,25.72
+Cobrança,Atual,2026-03-02 14:33:01,2026-03-02 14:33:01,Comissão de manutenção de conta pacote Premium,0.00,9.35,EUR,CONCLUÍDA,16.37
+Pagamento com cartão,Atual,2026-03-02 15:25:28,2026-03-04 14:15:37,Google One,-16.04,0.00,EUR,CONCLUÍDA,0.33
+Carregamento,Atual,2026-03-09 16:47:50,2026-03-09 16:48:42,Carregamento com cartão *6026,750.00,0.00,EUR,CONCLUÍDA,750.33
+Pagamento com cartão,Atual,2026-03-10 04:25:54,2026-03-10 09:38:21,Transatel,-12.80,0.00,EUR,CONCLUÍDA,737.53
+Pagamento com cartão,Atual,2026-03-12 11:54:40,2026-03-13 09:08:46,Heymondo,-56.70,0.00,EUR,CONCLUÍDA,680.83
+Carregamento,Atual,2026-03-13 12:18:36,2026-03-13 12:20:05,Carregamento com cartão *6026,4200.00,0.00,EUR,CONCLUÍDA,4880.83
+Transferência,Atual,2026-03-13 15:47:05,2026-03-13 15:47:05,Transferência imediata intrabancária de JEFFERSON GOUVEA SILVA,40.00,0.00,EUR,CONCLUÍDA,4920.83
+Pagamento com cartão,Atual,2026-03-13 18:04:25,2026-03-14 12:06:00,Uber,-2.00,0.00,EUR,CONCLUÍDA,4918.83
+Pagamento com cartão,Atual,2026-03-13 17:07:17,2026-03-14 12:06:27,Uber,-38.97,0.00,EUR,CONCLUÍDA,4879.86
+Pagamento com cartão,Atual,2026-03-13 14:06:17,2026-03-14 12:45:45,Rest Aldea,-80.00,0.00,EUR,CONCLUÍDA,4799.86
+Pagamento com cartão,Atual,2026-03-13 18:55:38,2026-03-14 12:46:15,The London Club,-8.30,0.00,EUR,CONCLUÍDA,4791.56
+Pagamento com cartão,Atual,2026-03-13 19:07:36,2026-03-14 12:46:21,The London Club,-4.85,0.00,EUR,CONCLUÍDA,4786.71
+ATM,Atual,2026-03-15 02:58:06,2026-03-15 13:43:03,Levantamento de numerário em Shinhan Card,-90.19,0.00,EUR,CONCLUÍDA,4696.52
+Pagamento com cartão,Atual,2026-03-11 05:49:46,2026-03-16 12:08:14,Headway,-19.98,0.00,EUR,CONCLUÍDA,4676.54
+Pagamento com cartão,Atual,2026-03-09 16:58:26,2026-03-16 13:32:18,Koreanair Service Center,-335.77,0.00,EUR,CONCLUÍDA,4340.77
+Pagamento com cartão,Atual,2026-03-14 14:20:11,2026-03-16 13:35:33,7-Eleven,-7.93,0.00,EUR,CONCLUÍDA,4332.84
+Pagamento com cartão,Atual,2026-03-14 13:19:08,2026-03-16 13:35:33,7-Eleven,-3.84,0.00,EUR,CONCLUÍDA,4329.00
+Pagamento com cartão,Atual,2026-03-15 04:30:20,2026-03-16 13:37:58,Korea Heritage Service,-1.77,0.00,EUR,CONCLUÍDA,4327.23
+Pagamento com cartão,Atual,2026-03-14 12:33:41,2026-03-17 16:43:12,Sofitel Ambassador Seoul,-2491.98,0.00,EUR,CONCLUÍDA,1835.25
+Pagamento com cartão,Atual,2026-03-17 13:29:57,2026-03-18 15:25:53,Gs25bangijoongangjum,-10.79,0.00,EUR,CONCLUÍDA,1824.46
+Pagamento com cartão,Atual,2026-03-17 13:21:37,2026-03-19 15:43:10,Gangchonsikdang Bangijeom,-20.51,0.00,EUR,CONCLUÍDA,1803.95
+Pagamento com cartão,Atual,2026-03-20 14:47:48,2026-03-22 14:37:22,Ryuhwa ( Bangi Main Branc,-57.74,0.00,EUR,CONCLUÍDA,1746.21
+Pagamento com cartão,Atual,2026-03-20 15:37:25,2026-03-22 14:38:37,Awoora Pyeoneuijeom,-10.42,0.00,EUR,CONCLUÍDA,1735.79
+Pagamento com cartão,Atual,2026-03-21 09:38:51,2026-03-23 15:05:53,Kicc,-26.69,0.00,EUR,CONCLUÍDA,1709.10
+Pagamento com cartão,Atual,2026-03-21 03:48:07,2026-03-23 15:05:55,Joosikhoisa Soobigihoik J,-12.74,0.00,EUR,CONCLUÍDA,1696.36
+Pagamento com cartão,Atual,2026-03-22 05:16:39,2026-03-23 15:07:45,Daniel S Truth,-30.72,0.00,EUR,CONCLUÍDA,1665.64
+Pagamento com cartão,Atual,2026-03-21 16:40:19,2026-03-23 15:07:45,Jusighoisa Mulgyanamu(yor,-44.87,0.00,EUR,CONCLUÍDA,1620.77
+Pagamento com cartão,Atual,2026-03-22 09:51:37,2026-03-23 15:08:41,Yukjunhalmunimaekjoo,-19.57,0.00,EUR,CONCLUÍDA,1601.20
+Pagamento com cartão,Atual,2026-03-21 09:11:26,2026-03-23 15:08:43,Tongtongdwaezibbolsal,-21.42,0.00,EUR,CONCLUÍDA,1579.78
+Pagamento com cartão,Atual,2026-03-22 06:55:00,2026-03-23 15:08:43,Daiso,-8.69,0.00,EUR,CONCLUÍDA,1571.09
+Pagamento com cartão,Atual,2026-03-22 05:58:43,2026-03-24 15:06:33,Joosikhoisa Aiaikeombaind,-75.85,0.00,EUR,CONCLUÍDA,1495.24
+Pagamento com cartão,Atual,2026-03-22 04:48:26,2026-03-24 15:06:48,Fatum 8,-4.06,0.00,EUR,CONCLUÍDA,1491.18
+Pagamento com cartão,Atual,2026-03-22 05:45:51,2026-03-24 15:06:50,Adidas,-74.69,0.00,EUR,CONCLUÍDA,1416.49
+Pagamento com cartão,Atual,2026-03-22 04:25:08,2026-03-24 15:06:50,Made In Bukchon,-15.06,0.00,EUR,CONCLUÍDA,1401.43
+Pagamento com cartão,Atual,2026-03-22 04:13:42,2026-03-24 15:06:50,Bukchon Korean Traditiona,-69.48,0.00,EUR,CONCLUÍDA,1331.95
+Pagamento com cartão,Atual,2026-03-22 03:55:09,2026-03-24 15:06:51,Retailers And Who,-6.37,0.00,EUR,CONCLUÍDA,1325.58
+Pagamento com cartão,Atual,2026-03-23 12:24:01,2026-03-24 15:08:59,Jelrattijelratti Ktsongpa,-15.52,0.00,EUR,CONCLUÍDA,1310.06
+Pagamento com cartão,Atual,2026-03-25 22:20:34,2026-03-26 14:52:58,Uber,-39.96,0.00,EUR,CONCLUÍDA,1270.10
+Pagamento com cartão,Atual,2026-03-24 11:59:25,2026-03-26 15:01:13,Chikinbaingi,-21.45,0.00,EUR,CONCLUÍDA,1248.65
+Pagamento com cartão,Atual,2026-03-24 10:43:34,2026-03-26 15:01:13,LOTTE SHOPPING,-44.22,0.00,EUR,CONCLUÍDA,1204.43
+Pagamento com cartão,Atual,2026-03-23 04:08:08,2026-03-26 15:01:27,Olive Young,-105.61,0.00,EUR,CONCLUÍDA,1098.82
+Pagamento com cartão,Atual,2026-03-25 12:04:29,2026-03-27 17:41:43,Ggoobdang(jamsilbangijeom,-37.37,0.00,EUR,CONCLUÍDA,1061.45
+Pagamento com cartão,Atual,2026-03-25 22:14:34,2026-03-27 17:43:39,Sofitel Ambassador Seoul,-38.21,0.00,EUR,CONCLUÍDA,1023.24
+Pagamento com cartão,Atual,2026-03-26 22:38:37,2026-03-28 09:30:06,Uber,-42.04,0.00,EUR,CONCLUÍDA,981.20
+Pagamento com cartão,Atual,2026-03-28 16:32:33,2026-03-29 12:08:54,Noobai,-95.00,0.00,EUR,CONCLUÍDA,886.20
+Transferência,Atual,2026-03-29 14:18:51,2026-03-29 14:18:51,Transferência imediata intrabancária de JEFFERSON GOUVEA SILVA,20.00,0.00,EUR,CONCLUÍDA,906.20
+Transferência,Atual,2026-03-29 16:42:57,2026-03-29 16:42:57,Transferência imediata intrabancária para JEFFERSON GOUVEA SILVA,-10.00,0.00,EUR,CONCLUÍDA,896.20
+Pagamento com cartão,Atual,2026-03-28 18:55:10,2026-03-30 11:36:47,TOPO,-9.50,0.00,EUR,CONCLUÍDA,886.70
+Pagamento com cartão,Atual,2026-03-29 13:35:46,2026-03-30 12:01:44,A R C O L S A ass.re,-1.00,0.00,EUR,CONCLUÍDA,885.70
+Pagamento com cartão,Atual,2026-03-29 13:35:22,2026-03-30 12:01:45,A R C O L S A ass.re,-5.00,0.00,EUR,CONCLUÍDA,880.70
+Pagamento com cartão,Atual,2026-03-28 20:08:21,2026-03-30 12:52:38,TOPO,-26.50,0.00,EUR,CONCLUÍDA,854.20
+Pagamento com cartão,Atual,2026-03-28 21:11:52,2026-03-30 12:52:45,TOPO,-30.00,0.00,EUR,CONCLUÍDA,824.20
+Pagamento com cartão,Atual,2026-03-30 07:40:17,2026-03-30 15:05:46,Notion,-20.94,0.00,EUR,CONCLUÍDA,803.26
+Cobrança,Atual,2026-04-02 01:15:33,2026-04-02 01:15:33,Comissão de manutenção de conta pacote Premium,0.00,9.35,EUR,CONCLUÍDA,793.91
+Pagamento com cartão,Atual,2026-03-31 23:16:36,2026-04-02 15:01:17,Apple,-5.99,0.00,EUR,CONCLUÍDA,787.92
+Pagamento com cartão,Atual,2026-04-01 22:25:12,2026-04-02 16:10:08,Pico De Gallo,-48.80,0.00,EUR,CONCLUÍDA,739.12
+Transferência,Atual,2026-04-02 22:30:13,2026-04-02 22:30:14,Transferência imediata intrabancária de JEFFERSON GOUVEA SILVA,48.80,0.00,EUR,CONCLUÍDA,787.92
+Pagamento com cartão,Atual,2026-04-02 16:25:25,2026-04-04 16:34:24,Google One,-16.41,0.00,EUR,CONCLUÍDA,771.51
+Pagamento com cartão,Atual,2026-04-04 12:52:00,2026-04-05 11:46:41,Continente,-59.11,0.00,EUR,CONCLUÍDA,712.40
+Pagamento com cartão,Atual,2026-04-04 21:41:41,2026-04-05 12:01:56,Crazy Dolphin Pub,-4.50,0.00,EUR,CONCLUÍDA,707.90
+Pagamento com cartão,Atual,2026-04-04 17:01:54,2026-04-05 12:06:02,O Meu Acai,-11.00,0.00,EUR,CONCLUÍDA,696.90
+Pagamento com cartão,Atual,2026-04-05 00:08:18,2026-04-06 09:13:02,Bardo Taverna,-30.00,0.00,EUR,CONCLUÍDA,666.90
+Pagamento com cartão,Atual,2026-04-05 12:38:13,2026-04-06 09:45:16,Continente,-7.78,0.00,EUR,CONCLUÍDA,659.12
+Pagamento com cartão,Atual,2026-04-01 10:52:44,2026-04-06 14:52:26,Koreanair Service Center,-60.99,0.00,EUR,CONCLUÍDA,598.13
+Transferência,Atual,2026-04-06 15:28:03,2026-04-06 15:28:04,Transferência imediata intrabancária de JEFFERSON GOUVEA SILVA,62.00,0.00,EUR,CONCLUÍDA,660.13
+Pagamento com cartão,Atual,2026-04-07 04:00:36,2026-04-07 17:15:25,Picsart,-72.00,0.00,EUR,CONCLUÍDA,588.13
+Pagamento com cartão,Atual,2026-04-07 19:21:40,2026-04-09 09:44:02,Uber Eats,-59.49,0.00,EUR,CONCLUÍDA,528.64
+Pagamento com cartão,Atual,2026-04-08 06:00:12,2026-04-09 09:49:28,Holafly,-59.90,0.00,EUR,CONCLUÍDA,468.74
+Pagamento com cartão,Atual,2026-04-09 11:24:19,,Heymondo,-58.53,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-09 12:18:06,,Uber Eats,-39.25,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-09 17:43:02,,Apple,-12.99,0.00,EUR,PENDENTE,
+Carregamento,Atual,2026-04-10 08:01:16,2026-04-10 08:02:12,Carregamento com cartão *6026,2000.00,0.00,EUR,CONCLUÍDA,2468.74
+Pagamento com cartão,Atual,2026-04-10 08:07:31,,Uber,-38.97,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-10 08:58:18,,Go To Lisboa,-11.95,0.00,EUR,PENDENTE,
