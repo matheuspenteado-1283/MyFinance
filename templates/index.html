@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload e Revisão de Extratos</title>
+    <title>MyFinance</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Tom Select para categorias pesquisáveis -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+    <!-- Chart.js para Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root {
@@ -458,6 +461,10 @@
                 <i class="fa-solid fa-chart-line menu-icon"></i>
                 <div class="menu-title">Atualizar Investimentos</div>
             </div>
+            <div class="menu-card" onclick="openModule('despesas_mensais')">
+                <i class="fa-solid fa-wallet menu-icon"></i>
+                <div class="menu-title">Despesas Mensais</div>
+            </div>
             <div class="menu-card" onclick="openModule('relatorio_mes')">
                 <i class="fa-solid fa-calendar-days menu-icon"></i>
                 <div class="menu-title">Relatório Mensal</div>
@@ -477,6 +484,10 @@
             <div class="menu-card" onclick="openModule('despesas_flex')">
                 <i class="fa-solid fa-wallet menu-icon"></i>
                 <div class="menu-title">Despesas Flex</div>
+            </div>
+            <div class="menu-card" onclick="openModule('receitas_mensais')">
+                <i class="fa-solid fa-coins menu-icon"></i>
+                <div class="menu-title">Receitas Mensais</div>
             </div>
             <div class="menu-card" onclick="openModule('impostos')">
                 <i class="fa-solid fa-building-columns menu-icon"></i>
@@ -528,6 +539,10 @@
                 <i class="fa-solid fa-chart-pie menu-icon"></i>
                 <div class="menu-title">Cadastro de Investimentos</div>
             </div>
+            <div class="menu-card" onclick="openModule('cad_usuarios')">
+                <i class="fa-solid fa-users menu-icon"></i>
+                <div class="menu-title">Cadastro de Usuários</div>
+            </div>
         </div>
     </div>
 
@@ -536,44 +551,52 @@
         <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Despesas</h1>
         
         <!-- Formulário Manual -->
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
-            <h3>Cadastro Rápido Manual</h3>
-            <form id="cadDespesaForm" onsubmit="addDespesa(event)" style="display: flex; gap: 25px; align-items: flex-end; flex-wrap: wrap; margin-top: 1rem;">
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+            <h3 id="cadDespesaTitle">Cadastro Rápido Manual</h3>
+            <form id="cadDespesaForm" onsubmit="addDespesa(event)">
                 <input type="hidden" id="cd_id" value="">
-                <div style="flex: 1; min-width: 200px;">
-                    <label style="font-size: 0.85rem; color: var(--text-muted);">Despesa</label>
-                    <input type="text" id="cd_nome" class="auth-input" style="width: 100%;" required>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                    <div>
+                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Despesa</label>
+                        <input type="text" id="cd_nome" class="auth-input" style="width: 100%;" placeholder="Ex: Aluguel, Internet..." required>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Tipo de Despesa</label>
+                        <input type="text" id="cd_tipo" class="auth-input" style="width: 100%;" placeholder="Ex: Moradia, Transporte..." required>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Fator de Divisão (1 = menor impacto, 10 = maior)</label>
+                        <select id="cd_fator" class="auth-input" style="width: 100%;">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Prioridade</label>
+                        <select id="cd_prio" class="auth-input" style="width: 100%;">
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média">Média</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
                 </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="font-size: 0.85rem; color: var(--text-muted);">Tipo de Despesa</label>
-                    <input type="text" id="cd_tipo" class="auth-input" style="width: 100%;" required>
-                </div>
-                <div style="width: 120px;">
-                    <label style="font-size: 0.85rem; color: var(--text-muted);">Fator (1-10)</label>
-                    <select id="cd_fator" class="auth-input" style="width: 100%;">
-                        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-                        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-                        <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-                        <option value="10">10</option>
-                    </select>
-                </div>
-                <div style="width: 150px;">
-                    <label style="font-size: 0.85rem; color: var(--text-muted);">Prioridade</label>
-                    <select id="cd_prio" class="auth-input" style="width: 100%;">
-                        <option value="Baixa">Baixa</option>
-                        <option value="Média">Média</option>
-                        <option value="Alta">Alta</option>
-                    </select>
-                </div>
-                <div>
+                <div style="display: flex; gap: 12px; margin-top: 1.5rem; align-items: center;">
                     <button type="submit" class="btn" id="cadDespesaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn secondary" id="cadDespesaCancelBtn" style="display:none;" onclick="cancelEditDespesa()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                    </button>
+                    <span id="cadDespesaEditLabel" style="display:none; color: var(--warning); font-size: 0.9rem;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Editando despesa existente
+                    </span>
                 </div>
             </form>
         </div>
 
         <!-- Tabela -->
         <h3>Despesas Cadastradas</h3>
-        <div class="table-container" style="max-height: 400px; overflow-y: auto; margin-bottom: 1rem;">
+        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
             <table id="despesasTable">
                 <thead>
                     <tr>
@@ -581,7 +604,7 @@
                         <th>Tipo</th>
                         <th>Fator de Divisão</th>
                         <th>Prioridade</th>
-                        <th style="width: 80px; text-align: center;">Ações</th>
+                        <th style="width: 110px; text-align: center;">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="despesasTableBody">
@@ -606,6 +629,195 @@
         </div>
     </div>
 
+    <!-- Módulo Cadastro de Contas Bancárias -->
+    <div class="container module-container" id="cadContasModule">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Contas Bancárias</h1>
+
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+            <h3 id="cadContaTitle">Nova Conta</h3>
+            <form id="cadContaForm" onsubmit="saveConta(event)">
+                <input type="hidden" id="cc_id" value="">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Descrição</label>
+                        <input type="text" id="cc_desc" class="auth-input" style="width:100%;" placeholder="Ex: Nubank, Santander..." required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Agência</label>
+                        <input type="text" id="cc_agencia" class="auth-input" style="width:100%;" placeholder="0000">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Conta</label>
+                        <input type="text" id="cc_conta" class="auth-input" style="width:100%;" placeholder="00000-0">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Dados de Acesso (Login/URL)</label>
+                        <input type="text" id="cc_acesso" class="auth-input" style="width:100%;" placeholder="app.banco.com.br ou CPF">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Senha</label>
+                        <input type="password" id="cc_senha" class="auth-input" style="width:100%;" placeholder="••••••">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Comentários</label>
+                        <input type="text" id="cc_obs" class="auth-input" style="width:100%;" placeholder="Observações livres">
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn" id="cadContaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn secondary" id="cadContaCancelBtn" style="display:none;" onclick="cancelEditConta()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <h3>Contas Cadastradas</h3>
+        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+            <table id="contasTable">
+                <thead><tr>
+                    <th>Descrição</th><th>Agência</th><th>Conta</th>
+                    <th>Dados Acesso</th><th>Senha</th><th>Comentários</th>
+                    <th style="width:120px;text-align:center;">Ações</th>
+                </tr></thead>
+                <tbody id="contasTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de Verificação de Senha -->
+    <div id="senhaModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:var(--glass-bg); backdrop-filter:blur(20px); border:1px solid var(--glass-border); border-radius:16px; padding:2rem; width:380px; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+            <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-lock" style="color:var(--primary);"></i> Confirmar Identidade</h3>
+            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.2rem;">Para visualizar a senha, informe a sua senha de acesso ao MyFinance:</p>
+            <input type="password" id="modalAppPassword" class="auth-input" style="width:100%;margin-bottom:1rem;" placeholder="Sua senha do App" autofocus>
+            <div id="modalSenhaError" style="color:var(--error);font-size:0.85rem;margin-bottom:0.8rem;display:none;"></div>
+            <div style="display:flex;gap:12px;">
+                <button class="btn" id="modalConfirmBtn" onclick="confirmRevealSenha()"><i class="fa-solid fa-eye"></i> Visualizar</button>
+                <button class="btn secondary" onclick="closeSenhaModal()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo Cadastro de Usuários -->
+    <div class="container module-container" id="cadUsuariosModule">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Usuários</h1>
+
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+            <h3 id="cadUsuarioTitle">Novo Usuário</h3>
+            <form id="cadUsuarioForm" onsubmit="saveUsuario(event)">
+                <input type="hidden" id="cu_id" value="">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Nome</label>
+                        <input type="text" id="cu_nome" class="auth-input" style="width:100%;" placeholder="Nome completo" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Fator de Pagamento</label>
+                        <select id="cu_fator" class="auth-input" style="width:100%;">
+                            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Chave Usr1</label>
+                        <input type="text" id="cu_usr1" class="auth-input" style="width:100%;" placeholder="Identificador 1">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Chave Usr2</label>
+                        <input type="text" id="cu_usr2" class="auth-input" style="width:100%;" placeholder="Identificador 2">
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn" id="cadUsuarioBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <h3>Usuários Cadastrados</h3>
+        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+            <table id="usuariosTable">
+                <thead><tr>
+                    <th>Nome</th><th>Chave Usr1</th><th>Chave Usr2</th>
+                    <th style="text-align:center;">Fator de Pagamento</th>
+                    <th style="width:120px;text-align:center;">Ações</th>
+                </tr></thead>
+                <tbody id="usuariosTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Módulo Cadastro de Receitas -->
+    <div class="container module-container" id="cadReceitasModule">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Receitas</h1>
+
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+            <h3 id="cadReceitaTitle">Nova Receita</h3>
+            <form id="cadReceitaForm" onsubmit="saveReceita(event)">
+                <input type="hidden" id="cr_id" value="">
+                <div style="margin-top:1.5rem;">
+                    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Descrição da Receita</label>
+                    <input type="text" id="cr_desc" class="auth-input" style="width:100%;" placeholder="Ex: Salário, Freelance, Aluguel Recebido..." required>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn" id="cadReceitaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn secondary" id="cadReceitaCancelBtn" style="display:none;" onclick="cancelEditReceita()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <h3>Receitas Cadastradas</h3>
+        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+            <table id="receitasTable">
+                <thead><tr>
+                    <th>Descrição</th>
+                    <th style="width:120px;text-align:center;">Ações</th>
+                </tr></thead>
+                <tbody id="receitasTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Módulo Cadastro de Investimentos -->
+    <div class="container module-container" id="cadInvestimentosModule">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Investimentos</h1>
+
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+            <h3 id="cadInvestTitle">Novo Investimento</h3>
+            <form id="cadInvestForm" onsubmit="saveInvest(event)">
+                <input type="hidden" id="ci_id" value="">
+                <div style="margin-top:1.5rem;">
+                    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Descrição do Investimento</label>
+                    <input type="text" id="ci_desc" class="auth-input" style="width:100%;" placeholder="Ex: Tesouro Direto, Ações PETR4, CDB..." required>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn" id="cadInvestBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn secondary" id="cadInvestCancelBtn" style="display:none;" onclick="cancelEditInvest()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <h3>Investimentos Cadastrados</h3>
+        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+            <table id="investimentosTable">
+                <thead><tr>
+                    <th>Descrição</th>
+                    <th style="width:120px;text-align:center;">Ações</th>
+                </tr></thead>
+                <tbody id="investimentosTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="container module-container" id="extratosModule">
         
         <div id="uploadSection">
@@ -620,6 +832,15 @@
             </div>
 
             <div class="file-list" id="fileList"></div>
+
+            <!-- Conta Bancária do Extrato -->
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 10px; padding: 1rem 1.5rem; margin-top: 1rem; display:flex; align-items:center; gap: 16px; flex-wrap:wrap;">
+                <div style="font-size:0.9rem; color:var(--text-muted);"><i class="fa-solid fa-building-columns" style="color:var(--primary);"></i> <b>Conta Bancária deste Extrato:</b></div>
+                <select id="uploadContaBancaria" class="auth-input" style="flex:1; min-width:200px; max-width:350px;">
+                    <option value="">Selecionar conta...</option>
+                </select>
+                <div style="font-size:0.8rem; color:var(--text-muted);">Será aplicada a todas as linhas do extrato (editável após)</div>
+            </div>
 
             <button class="btn" id="uploadBtn" disabled>
                 <div class="loader" id="loader"></div>
@@ -642,11 +863,14 @@
                             <th>Original</th>
                             <th>Câmbio</th>
                             <th>Valor (EUR)</th>
-                            <th>Pag1 (Orig)</th>
-                            <th>Pag2 (Orig)</th>
+                            <th>Pag1<br><small style="font-weight:normal;font-size:0.7rem;">☐ <a href="#" onclick="applyAllUsr(1);return false;" style="color:var(--primary);text-decoration:none;">100%</a></small></th>
+                            <th>Pag2<br><small style="font-weight:normal;font-size:0.7rem;">☐ <a href="#" onclick="applyAllUsr(2);return false;" style="color:var(--primary);text-decoration:none;">100%</a></small></th>
                             <th>Diferença</th>
                             <th>Status<br><input type="text" class="filter-input" data-col="8" placeholder="Filtrar..."></th>
-                            <th>Categoria<br><input type="text" class="filter-input" data-col="9" placeholder="Filtrar..."></th>
+                            <th>Receita</th>
+                            <th>Categoria<br><input type="text" class="filter-input" data-col="10" placeholder="Filtrar..."></th>
+                            <th>Conta Bancária</th>
+                            <th>Comentários</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -661,7 +885,7 @@
                             <th id="sumPag1">0,00</th>
                             <th id="sumPag2">0,00</th>
                             <th id="sumDiff">0,00</th>
-                            <th colspan="2"></th>
+                            <th colspan="5"></th>
                         </tr>
                     </tfoot>
                 </table>
@@ -671,12 +895,472 @@
                 <button class="btn secondary" id="exportBtn">
                     <i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX
                 </button>
+                <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" id="saveMensaisBtn" onclick="saveDespesasMensais()">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar Despesas Mensais
+                </button>
                 <button class="btn" onclick="location.reload()">
                     <i class="fa-solid fa-arrow-rotate-left"></i> Processar Novos Arquivos
                 </button>
             </div>
+            <div id="saveMensaisStatus" style="text-align:center;margin-top:0.5rem;font-size:0.9rem;"></div>
         </div>
 
+    </div>
+
+    <div class="container module-container" id="despesasMensaisModule" style="max-width:1550px;">
+        <h1 style="text-align:center; margin-bottom:0.5rem;">Despesas Mensais</h1>
+        
+        <!-- Cabeçalhos Dinâmicos de Mês e Ano -->
+        <div style="display:flex; justify-content:center; gap:30px; margin-bottom:1.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; padding:15px; box-shadow:0 8px 32px 0 rgba(0,0,0,0.2);">
+            <div style="text-align:center;">
+                <span style="font-size:0.8rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:1px; display:block;">Mês Selecionado</span>
+                <h2 id="dmHeaderMes" style="margin:0; color:var(--primary); font-size:1.8rem;">—</h2>
+            </div>
+            <div style="width:1px; background:var(--glass-border);"></div>
+            <div style="text-align:center;">
+                <span style="font-size:0.8rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:1px; display:block;">Ano Selecionado</span>
+                <h2 id="dmHeaderAno" style="margin:0; color:var(--primary); font-size:1.8rem;">—</h2>
+            </div>
+        </div>
+
+        <!-- Barra de Filtro por Mês + Botões -->
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:1.5rem; justify-content: space-between;">
+            <div style="display:flex; gap:12px; align-items:center;">
+                <div>
+                    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:4px;">Selecione o Período</label>
+                    <input type="month" id="dmMesRef" class="auth-input" style="width:200px;" onchange="loadDespesasMensais()">
+                </div>
+                <div style="margin-top:20px;">
+                    <button class="btn" onclick="openDmForm(null)" style="min-width:220px; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:12px;"><i class="fa-solid fa-plus"></i> Nova Linha Manual</button>
+                </div>
+            </div>
+            <div id="dmBotoesArea" style="margin-top:20px; gap:10px; display:flex;">
+                <button onclick="openDmDetalhes()" style="background:#8b5cf6; color:white; padding:15px 30px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; min-width:220px;">
+                    <i class="fa-solid fa-list-check"></i> Detalhe de Lançamentos
+                </button>
+                <button onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669); color:white; padding:15px 30px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; min-width:220px;">
+                    <i class="fa-solid fa-calendar-check"></i> Salvar Dados Despesas Anuais
+                </button>
+                <div id="dmStatusMsg" style="font-size:14px; font-weight:bold;"></div>
+            </div>
+        </div>
+
+        <!-- Formulário de Adição/Edição -->
+        <div id="dmFormPanel" style="display:none; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
+            <h3 id="dmFormTitle">Nova Despesa</h3>
+            <form id="dmForm" onsubmit="saveDmRow(event)">
+                <input type="hidden" id="dm_id" value="">
+                <div style="display:grid; grid-template-columns:1fr 2fr 1fr 1fr; gap:1rem; margin-top:1rem;">
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Data</label>
+                        <input type="date" id="dm_data" class="auth-input" style="width:100%;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Descrição</label>
+                        <input type="text" id="dm_desc" class="auth-input" style="width:100%;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor Original</label>
+                        <input type="number" step="0.01" id="dm_valor_orig" class="auth-input" style="width:100%;" oninput="calcDmEur()">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Moeda</label>
+                        <input type="text" id="dm_moeda" class="auth-input" value="BRL" style="width:100%;">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; margin-top:1rem;">
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Câmbio EUR</label>
+                        <input type="number" step="0.0001" id="dm_cambio" class="auth-input" value="1" style="width:100%;" oninput="calcDmEur()">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor Final (EUR)</label>
+                        <input type="number" step="0.01" id="dm_valor_eur" class="auth-input" style="width:100%;opacity:0.7;" readonly>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Usr1</label>
+                        <select id="dm_usr1" class="auth-input" style="width:100%;">
+                            <option value="">— Selecione —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Usr2</label>
+                        <select id="dm_usr2" class="auth-input" style="width:100%;">
+                            <option value="">— Selecione —</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; margin-top:1rem;">
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Status Pago</label>
+                        <select id="dm_status" class="auth-input" style="width:100%;">
+                            <option value="Pendente">Pendente</option>
+                            <option value="Pago">Pago</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Categoria Final</label>
+                        <select id="dm_cat" class="auth-input" style="width:100%;"><option value="">—</option></select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Conta Bancária</label>
+                        <select id="dm_conta" class="auth-input" style="width:100%;"><option value="">—</option></select>
+                    </div>
+                    <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:6px;">
+                        <label style="font-size:0.9rem;cursor:pointer;">
+                            <input type="checkbox" id="dm_receita" style="margin-right:6px;" onchange="onDmReceitaChanged()"> É Receita
+                        </label>
+                    </div>
+                </div>
+                <div style="margin-top:1rem;">
+                    <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Comentários</label>
+                    <input type="text" id="dm_comments" class="auth-input" style="width:100%;" placeholder="Observações livres...">
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1.2rem;">
+                    <button type="submit" class="btn" id="dmSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                    <button type="button" class="btn secondary" onclick="closeDmForm()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela Principal conforme Especificação -->
+        
+        <div class="table-container" style="max-height:calc(100vh - 350px);overflow-y:auto;margin-bottom:2rem;">
+            <table id="dmTable">
+                <thead><tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th style="text-align:right;">Valor Original</th>
+                    <th style="text-align:center;">Moeda Original</th>
+                    <th style="text-align:center;">Câmbio EUR</th>
+                    <th style="text-align:right;">Valor Final (EUR)</th>
+                    <th style="text-align:right;">USR1</th>
+                    <th style="text-align:right;">USR2</th>
+                    <th style="text-align:center;">Diferença Original</th>
+                    <th style="text-align:center;">Status Pago</th>
+                    <th>Categoria Final</th>
+                    <th style="text-align:center;">Receita</th>
+                    <th>Comentários</th>
+                    <th>Conta Bancária</th>
+                    <th style="width:100px;text-align:center;">Ações</th>
+                </tr></thead>
+                <tbody id="dmTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Botões de Consolidação e Exportação -->
+        <div style="margin-top:1.5rem; display:flex; gap:10px; flex-wrap:wrap;">
+            <button onclick="openDmConsolidacao()" style="background:#f59e0b; color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; border:none;">
+                <i class="fa-solid fa-chart-bar"></i> Consolidação
+            </button>
+            <button onclick="exportDmConsolidacao()" style="background:#ef4444; color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; border:none;">
+                <i class="fa-solid fa-file-excel"></i> Exportar Consolidação
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Consolidação -->
+    <div id="dmConsolidacaoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; overflow-y:auto;">
+        <div style="background:#1e293b; margin:5% auto; padding:2rem; border-radius:16px; max-width:800px; border:1px solid #334155;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h2 style="margin:0; color:#f8fafc;"><i class="fa-solid fa-chart-bar"></i> Consolidação por Categoria</h2>
+                <button onclick="closeDmConsolidacao()" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">✕ Fechar</button>
+            </div>
+            <div style="background:#0f172a; border-radius:12px; padding:1rem; max-height:400px; overflow-y:auto;">
+                <table style="width:100%; border-collapse:collapse; color:#f8fafc;">
+                    <thead>
+                        <tr style="background:#334155;">
+                            <th style="padding:12px; text-align:left;">Categoria</th>
+                            <th style="padding:12px; text-align:right;">Total Usr1</th>
+                            <th style="padding:12px; text-align:right;">Total Usr2</th>
+                            <th style="padding:12px; text-align:right;">Total Geral</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dmConsolidacaoBody"></tbody>
+                </table>
+            </div>
+            <div style="margin-top:1rem; text-align:right;">
+                <span id="dmConsolidacaoTotal" style="font-size:18px; font-weight:bold; color:#10b981;"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo Detalhe de Lançamentos -->
+    <div class="container module-container" id="dmDetalhesModule" style="max-width:1550px;">
+        <div style="display:flex; align-items:center; gap:15px; margin-bottom:1.5rem;">
+            <button class="btn secondary" onclick="closeDmDetalhes()" style="padding:0.5rem 1rem;">
+                <i class="fa-solid fa-arrow-left"></i> Voltar
+            </button>
+            <h1 style="margin:0; text-align:left;"><i class="fa-solid fa-list-check"></i> Detalhe de Lançamentos</h1>
+        </div>
+        
+        <div style="display:flex; gap:12px; margin-bottom:1.5rem; flex-wrap:wrap;">
+            <button onclick="exportDdTable()" style="background:#ef4444; color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; border:none;">
+                <i class="fa-solid fa-file-excel"></i> Exportar para Excel
+            </button>
+        </div>
+        
+        <div style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; padding:15px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <span style="font-size:0.85rem; color:var(--text-muted);">Período:</span>
+                <span id="ddPeriodo" style="font-size:1.1rem; font-weight:600; margin-left:10px;"></span>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <span style="font-size:0.85rem; color:var(--text-muted);">Total Registros:</span>
+                <span id="ddTotalRegistros" style="font-weight:600;"></span>
+            </div>
+        </div>
+
+        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto;">
+            <table id="ddTable">
+                <thead><tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th style="text-align:right;">Valor Original</th>
+                    <th style="text-align:center;">Moeda</th>
+                    <th style="text-align:center;">Câmbio</th>
+                    <th style="text-align:right;">EUR</th>
+                    <th style="text-align:right;">USR1</th>
+                    <th style="text-align:right;">USR2</th>
+                    <th style="text-align:center;">Diferença</th>
+                    <th style="text-align:center;">Status</th>
+                    <th>Categoria</th>
+                    <th style="text-align:center;">Receita</th>
+                    <th>Conta</th>
+                    <th>Comentários</th>
+                </tr></thead>
+                <tbody id="ddTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:1.5rem;">
+            <button class="btn secondary" onclick="exportDdTable()">
+                <i class="fa-solid fa-file-excel"></i> Exportar para Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Módulo Receitas Mensais -->
+    <div class="container module-container" id="receitasMensaisModule" style="max-width:1550px;">
+        <h1 style="text-align:center; margin-bottom:0.5rem;"><i class="fa-solid fa-coins" style="color:#10b981;"></i> Receitas Mensais</h1>
+        
+        <div style="display:flex; justify-content:center; gap:30px; margin-bottom:1.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; padding:15px;">
+            <div style="text-align:center;">
+                <span style="font-size:0.8rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:1px; display:block;">Mês Selecionado</span>
+                <h2 id="rmHeaderMes" style="margin:0; color:#10b981; font-size:1.8rem;">—</h2>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:1.5rem; justify-content:space-between;">
+            <div style="display:flex; gap:12px; align-items:center;">
+                <div>
+                    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:4px;">Selecione o Período</label>
+                    <input type="month" id="rmMesRef" class="auth-input" style="width:200px;" onchange="loadReceitasMensais()">
+                </div>
+                <div style="margin-top:20px;">
+                    <button class="btn" onclick="syncReceitasFromDespesas()" style="background:#10b981; width:auto;">
+                        <i class="fa-solid fa-sync"></i> Sincronizar de Despesas
+                    </button>
+                </div>
+            </div>
+            <div style="margin-top:20px;">
+                <button class="btn" onclick="openRmForm(null)" style="background:#10b981; width:auto;">
+                    <i class="fa-solid fa-plus"></i> Nova Receita Manual
+                </button>
+            </div>
+        </div>
+
+        <div id="rmStatusMsg" style="text-align:center; margin-bottom:1rem; font-weight:bold;"></div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+            <div style="background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.3); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:#10b981; text-transform:uppercase;">Total EUR</span>
+                <h2 id="rmTotalEur" style="margin:0.5rem 0 0; color:#10b981; font-size:1.5rem;">€ 0,00</h2>
+            </div>
+            <div style="background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.3); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:#3b82f6; text-transform:uppercase;">Total BRL</span>
+                <h2 id="rmTotalBrl" style="margin:0.5rem 0 0; color:#3b82f6; font-size:1.5rem;">R$ 0,00</h2>
+            </div>
+            <div style="background:rgba(139, 92, 246, 0.15); border:1px solid rgba(139, 92, 246, 0.3); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:#8b5cf6; text-transform:uppercase;">Registros</span>
+                <h2 id="rmTotalRegistros" style="margin:0.5rem 0 0; color:#8b5cf6; font-size:1.5rem;">0</h2>
+            </div>
+        </div>
+
+        <div id="rmFormPanel" style="display:none; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
+            <h3 id="rmFormTitle">Nova Receita</h3>
+            <form id="rmForm" onsubmit="saveRmRow(event)">
+                <input type="hidden" id="rm_id" value="">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; margin-top:1rem;">
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Data</label>
+                        <input type="date" id="rm_data" class="auth-input" style="width:100%;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Tipo de Receita</label>
+                        <select id="rm_tipo" class="auth-input" style="width:100%;"><option value="">—</option></select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor Original</label>
+                        <input type="number" step="0.01" id="rm_valor_orig" class="auth-input" style="width:100%;" oninput="calcRmEur()">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Moeda Original</label>
+                        <select id="rm_moeda" class="auth-input" style="width:100%;" onchange="calcRmEur()">
+                            <option value="BRL">BRL</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; margin-top:1rem;">
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Cotação</label>
+                        <input type="number" step="0.0001" id="rm_cotacao" class="auth-input" value="1" style="width:100%;" oninput="calcRmEur()">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor EUR</label>
+                        <input type="number" step="0.01" id="rm_valor_eur" class="auth-input" style="width:100%;" readonly>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor BRL</label>
+                        <input type="number" step="0.01" id="rm_valor_brl" class="auth-input" style="width:100%;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Conta Bancária</label>
+                        <select id="rm_conta" class="auth-input" style="width:100%;"><option value="">—</option></select>
+                    </div>
+                </div>
+                <div style="margin-top:1rem;">
+                    <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Comentários</label>
+                    <input type="text" id="rm_comments" class="auth-input" style="width:100%;" placeholder="Observações...">
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1.2rem;">
+                    <button type="submit" class="btn" id="rmSaveBtn" style="background:#10b981; width:auto;"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                    <button type="button" class="btn secondary" onclick="closeRmForm()" style="width:auto;"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1.5rem;">
+            <table id="rmTable">
+                <thead><tr>
+                    <th>Data</th>
+                    <th>Tipo de Receita</th>
+                    <th style="text-align:right;">Valor Original</th>
+                    <th style="text-align:center;">Moeda</th>
+                    <th style="text-align:center;">Cotação</th>
+                    <th style="text-align:right;">Valor EUR</th>
+                    <th style="text-align:right;">Valor BRL</th>
+                    <th>Conta</th>
+                    <th>Comentários</th>
+                    <th style="width:100px; text-align:center;">Ações</th>
+                </tr></thead>
+                <tbody id="rmTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+            <button onclick="exportRmTable()" style="background:#ef4444; color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; border:none;">
+                <i class="fa-solid fa-file-excel"></i> Exportar para Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Módulo Relatório Mensal -->
+    <div class="container module-container" id="relatorioMesModule" style="max-width:1100px;">
+        <h1 style="text-align:center;"><i class="fa-solid fa-file-invoice-dollar"></i> Relatório Mensal</h1>
+        
+        <div style="display:flex; justify-content:center; gap:12px; align-items:center; margin-bottom:2rem;">
+            <label style="font-size:0.9rem; color:var(--text-muted);">Período:</label>
+            <input type="month" id="relMesRef" class="auth-input" style="width:200px;" onchange="loadRelatorioMensal()">
+        </div>
+
+        <!-- Resumo Rápido -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+            <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.2); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:var(--success); text-transform:uppercase; letter-spacing:1px;">Total Receitas</span>
+                <h2 id="relMesTotalRec" style="margin:0.5rem 0 0; color:var(--success);">€ 0,00</h2>
+            </div>
+            <div style="background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:var(--error); text-transform:uppercase; letter-spacing:1px;">Total Despesas</span>
+                <h2 id="relMesTotalExp" style="margin:0.5rem 0 0; color:var(--error);">€ 0,00</h2>
+            </div>
+            <div style="background:rgba(59, 130, 246, 0.1); border:1px solid rgba(59, 130, 246, 0.2); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:var(--primary); text-transform:uppercase; letter-spacing:1px;">Saldo Líquido</span>
+                <h2 id="relMesSaldo" style="margin:0.5rem 0 0; color:var(--text-light);">€ 0,00</h2>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-list-check"></i> Consolidação por Categoria</h3>
+            <table id="relMesTable">
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th style="text-align:center;">Receita/Despesa</th>
+                        <th style="text-align:center;">Total Usr1</th>
+                        <th style="text-align:center;">Total Usr2</th>
+                        <th style="text-align:center;">Total Geral</th>
+                    </tr>
+                </thead>
+                <tbody id="relMesTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Módulo Dashboard -->
+    <div class="container module-container" id="dashboardModule" style="max-width:1400px;">
+        <h1 style="text-align:center;"><i class="fa-solid fa-chart-line"></i> Dashboard Inicial</h1>
+        
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:2rem; justify-content:center;">
+            <label style="font-size:0.9rem; color:var(--text-muted);">Mês de Referência:</label>
+            <input type="month" id="dashMesRef" class="auth-input" style="width:200px;" onchange="loadDashboard()">
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:2rem;">
+            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:16px; padding:1.5rem; display:flex; flex-direction:column; align-items:center;">
+                <h3 style="margin-bottom:1.5rem; color:var(--primary);">Despesas por Categoria</h3>
+                <div style="width:100%; height:350px;"><canvas id="chartDespesas"></canvas></div>
+            </div>
+            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:16px; padding:1.5rem; display:flex; flex-direction:column; align-items:center;">
+                <h3 style="margin-bottom:1.5rem; color:var(--success);">Receitas Mensais</h3>
+                <div style="width:100%; height:350px;"><canvas id="chartReceitas"></canvas></div>
+            </div>
+            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:16px; padding:1.5rem; display:flex; flex-direction:column; align-items:center;">
+                <h3 style="margin-bottom:1.5rem; color:var(--secondary);">Resultado Acumulado (Ano)</h3>
+                <div style="width:100%; height:350px;"><canvas id="chartNet"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo Relatório Anual -->
+    <div class="container module-container" id="relatorioAnoModule" style="max-width:1100px;">
+        <h1 style="text-align:center;"><i class="fa-solid fa-calendar-days"></i> Relatório Anual Consolidado</h1>
+        
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:2rem; justify-content:center;">
+            <label style="font-size:0.9rem; color:var(--text-muted);">Ano:</label>
+            <select id="relAnoSel" class="auth-input" style="width:120px;" onchange="loadRelatorioAnual()">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2023">2023</option>
+            </select>
+            <button class="btn" style="padding:0.5rem 1rem;" onclick="loadRelatorioAnual()"><i class="fa-solid fa-sync"></i> Carregar</button>
+        </div>
+
+        <div class="table-container">
+            <table id="relAnoTable">
+                <thead>
+                    <tr>
+                        <th>Categoria Final</th>
+                        <th style="text-align:center;">Total Usr1</th>
+                        <th style="text-align:center;">Total Usr2</th>
+                        <th style="text-align:center;">Total Geral</th>
+                    </tr>
+                </thead>
+                <tbody id="relAnoTableBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -772,20 +1456,28 @@
         function openModule(moduleKey) {
             document.getElementById('menuContainer').style.display = 'none';
             document.querySelectorAll('.module-container').forEach(el => el.style.display = 'none');
-            
             document.getElementById('backMenuBtn').style.display = 'flex';
             let nav = document.getElementById('userNav');
-            nav.style.maxWidth = '1550px'; // Força ficar largo ao abrir módulos pra caber bem
+            nav.style.maxWidth = '1550px';
 
-            if (moduleKey === 'extratos') {
-                document.getElementById('extratosModule').style.display = 'block';
-            } else if (moduleKey === 'configuracoes') {
-                document.getElementById('configuracoesModule').style.display = 'block';
-                nav.style.maxWidth = '1200px';
-            } else if (moduleKey === 'cad_despesas') {
-                document.getElementById('cadDespesasModule').style.display = 'block';
-                nav.style.maxWidth = '1200px';
-                loadDespesas();
+            const moduleMap = {
+                'extratos':          () => document.getElementById('extratosModule').style.display = 'block',
+                'configuracoes':     () => { document.getElementById('configuracoesModule').style.display = 'block'; nav.style.maxWidth = '1200px'; },
+                'cad_despesas':      () => { document.getElementById('cadDespesasModule').style.display = 'block'; nav.style.maxWidth = '1200px'; loadDespesas(); },
+                'cad_contas':        () => { document.getElementById('cadContasModule').style.display = 'block'; nav.style.maxWidth = '1200px'; loadContas(); },
+                'cad_receitas':      () => { document.getElementById('cadReceitasModule').style.display = 'block'; nav.style.maxWidth = '900px'; loadReceitas(); },
+                'cad_investimentos': () => { document.getElementById('cadInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '900px'; loadInvestimentos(); },
+                'cad_usuarios':      () => { document.getElementById('cadUsuariosModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadUsuarios(); },
+                'despesas_mensais':  () => { document.getElementById('despesasMensaisModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initDespesasMensais(); },
+                'receitas_mensais':  () => { document.getElementById('receitasMensaisModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initReceitasMensais(); },
+                'dashboard':         () => { document.getElementById('dashboardModule').style.display = 'block'; nav.style.maxWidth = '1400px'; loadDashboard(); },
+                'relatorio_ano':     () => { document.getElementById('relatorioAnoModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadRelatorioAnual(); },
+                'relatorio_mes':     () => { document.getElementById('relatorioMesModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadRelatorioMensal(); },
+            };
+
+            if (moduleMap[moduleKey]) {
+                moduleMap[moduleKey]();
+                if(moduleKey === 'extratos') loadContasIntoSelect('uploadContaBancaria');
             } else {
                 document.getElementById('placeholderModule').style.display = 'block';
                 document.getElementById('placeholderTitle').innerText = MODULE_NAMES[moduleKey] || 'Módulo';
@@ -805,13 +1497,24 @@
                         <td style="text-align: center;">${d.fator_divisao}</td>
                         <td><span class="val-badge">${d.prioridade}</span></td>
                         <td style="text-align: center;">
-                            <button class="btn secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="editDespesa(${d.id}, '${d.despesa.replace(/'/g, "\\'")}', '${d.tipo_despesa.replace(/'/g, "\\'")}', '${d.fator_divisao}', '${d.prioridade}')" title="Editar Despesa">
+                            <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;"
+                                onclick="editDespesa(${d.id},'${d.despesa.replace(/'/g, "\\'")}','${d.tipo_despesa.replace(/'/g, "\\'")}','${d.fator_divisao}','${d.prioridade}')" title="Editar">
                                 <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
+                                onclick="deleteDespesa(${d.id})" title="Excluir">
+                                <i class="fa-solid fa-trash"></i>
                             </button>
                         </td>
                     </tr>`;
                 });
             } catch(e) {}
+        }
+
+        async function deleteDespesa(id){
+            if(!confirm('Excluir esta despesa?')) return;
+            await fetch(`/api/cad_despesas/${id}`,{method:'DELETE'});
+            loadDespesas();
         }
 
         function editDespesa(id, despesa, tipo, fator, prio) {
@@ -822,8 +1525,20 @@
             document.getElementById('cd_prio').value = prio;
             
             const btn = document.getElementById('cadDespesaBtn');
-            btn.innerHTML = '<i class="fa-solid fa-save"></i> Atualizar';
-            // btn.style.background = 'var(--warning)';
+            btn.innerHTML = '<i class="fa-solid fa-save"></i> Salvar Alterações';
+            document.getElementById('cadDespesaCancelBtn').style.display = 'inline-flex';
+            document.getElementById('cadDespesaEditLabel').style.display = 'inline-flex';
+            document.getElementById('cadDespesaTitle').innerText = 'Editando Despesa';
+            document.getElementById('cadDespesasModule').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function cancelEditDespesa() {
+            document.getElementById('cadDespesaForm').reset();
+            document.getElementById('cd_id').value = '';
+            document.getElementById('cadDespesaBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('cadDespesaCancelBtn').style.display = 'none';
+            document.getElementById('cadDespesaEditLabel').style.display = 'none';
+            document.getElementById('cadDespesaTitle').innerText = 'Cadastro Rápido Manual';
         }
 
         async function addDespesa(e) {
@@ -851,9 +1566,10 @@
             if(res.ok) {
                 document.getElementById('cadDespesaForm').reset();
                 document.getElementById('cd_id').value = '';
-                const btn = document.getElementById('cadDespesaBtn');
-                btn.innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
-                
+                document.getElementById('cadDespesaBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+                document.getElementById('cadDespesaCancelBtn').style.display = 'none';
+                document.getElementById('cadDespesaEditLabel').style.display = 'none';
+                document.getElementById('cadDespesaTitle').innerText = 'Cadastro Rápido Manual';
                 loadDespesas();
             }
         }
@@ -888,6 +1604,338 @@
             input.value = '';
         }
 
+        // ── Contas Bancárias ─────────────────────────────────────────────────────
+        const CONTA_FIELDS = ['cc_desc','cc_agencia','cc_conta','cc_acesso','cc_senha','cc_obs'];
+        const CONTA_KEYS   = ['descricao','agencia','conta','dados_acesso','senha','comentarios'];
+
+        async function loadContas() {
+            const res = await fetch('/api/cad_contas');
+            const data = await res.json();
+            window.CONTAS_CACHE = data; // Cache for other selects
+            const tbody = document.getElementById('contasTableBody');
+            tbody.innerHTML = '';
+            data.forEach(c => {
+                const temSenha = !!(c.senha);
+                tbody.innerHTML += `<tr>
+                    <td>${c.descricao||''}</td>
+                    <td>${c.agencia||'—'}</td>
+                    <td>${c.conta||'—'}</td>
+                    <td>${c.dados_acesso||'—'}</td>
+                    <td>
+                        <span id="senha_display_${c.id}" style="font-family:monospace;">••••••</span>
+                        ${temSenha ? `<button class="btn secondary" style="padding:0.2rem 0.5rem;font-size:0.75rem;margin-left:6px;"
+                            onclick="openSenhaModal(${c.id})" title="Visualizar Senha">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>` : ''}
+                    </td>
+                    <td>${c.comentarios||'—'}</td>
+                    <td style="text-align:center;">
+                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
+                            onclick="editConta(${c.id},'${esc(c.descricao)}','${esc(c.agencia)}','${esc(c.conta)}','${esc(c.dados_acesso)}','${esc(c.senha)}','${esc(c.comentarios)}')" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
+                            onclick="deleteConta(${c.id})" title="Remover">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        async function loadContasIntoSelect(selectId, selectedVal) {
+            if(!window.CONTAS_CACHE) {
+                const res = await fetch('/api/cad_contas');
+                window.CONTAS_CACHE = await res.json();
+            }
+            const sel = document.getElementById(selectId);
+            if(!sel) return;
+            sel.innerHTML = '<option value="">Selecionar conta...</option>' + 
+                window.CONTAS_CACHE.map(c => `<option value="${c.descricao}" ${c.descricao===selectedVal?'selected':''}>${c.descricao}</option>`).join('');
+        }
+
+        function editConta(id,desc,ag,cnt,ac,sen,obs){
+            document.getElementById('cc_id').value=id;
+            document.getElementById('cc_desc').value=desc;
+            document.getElementById('cc_agencia').value=ag;
+            document.getElementById('cc_conta').value=cnt;
+            document.getElementById('cc_acesso').value=ac;
+            document.getElementById('cc_senha').value=sen;
+            document.getElementById('cc_obs').value=obs;
+            document.getElementById('cadContaBtn').innerHTML='<i class="fa-solid fa-save"></i> Salvar';
+            document.getElementById('cadContaCancelBtn').style.display='inline-flex';
+            document.getElementById('cadContaTitle').innerText='Editando Conta';
+            document.getElementById('cadContasModule').scrollIntoView({behavior:'smooth',block:'start'});
+        }
+
+        function cancelEditConta(){
+            document.getElementById('cadContaForm').reset();
+            document.getElementById('cc_id').value='';
+            document.getElementById('cadContaBtn').innerHTML='<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('cadContaCancelBtn').style.display='none';
+            document.getElementById('cadContaTitle').innerText='Nova Conta';
+        }
+
+        async function saveConta(e){
+            e.preventDefault();
+            const id = document.getElementById('cc_id').value;
+            const payload = {
+                descricao: document.getElementById('cc_desc').value,
+                agencia: document.getElementById('cc_agencia').value,
+                conta: document.getElementById('cc_conta').value,
+                dados_acesso: document.getElementById('cc_acesso').value,
+                senha: document.getElementById('cc_senha').value,
+                comentarios: document.getElementById('cc_obs').value
+            };
+            const res = await fetch(id ? `/api/cad_contas/${id}` : '/api/cad_contas',{
+                method: id ? 'PUT' : 'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(payload)
+            });
+            if(res.ok){ cancelEditConta(); loadContas(); }
+        }
+
+        async function deleteConta(id){
+            if(!confirm('Remover esta conta?')) return;
+            await fetch(`/api/cad_contas/${id}`,{method:'DELETE'});
+            loadContas();
+        }
+
+        // ── Receitas ─────────────────────────────────────────────────────────────
+        async function loadReceitas(){
+            const res = await fetch('/api/cad_receitas');
+            const data = await res.json();
+            const tbody = document.getElementById('receitasTableBody');
+            tbody.innerHTML='';
+            data.forEach(r=>{
+                tbody.innerHTML+=`<tr>
+                    <td>${r.descricao}</td>
+                    <td style="text-align:center;">
+                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
+                            onclick="editReceita(${r.id},'${esc(r.descricao)}')" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
+                            onclick="deleteReceita(${r.id})" title="Remover">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function editReceita(id,desc){
+            document.getElementById('cr_id').value=id;
+            document.getElementById('cr_desc').value=desc;
+            document.getElementById('cadReceitaBtn').innerHTML='<i class="fa-solid fa-save"></i> Salvar';
+            document.getElementById('cadReceitaCancelBtn').style.display='inline-flex';
+            document.getElementById('cadReceitaTitle').innerText='Editando Receita';
+        }
+
+        function cancelEditReceita(){
+            document.getElementById('cadReceitaForm').reset();
+            document.getElementById('cr_id').value='';
+            document.getElementById('cadReceitaBtn').innerHTML='<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('cadReceitaCancelBtn').style.display='none';
+            document.getElementById('cadReceitaTitle').innerText='Nova Receita';
+        }
+
+        async function saveReceita(e){
+            e.preventDefault();
+            const id=document.getElementById('cr_id').value;
+            const payload={descricao:document.getElementById('cr_desc').value};
+            const res=await fetch(id?`/api/cad_receitas/${id}`:'/api/cad_receitas',{
+                method:id?'PUT':'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(payload)
+            });
+            if(res.ok){ cancelEditReceita(); loadReceitas(); }
+        }
+
+        async function deleteReceita(id){
+            if(!confirm('Remover esta receita?')) return;
+            await fetch(`/api/cad_receitas/${id}`,{method:'DELETE'});
+            loadReceitas();
+        }
+
+        // ── Investimentos ─────────────────────────────────────────────────────────
+        async function loadInvestimentos(){
+            const res=await fetch('/api/cad_investimentos');
+            const data=await res.json();
+            const tbody=document.getElementById('investimentosTableBody');
+            tbody.innerHTML='';
+            data.forEach(i=>{
+                tbody.innerHTML+=`<tr>
+                    <td>${i.descricao}</td>
+                    <td style="text-align:center;">
+                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
+                            onclick="editInvest(${i.id},'${esc(i.descricao)}')" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
+                            onclick="deleteInvest(${i.id})" title="Remover">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function editInvest(id,desc){
+            document.getElementById('ci_id').value=id;
+            document.getElementById('ci_desc').value=desc;
+            document.getElementById('cadInvestBtn').innerHTML='<i class="fa-solid fa-save"></i> Salvar';
+            document.getElementById('cadInvestCancelBtn').style.display='inline-flex';
+            document.getElementById('cadInvestTitle').innerText='Editando Investimento';
+        }
+
+        function cancelEditInvest(){
+            document.getElementById('cadInvestForm').reset();
+            document.getElementById('ci_id').value='';
+            document.getElementById('cadInvestBtn').innerHTML='<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('cadInvestCancelBtn').style.display='none';
+            document.getElementById('cadInvestTitle').innerText='Novo Investimento';
+        }
+
+        async function saveInvest(e){
+            e.preventDefault();
+            const id=document.getElementById('ci_id').value;
+            const payload={descricao:document.getElementById('ci_desc').value};
+            const res=await fetch(id?`/api/cad_investimentos/${id}`:'/api/cad_investimentos',{
+                method:id?'PUT':'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(payload)
+            });
+            if(res.ok){ cancelEditInvest(); loadInvestimentos(); }
+        }
+
+        async function deleteInvest(id){
+            if(!confirm('Remover este investimento?')) return;
+            await fetch(`/api/cad_investimentos/${id}`,{method:'DELETE'});
+            loadInvestimentos();
+        }
+
+        // Helper: escapa aspas simples para uso em onclick inline
+        function esc(s){ return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+        // ── Modal Visualizar Senha (Contas Bancárias) ────────────────────────────
+        let _senhaModalContaId = null;
+
+        function openSenhaModal(contaId) {
+            _senhaModalContaId = contaId;
+            document.getElementById('modalAppPassword').value = '';
+            document.getElementById('modalSenhaError').style.display = 'none';
+            const modal = document.getElementById('senhaModal');
+            modal.style.display = 'flex';
+            setTimeout(() => document.getElementById('modalAppPassword').focus(), 100);
+        }
+
+        function closeSenhaModal() {
+            document.getElementById('senhaModal').style.display = 'none';
+            _senhaModalContaId = null;
+        }
+
+        async function confirmRevealSenha() {
+            const appPwd = document.getElementById('modalAppPassword').value;
+            const errDiv = document.getElementById('modalSenhaError');
+            if (!appPwd) { errDiv.innerText = 'Informe sua senha.'; errDiv.style.display='block'; return; }
+
+            const res = await fetch(`/api/cad_contas/${_senhaModalContaId}/senha`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({app_password: appPwd})
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                const span = document.getElementById(`senha_display_${_senhaModalContaId}`);
+                if (span) {
+                    span.textContent = data.senha || '(vazia)';
+                    span.style.color = 'var(--warning)';
+                    // Reesconde após 15 segundos por segurança
+                    setTimeout(() => { if(span) { span.textContent = '••••••'; span.style.color=''; } }, 15000);
+                }
+                closeSenhaModal();
+            } else {
+                errDiv.innerText = data.error || 'Erro ao verificar.';
+                errDiv.style.display = 'block';
+            }
+        }
+
+        // Fechar modal ao clicar fora
+        document.getElementById('senhaModal').addEventListener('click', function(e){ if(e.target===this) closeSenhaModal(); });
+        // Enter no campo de senha do modal
+        document.getElementById('modalAppPassword').addEventListener('keydown', function(e){ if(e.key==='Enter') confirmRevealSenha(); });
+
+        // ── Usuários ─────────────────────────────────────────────────────────────
+        async function loadUsuarios(){
+            const res = await fetch('/api/cad_usuarios');
+            const data = await res.json();
+            const tbody = document.getElementById('usuariosTableBody');
+            tbody.innerHTML = '';
+            data.forEach(u => {
+                tbody.innerHTML += `<tr>
+                    <td>${u.nome}</td>
+                    <td>${u.chave_usr1||'—'}</td>
+                    <td>${u.chave_usr2||'—'}</td>
+                    <td style="text-align:center;"><span class="val-badge">${u.fator_pagamento}</span></td>
+                    <td style="text-align:center;">
+                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
+                            onclick="editUsuario(${u.id},'${esc(u.nome)}','${esc(u.chave_usr1)}','${esc(u.chave_usr2)}','${u.fator_pagamento}')" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
+                            onclick="deleteUsuario(${u.id})" title="Remover">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function editUsuario(id,nome,usr1,usr2,fator){
+            document.getElementById('cu_id').value=id;
+            document.getElementById('cu_nome').value=nome;
+            document.getElementById('cu_usr1').value=usr1;
+            document.getElementById('cu_usr2').value=usr2;
+            document.getElementById('cu_fator').value=fator;
+            document.getElementById('cadUsuarioBtn').innerHTML='<i class="fa-solid fa-save"></i> Salvar';
+            document.getElementById('cadUsuarioCancelBtn').style.display='inline-flex';
+            document.getElementById('cadUsuarioTitle').innerText='Editando Usuário';
+            document.getElementById('cadUsuariosModule').scrollIntoView({behavior:'smooth',block:'start'});
+        }
+
+        function cancelEditUsuario(){
+            document.getElementById('cadUsuarioForm').reset();
+            document.getElementById('cu_id').value='';
+            document.getElementById('cadUsuarioBtn').innerHTML='<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('cadUsuarioCancelBtn').style.display='none';
+            document.getElementById('cadUsuarioTitle').innerText='Novo Usuário';
+        }
+
+        async function saveUsuario(e){
+            e.preventDefault();
+            const id = document.getElementById('cu_id').value;
+            const payload = {
+                nome: document.getElementById('cu_nome').value,
+                chave_usr1: document.getElementById('cu_usr1').value,
+                chave_usr2: document.getElementById('cu_usr2').value,
+                fator_pagamento: document.getElementById('cu_fator').value
+            };
+            const res = await fetch(id ? `/api/cad_usuarios/${id}` : '/api/cad_usuarios', {
+                method: id ? 'PUT' : 'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(payload)
+            });
+            if(res.ok){ cancelEditUsuario(); loadUsuarios(); }
+        }
+
+        async function deleteUsuario(id){
+            if(!confirm('Remover este usuário?')) return;
+            await fetch(`/api/cad_usuarios/${id}`,{method:'DELETE'});
+            loadUsuarios();
+        }
+
         function returnToMenu() {
             document.getElementById('loginContainer').style.display = 'none';
             document.querySelectorAll('.module-container').forEach(el => el.style.display = 'none');
@@ -913,7 +1961,789 @@
             showLoginUI();
         }
 
-        // Run on mount
+        // ── Módulo Despesas Mensais ─────────────────────────────────────────────
+        let dmDespesasCats = [];
+        let dmReceitasCats = [];
+        let dmUsr1Keys = [];
+        let dmUsr2Keys = [];
+
+        async function initDespesasMensais() {
+            // Define mês atual se não houver
+            const mesInput = document.getElementById('dmMesRef');
+            if(!mesInput.value) {
+                mesInput.value = new Date().toISOString().substring(0, 7);
+            }
+            
+            // Carrega categorias, contas e usuários para os selects do formulário
+            try {
+                const [cRes, dRes, rRes, uRes] = await Promise.all([fetch('/api/cad_contas'), fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/cad_usuarios')]);
+                const contas = await cRes.json();
+                const despesas = await dRes.json();
+                const receitas = await rRes.json();
+                const usuarios = await uRes.json();
+                
+                console.log('Usuarios carregados:', usuarios);
+                
+                dmDespesasCats = despesas.map(d => d.despesa);
+                dmReceitasCats = receitas.map(r => r.descricao);
+                
+                // Extrai chaves únicas da tabela de usuários
+                const allUsr1 = usuarios.map(u => u.chave_usr1).filter(k => k);
+                const allUsr2 = usuarios.map(u => u.chave_usr2).filter(k => k);
+                dmUsr1Keys = [...new Set(allUsr1)];
+                dmUsr2Keys = [...new Set(allUsr2)];
+                
+                console.log('USR1 Keys:', dmUsr1Keys, 'USR2 Keys:', dmUsr2Keys);
+                
+                const cSel = document.getElementById('dm_conta');
+                cSel.innerHTML = '<option value="">—</option>' + contas.map(c => `<option value="${c.descricao}">${c.descricao}</option>`).join('');
+                
+                const usr1Select = document.getElementById('dm_usr1');
+                usr1Select.innerHTML = '<option value="">— Selecione —</option>' + dmUsr1Keys.map(k => `<option value="${k}">${k}</option>`).join('') + '<option value="__outro__">+ Outro...</option>';
+                const usr2Select = document.getElementById('dm_usr2');
+                usr2Select.innerHTML = '<option value="">— Selecione —</option>' + dmUsr2Keys.map(k => `<option value="${k}">${k}</option>`).join('') + '<option value="__outro__">+ Outro...</option>';
+                
+                updateDmCategorySelect(false);
+            } catch(e) {
+                console.error('Erro ao carregar dados:', e);
+            }
+            
+            loadDespesasMensais();
+        }
+
+        function updateDmCategorySelect(isReceita) {
+            const dSel = document.getElementById('dm_cat');
+            const cats = isReceita ? dmReceitasCats : dmDespesasCats;
+            dSel.innerHTML = '<option value="">—</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function onDmReceitaChanged() {
+            const isChecked = document.getElementById('dm_receita').checked;
+            updateDmCategorySelect(isChecked);
+        }
+
+        async function refreshDmCategories() {
+            try {
+                const [dRes, rRes] = await Promise.all([fetch('/api/cad_despesas'), fetch('/api/cad_receitas')]);
+                const despesas = await dRes.json();
+                const receitas = await rRes.json();
+                dmDespesasCats = despesas.map(d => d.despesa);
+                dmReceitasCats = receitas.map(r => r.descricao);
+            } catch(e) {}
+        }
+
+        async function loadDespesasMensais() {
+            const mesValue = document.getElementById('dmMesRef').value;
+            if(!mesValue) return;
+            
+            // Atualiza cabeçalhos de Mês e Ano
+            const [ano, mes] = mesValue.split('-');
+            const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
+            document.getElementById('dmHeaderMes').innerText = mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1);
+            document.getElementById('dmHeaderAno').innerText = ano;
+
+            // Atualizar categorias carregadas
+            refreshDmCategories();
+
+            const res = await fetch(`/api/despesas_mensais?mes=${mesValue}`);
+            const data = await res.json();
+            
+            const tbody = document.getElementById('dmTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(d => {
+                const usr1Val = parseFloat(d.usr1) || 0;
+                const usr2Val = parseFloat(d.usr2) || 0;
+                const diff = Math.abs(d.valor_original - (usr1Val + usr2Val));
+                const diffBadge = diff < 0.01 ? '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">OK</span>' : `<span class="val-badge" style="background:rgba(239,68,68,0.15);color:var(--error);">${formatCurrency(diff)}</span>`;
+                const stColor = d.status_pago === 'Pago' ? 'var(--success)' : 'var(--warning)';
+                
+                tbody.innerHTML += `<tr>
+                    <td>${d.data}</td>
+                    <td title="${d.descricao}">${d.descricao}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_original)}</td>
+                    <td style="text-align:center;">${d.moeda}</td>
+                    <td style="text-align:center;">${d.cambio_eur}</td>
+                    <td style="text-align:right;">€ ${formatCurrency(d.valor_eur)}</td>
+                    <td style="text-align:right;">${d.usr1 || '—'}</td>
+                    <td style="text-align:right;">${d.usr2 || '—'}</td>
+                    <td style="text-align:center;">${diffBadge}</td>
+                    <td style="text-align:center;"><span class="val-badge" style="color:${stColor};border:1px solid ${stColor};">${d.status_pago}</span></td>
+                    <td>${d.categoria_final||'—'}</td>
+                    <td style="text-align:center;">${d.receita ? '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>' : '—'}</td>
+                    <td>${d.comentarios||'—'}</td>
+                    <td>${d.conta_bancaria||'—'}</td>
+                    <td style="text-align:center;">
+                        <button class="btn secondary" style="padding:0.2rem 0.4rem;font-size:0.75rem;margin-right:2px;" onclick="openDmForm(${d.id}, ${JSON.stringify(d).replace(/"/g, '&quot;')})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn" style="padding:0.2rem 0.4rem;font-size:0.75rem;background:var(--error);" onclick="deleteDmRow(${d.id})" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            
+            updateDmSumTable(data);
+        }
+
+        function updateDmSumTable(data) {
+            const sumMap = {};
+            data.forEach(d => {
+                const cat = d.categoria_final || 'Sem Categoria';
+                if(!sumMap[cat]) sumMap[cat] = {usr1:0, usr2:0, total:0};
+                sumMap[cat].usr1 += d.usr1;
+                sumMap[cat].usr2 += d.usr2;
+                sumMap[cat].total += (d.usr1 + d.usr2);
+            });
+            
+            const tbody = document.getElementById('dmSumTableBody');
+            tbody.innerHTML = '';
+            Object.keys(sumMap).sort().forEach(cat => {
+                const s = sumMap[cat];
+                tbody.innerHTML += `<tr>
+                    <td><b>${cat}</b></td>
+                    <td style="text-align:center;">${formatCurrency(s.usr1)}</td>
+                    <td style="text-align:center;">${formatCurrency(s.usr2)}</td>
+                    <td style="text-align:center;"><b>${formatCurrency(s.total)}</b></td>
+                </tr>`;
+            });
+        }
+
+        function openDmForm(id, data) {
+            document.getElementById('dmFormPanel').style.display = 'block';
+            document.getElementById('dmForm').reset();
+            const mesValue = document.getElementById('dmMesRef').value;
+            
+            if(id) {
+                document.getElementById('dmFormTitle').innerText = 'Editar Despesa';
+                document.getElementById('dm_id').value = id;
+                document.getElementById('dm_data').value = data.data.split('/').reverse().join('-');
+                document.getElementById('dm_desc').value = data.descricao;
+                document.getElementById('dm_valor_orig').value = data.valor_original;
+                document.getElementById('dm_moeda').value = data.moeda;
+                document.getElementById('dm_cambio').value = data.cambio_eur;
+                document.getElementById('dm_valor_eur').value = data.valor_eur;
+                document.getElementById('dm_usr1').value = data.usr1;
+                document.getElementById('dm_usr2').value = data.usr2;
+                document.getElementById('dm_status').value = data.status_pago;
+                document.getElementById('dm_conta').value = data.conta_bancaria;
+                document.getElementById('dm_receita').checked = !!data.receita;
+                document.getElementById('dm_comments').value = data.comentarios;
+                updateDmCategorySelect(!!data.receita);
+                document.getElementById('dm_cat').value = data.categoria_final;
+                document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-save"></i> Salvar Alteração';
+            } else {
+                document.getElementById('dmFormTitle').innerText = 'Nova Despesa';
+                document.getElementById('dm_id').value = '';
+                document.getElementById('dm_data').value = `${mesValue}-01`;
+                document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+            }
+            document.getElementById('dmFormPanel').scrollIntoView({behavior:'smooth'});
+        }
+
+        function closeDmForm() {
+            document.getElementById('dmFormPanel').style.display = 'none';
+        }
+
+        function calcDmEur() {
+            const v = parseFloat(document.getElementById('dm_valor_orig').value) || 0;
+            const c = parseFloat(document.getElementById('dm_cambio').value) || 1;
+            document.getElementById('dm_valor_eur').value = (v * c).toFixed(2);
+        }
+
+        function calcDmDiff() {
+            // Apenas auxiliar visual se necessário
+        }
+
+        async function saveDmRow(e) {
+            e.preventDefault();
+            const id = document.getElementById('dm_id').value;
+            const mesRef = document.getElementById('dmMesRef').value;
+            
+            const usr1Val = document.getElementById('dm_usr1').value;
+            const usr2Val = document.getElementById('dm_usr2').value;
+            const payload = {
+                data: document.getElementById('dm_data').value.split('-').reverse().join('/'),
+                descricao: document.getElementById('dm_desc').value,
+                valor_original: parseFloat(document.getElementById('dm_valor_orig').value) || 0,
+                moeda: document.getElementById('dm_moeda').value,
+                cambio_eur: parseFloat(document.getElementById('dm_cambio').value) || 1,
+                valor_eur: parseFloat(document.getElementById('dm_valor_eur').value) || 0,
+                usr1: usr1Val || '',
+                usr2: usr2Val || '',
+                diferenca_original: 0, 
+                status_pago: document.getElementById('dm_status').value,
+                categoria_final: document.getElementById('dm_cat').value,
+                receita: document.getElementById('dm_receita').checked ? 1 : 0,
+                comentarios: document.getElementById('dm_comments').value,
+                conta_bancaria: document.getElementById('dm_conta').value,
+                mes_referencia: mesRef
+            };
+            const usr1Num = parseFloat(usr1Val) || 0;
+            const usr2Num = parseFloat(usr2Val) || 0;
+            payload.diferenca_original = Math.abs(payload.valor_original - (usr1Num + usr2Num));
+            
+            const url = id ? `/api/despesas_mensais/${id}` : '/api/despesas_mensais';
+            const method = id ? 'PUT' : 'POST';
+            
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            
+            if(res.ok) {
+                closeDmForm();
+                loadDespesasMensais();
+            }
+        }
+
+        async function deleteDmRow(id) {
+            if(!confirm('Excluir esta linha permanentemente?')) return;
+            const res = await fetch(`/api/despesas_mensais/${id}`, { method: 'DELETE' });
+            if(res.ok) loadDespesasMensais();
+        }
+
+        let ddData = [];
+
+        async function openDmDetalhes() {
+            const mesValue = document.getElementById('dmMesRef').value;
+            if(!mesValue) {
+                alert('Selecione um mês primeiro.');
+                return;
+            }
+            
+            document.getElementById('despesasMensaisModule').style.display = 'none';
+            document.getElementById('dmDetalhesModule').style.display = 'block';
+            
+            const [ano, mes] = mesValue.split('-');
+            const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
+            document.getElementById('ddPeriodo').innerText = `${mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1)} de ${ano}`;
+            
+            const res = await fetch(`/api/despesas_mensais?mes=${mesValue}`);
+            ddData = await res.json();
+            
+            document.getElementById('ddTotalRegistros').innerText = ddData.length;
+            
+            const tbody = document.getElementById('ddTableBody');
+            tbody.innerHTML = '';
+            
+            ddData.forEach(d => {
+                const diff = Math.abs(d.valor_original - (d.usr1 + d.usr2));
+                const diffBadge = diff < 0.01 ? '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">OK</span>' : `<span class="val-badge" style="background:rgba(239,68,68,0.15);color:var(--error);">${formatCurrency(diff)}</span>`;
+                const stColor = d.status_pago === 'Pago' ? 'var(--success)' : 'var(--warning)';
+                
+                tbody.innerHTML += `<tr>
+                    <td>${d.data}</td>
+                    <td title="${d.descricao}">${d.descricao}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_original)}</td>
+                    <td style="text-align:center;">${d.moeda}</td>
+                    <td style="text-align:center;">${d.cambio_eur}</td>
+                    <td style="text-align:right;">€ ${formatCurrency(d.valor_eur)}</td>
+                    <td style="text-align:right;">${d.usr1 || '—'}</td>
+                    <td style="text-align:right;">${d.usr2 || '—'}</td>
+                    <td style="text-align:center;">${diffBadge}</td>
+                    <td style="text-align:center;"><span class="val-badge" style="color:${stColor};border:1px solid ${stColor};">${d.status_pago}</span></td>
+                    <td>${d.categoria_final||'—'}</td>
+                    <td style="text-align:center;">${d.receita ? '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>' : '—'}</td>
+                    <td>${d.conta_bancaria||'—'}</td>
+                    <td>${d.comentarios||'—'}</td>
+                </tr>`;
+            });
+        }
+
+        function closeDmDetalhes() {
+            document.getElementById('dmDetalhesModule').style.display = 'none';
+            document.getElementById('despesasMensaisModule').style.display = 'block';
+        }
+
+        // --- Consolidação Modal ---
+        async function openDmConsolidacao() {
+            const mesValue = document.getElementById('dmMesRef').value;
+            if(!mesValue) {
+                alert('Selecione um mês primeiro.');
+                return;
+            }
+            
+            const res = await fetch(`/api/despesas_mensais?mes=${mesValue}`);
+            const data = await res.json();
+            
+            const sumMap = {};
+            data.forEach(d => {
+                const cat = d.categoria_final || 'Sem Categoria';
+                if(!sumMap[cat]) sumMap[cat] = {usr1:0, usr2:0, total:0};
+                sumMap[cat].usr1 += d.usr1 || 0;
+                sumMap[cat].usr2 += d.usr2 || 0;
+                sumMap[cat].total += (d.usr1 + d.usr2);
+            });
+            
+            let html = '';
+            let totalGeral = 0;
+            Object.keys(sumMap).sort().forEach(cat => {
+                const s = sumMap[cat];
+                totalGeral += s.total;
+                html += `<tr style="border-bottom:1px solid #334155;">
+                    <td style="padding:10px;">${cat}</td>
+                    <td style="padding:10px; text-align:right;">€ ${formatCurrency(s.usr1)}</td>
+                    <td style="padding:10px; text-align:right;">€ ${formatCurrency(s.usr2)}</td>
+                    <td style="padding:10px; text-align:right; font-weight:bold;">€ ${formatCurrency(s.total)}</td>
+                </tr>`;
+            });
+            
+            document.getElementById('dmConsolidacaoBody').innerHTML = html;
+            document.getElementById('dmConsolidacaoTotal').innerText = 'Total Geral: € ' + formatCurrency(totalGeral);
+            document.getElementById('dmConsolidacaoModal').style.display = 'block';
+        }
+
+        function closeDmConsolidacao() {
+            document.getElementById('dmConsolidacaoModal').style.display = 'none';
+        }
+
+        // ── Módulo Receitas Mensais ─────────────────────────────────────────────
+        let rmReceitasCats = [];
+
+        async function initReceitasMensais() {
+            const mesInput = document.getElementById('rmMesRef');
+            if(!mesInput.value) {
+                mesInput.value = new Date().toISOString().substring(0, 7);
+            }
+            
+            const [cRes, rRes] = await Promise.all([fetch('/api/cad_contas'), fetch('/api/cad_receitas')]);
+            const contas = await cRes.json();
+            const receitas = await rRes.json();
+            
+            rmReceitasCats = receitas.map(r => r.descricao);
+            
+            const cSel = document.getElementById('rm_conta');
+            cSel.innerHTML = '<option value="">—</option>' + contas.map(c => `<option value="${c.descricao}">${c.descricao}</option>`).join('');
+            
+            const tSel = document.getElementById('rm_tipo');
+            tSel.innerHTML = '<option value="">—</option>' + rmReceitasCats.map(c => `<option value="${c}">${c}</option>`).join('');
+            
+            try {
+                const rateRes = await fetch(`/api/cotacao?from=BRL&to=EUR`);
+                if(rateRes.ok) {
+                    const rateData = await rateRes.json();
+                    document.getElementById('rm_cotacao').value = rateData.cotacao.toFixed(4);
+                }
+            } catch(e) {}
+            
+            loadReceitasMensais();
+        }
+
+        async function loadReceitasMensais() {
+            const mesValue = document.getElementById('rmMesRef').value;
+            if(!mesValue) return;
+            
+            const [ano, mes] = mesValue.split('-');
+            const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
+            document.getElementById('rmHeaderMes').innerText = mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1);
+            
+            const res = await fetch(`/api/receitas_mensais?mes=${mesValue}`);
+            const data = await res.json();
+            
+            document.getElementById('rmTotalRegistros').innerText = data.length;
+            
+            let totalEur = 0, totalBrl = 0;
+            data.forEach(r => {
+                totalEur += r.valor_eur || 0;
+                totalBrl += r.valor_brl || 0;
+            });
+            document.getElementById('rmTotalEur').innerText = '€ ' + formatCurrency(totalEur);
+            document.getElementById('rmTotalBrl').innerText = 'R$ ' + formatCurrency(totalBrl);
+            
+            const tbody = document.getElementById('rmTableBody');
+            tbody.innerHTML = '';
+            data.forEach(r => {
+                tbody.innerHTML += `<tr>
+                    <td>${formatDateBR(r.data)}</td>
+                    <td>${r.tipo_receita||'—'}</td>
+                    <td style="text-align:right;">${formatCurrency(r.valor_original)}</td>
+                    <td style="text-align:center;">${r.moeda_original||'—'}</td>
+                    <td style="text-align:center;">${r.cotacao}</td>
+                    <td style="text-align:right;">€ ${formatCurrency(r.valor_eur)}</td>
+                    <td style="text-align:right;">R$ ${formatCurrency(r.valor_brl)}</td>
+                    <td>${r.conta_bancaria||'—'}</td>
+                    <td>${r.comentarios||'—'}</td>
+                    <td style="text-align:center;">
+                        <button onclick="openRmForm(${r.id}, ${JSON.stringify(r).replace(/"/g, '&quot;')})" style="padding:4px 8px; background:#8b5cf6; color:white; border:none; border-radius:6px; cursor:pointer; margin-right:4px;"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteRmRow(${r.id})" style="padding:4px 8px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function openRmForm(id, data) {
+            document.getElementById('rmFormPanel').style.display = 'block';
+            document.getElementById('rmForm').reset();
+            const mesValue = document.getElementById('rmMesRef').value;
+            
+            if(id) {
+                document.getElementById('rmFormTitle').innerText = 'Editar Receita';
+                document.getElementById('rm_id').value = id;
+                document.getElementById('rm_data').value = data.data.split('/').reverse().join('-');
+                document.getElementById('rm_tipo').value = data.tipo_receita;
+                document.getElementById('rm_valor_orig').value = data.valor_original;
+                document.getElementById('rm_moeda').value = data.moeda_original;
+                document.getElementById('rm_cotacao').value = data.cotacao;
+                document.getElementById('rm_valor_eur').value = data.valor_eur;
+                document.getElementById('rm_valor_brl').value = data.valor_brl;
+                document.getElementById('rm_conta').value = data.conta_bancaria;
+                document.getElementById('rm_comments').value = data.comentarios;
+                document.getElementById('rmSaveBtn').innerHTML = '<i class="fa-solid fa-save"></i> Salvar';
+            } else {
+                document.getElementById('rmFormTitle').innerText = 'Nova Receita';
+                document.getElementById('rm_id').value = '';
+                document.getElementById('rm_data').value = `${mesValue}-01`;
+                document.getElementById('rmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+            }
+            document.getElementById('rmFormPanel').scrollIntoView({behavior:'smooth'});
+        }
+
+        function closeRmForm() {
+            document.getElementById('rmFormPanel').style.display = 'none';
+        }
+
+        function calcRmEur() {
+            const v = parseFloat(document.getElementById('rm_valor_orig').value) || 0;
+            const c = parseFloat(document.getElementById('rm_cotacao').value) || 1;
+            const moeda = document.getElementById('rm_moeda').value;
+            let valorEur = v;
+            if(moeda === 'BRL') valorEur = v / c;
+            else if(moeda === 'USD') valorEur = v * c;
+            document.getElementById('rm_valor_eur').value = valorEur.toFixed(2);
+        }
+
+        function formatDateBR(dateStr) {
+            if(!dateStr) return '—';
+            if(dateStr.includes('/')) return dateStr;
+            const parts = dateStr.split('-');
+            if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            return dateStr;
+        }
+
+        async function saveRmRow(e) {
+            e.preventDefault();
+            const id = document.getElementById('rm_id').value;
+            const mesRef = document.getElementById('rmMesRef').value;
+            
+            const payload = {
+                data: document.getElementById('rm_data').value.split('-').reverse().join('/'),
+                tipo_receita: document.getElementById('rm_tipo').value,
+                valor_original: parseFloat(document.getElementById('rm_valor_orig').value) || 0,
+                moeda_original: document.getElementById('rm_moeda').value,
+                cotacao: parseFloat(document.getElementById('rm_cotacao').value) || 1,
+                valor_eur: parseFloat(document.getElementById('rm_valor_eur').value) || 0,
+                valor_brl: parseFloat(document.getElementById('rm_valor_brl').value) || 0,
+                conta_bancaria: document.getElementById('rm_conta').value,
+                comentarios: document.getElementById('rm_comments').value,
+                mes_referencia: mesRef
+            };
+            
+            const url = id ? `/api/receitas_mensais/${id}` : '/api/receitas_mensais';
+            const method = id ? 'PUT' : 'POST';
+            
+            const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            if(res.ok) {
+                closeRmForm();
+                loadReceitasMensais();
+            }
+        }
+
+        async function deleteRmRow(id) {
+            if(!confirm('Excluir esta receita?')) return;
+            await fetch(`/api/receitas_mensais/${id}`, { method: 'DELETE' });
+            loadReceitasMensais();
+        }
+
+        async function syncReceitasFromDespesas() {
+            const mesValue = document.getElementById('rmMesRef').value;
+            if(!mesValue) {
+                alert('Selecione um mês primeiro.');
+                return;
+            }
+            
+            const status = document.getElementById('rmStatusMsg');
+            status.innerText = 'Sincronizando...';
+            status.style.color = 'var(--warning)';
+            
+            const res = await fetch('/api/receitas_mensais/sync', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mes: mesValue })
+            });
+            
+            if(res.ok) {
+                const data = await res.json();
+                status.innerText = `${data.synced} receitas sincronizadas!`;
+                status.style.color = 'var(--success)';
+                loadReceitasMensais();
+            } else {
+                status.innerText = 'Erro ao sincronizar.';
+                status.style.color = 'var(--error)';
+            }
+            setTimeout(() => status.innerText = '', 5000);
+        }
+
+        async function exportRmTable() {
+            const mesValue = document.getElementById('rmMesRef').value;
+            if(!mesValue) {
+                alert('Selecione um mês primeiro.');
+                return;
+            }
+            
+            const res = await fetch('/export/receitas_mensais', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mes: mesValue })
+            });
+            
+            if(res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Receitas_${mesValue}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+        }
+
+        async function exportDmConsolidacao() {
+            const mesValue = document.getElementById('dmMesRef').value;
+            if(!mesValue) {
+                alert('Selecione um mês primeiro.');
+                return;
+            }
+            
+            const res = await fetch('/export/consolidacao', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mes: mesValue })
+            });
+            
+            if(res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const [ano, mes] = mesValue.split('-');
+                const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
+                a.download = `Consolidacao_${mesExtenso}_${ano}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                alert('Erro ao exportar.');
+            }
+        }
+
+        async function exportDdTable() {
+            if(!ddData.length) {
+                alert('Nenhum dado para exportar.');
+                return;
+            }
+            
+            const res = await fetch('/export/despesas_mensais', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mes: document.getElementById('dmMesRef').value })
+            });
+            
+            if(res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = document.getElementById('ddPeriodo').innerText.replace(' ', '_') + '_Detalhes.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            }
+        }
+
+        async function saveDespesasAnuais() {
+            const mesRef = document.getElementById('dmMesRef').value;
+            if(!mesRef) return;
+            const [ano, mes] = mesRef.split('-');
+            const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
+            const periodoMsg = `${mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1)} de ${ano}`;
+            
+            const status = document.getElementById('dmStatusMsg');
+            status.innerText = `Lançando dados de ${periodoMsg}...`;
+            status.style.color = 'var(--warning)';
+            
+            const res = await fetch('/api/despesas_anuais/consolidar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ano: parseInt(ano) })
+            });
+            
+            if(res.ok) {
+                status.innerText = `Dados de ${periodoMsg} salvos com sucesso!`;
+                status.style.color = 'var(--success)';
+            } else {
+                status.innerText = `Erro ao salvar dados de ${periodoMsg}.`;
+                status.style.color = 'var(--error)';
+            }
+            setTimeout(() => status.innerText = '', 8000);
+        }
+
+        // ── Dashboard e Gráficos ───────────────────────────────────────────────
+        let chartInstances = {};
+
+        async function loadDashboard() {
+            const mesInput = document.getElementById('dashMesRef');
+            if(!mesInput.value) {
+                mesInput.value = new Date().toISOString().substring(0, 7);
+            }
+            const mes = mesInput.value;
+            
+            try {
+                const res = await fetch(`/api/dashboard_data?mes=${mes}`);
+                const data = await res.json();
+                renderCharts(data);
+            } catch(e) { console.error("Erro dashboard:", e); }
+        }
+
+        function renderCharts(data) {
+            // Cores padrão MyFinance
+            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#6366f1', '#ec4899'];
+            
+            // 1. Gráfico de Despesas (Doughnut)
+            updateOrCreateChart('chartDespesas', 'doughnut', {
+                labels: data.expenses_by_category.map(x => x.categoria_final),
+                datasets: [{
+                    label: 'Despesas',
+                    data: data.expenses_by_category.map(x => x.total),
+                    backgroundColor: colors,
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1
+                }]
+            }, { 
+                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
+            });
+
+            // 2. Gráfico de Receitas (Bar)
+            updateOrCreateChart('chartReceitas', 'bar', {
+                labels: data.revenues_by_category.map(x => x.categoria_final),
+                datasets: [{
+                    label: 'Receitas',
+                    data: data.revenues_by_category.map(x => x.total),
+                    backgroundColor: '#10b981',
+                    borderRadius: 6
+                }]
+            }, {
+                scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }
+            });
+
+            // 3. Gráfico Resultado Anual (Line/Area)
+            updateOrCreateChart('chartNet', 'line', {
+                labels: [data.ano],
+                datasets: [{
+                    label: 'Saldo Acumulado (EUR)',
+                    data: [data.annual_net],
+                    fill: true,
+                    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                    borderColor: '#8b5cf6',
+                    tension: 0.4
+                }]
+            }, {
+                scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }
+            });
+        }
+
+        function updateOrCreateChart(id, type, data, options) {
+            if (chartInstances[id]) chartInstances[id].destroy();
+            const ctx = document.getElementById(id).getContext('2d');
+            chartInstances[id] = new Chart(ctx, { type, data, options });
+        }
+
+        // ── Relatório Anual ───────────────────────────────────────────────────
+        async function loadRelatorioAnual() {
+            const ano = document.getElementById('relAnoSel').value;
+            try {
+                const res = await fetch(`/api/relatorio_anual?ano=${ano}`);
+                const data = await res.json();
+                
+                const tbody = document.getElementById('relAnoTableBody');
+                tbody.innerHTML = '';
+                
+                data.forEach(d => {
+                    tbody.innerHTML += `<tr>
+                        <td><b>${d.categoria_final || 'Sem Categoria'}</b></td>
+                        <td style="text-align:center;">${formatCurrency(d.total_usr1)}</td>
+                        <td style="text-align:center;">${formatCurrency(d.total_usr2)}</td>
+                        <td style="text-align:center;"><b>${formatCurrency(d.total_geral)}</b></td>
+                    </tr>`;
+                });
+            } catch(e) { console.error("Erro relatório anual:", e); }
+        }
+
+        // ── Relatório Mensal ──────────────────────────────────────────────────
+        async function loadRelatorioMensal() {
+            const mesInput = document.getElementById('relMesRef');
+            if(!mesInput.value) {
+                mesInput.value = new Date().toISOString().substring(0, 7);
+            }
+            const mes = mesInput.value;
+            
+            try {
+                const res = await fetch(`/api/despesas_mensais?mes=${mes}`);
+                const data = await res.json();
+                
+                let totalRec = 0;
+                let totalExp = 0;
+                const categories = {};
+
+                data.forEach(d => {
+                    const val = d.valor_eur || 0;
+                    if(d.receita) {
+                        totalRec += val;
+                    } else {
+                        totalExp += val;
+                    }
+                    
+                    const catKey = d.categoria_final || 'Sem Categoria';
+                    if(!categories[catKey]) {
+                        categories[catKey] = { usr1: 0, usr2: 0, total: 0, isReceita: d.receita };
+                    }
+                    categories[catKey].usr1 += d.usr1 || 0;
+                    categories[catKey].usr2 += d.usr2 || 0;
+                    categories[catKey].total += val;
+                });
+
+                // Atualiza Cards
+                document.getElementById('relMesTotalRec').innerText = `€ ${formatCurrency(totalRec)}`;
+                document.getElementById('relMesTotalExp').innerText = `€ ${formatCurrency(totalExp)}`;
+                const saldo = totalRec - totalExp;
+                const saldoEl = document.getElementById('relMesSaldo');
+                saldoEl.innerText = `€ ${formatCurrency(saldo)}`;
+                saldoEl.style.color = saldo >= 0 ? 'var(--success)' : 'var(--error)';
+
+                // Atualiza Tabela
+                const tbody = document.getElementById('relMesTableBody');
+                tbody.innerHTML = '';
+                
+                Object.keys(categories).sort().forEach(cat => {
+                    const c = categories[cat];
+                    const typeBadge = c.isReceita ? 
+                        '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">Receita</span>' : 
+                        '<span class="val-badge" style="background:rgba(59,130,246,0.15);color:var(--primary);">Despesa</span>';
+                    
+                    tbody.innerHTML += `<tr>
+                        <td><b>${cat}</b></td>
+                        <td style="text-align:center;">${typeBadge}</td>
+                        <td style="text-align:center;">${formatCurrency(c.usr1)}</td>
+                        <td style="text-align:center;">${formatCurrency(c.usr2)}</td>
+                        <td style="text-align:center;"><b>${formatCurrency(c.total)}</b></td>
+                    </tr>`;
+                });
+
+            } catch(e) { console.error("Erro relatório mensal:", e); }
+        }
+
+        // Run checkAuthStatus on mount
         checkAuthStatus();
         // =====================================================================
 
@@ -1031,6 +2861,107 @@
             }
         }
 
+        function applyTrxAllUsr(usrNum, id) {
+            const trx = parsedTransactions.find(t => t.id === id);
+            if(!trx) return;
+            const tr = document.querySelector(`tr[data-id="${id}"]`);
+            if (usrNum === 1) {
+                trx.pag1 = trx.valor_original;
+                trx.pag2 = 0;
+            } else {
+                trx.pag1 = 0;
+                trx.pag2 = trx.valor_original;
+            }
+            const p1 = tr.querySelector('.pag1-input');
+            const p2 = tr.querySelector('.pag2-input');
+            if(p1) p1.value = formatCurrency(trx.pag1);
+            if(p2) p2.value = formatCurrency(trx.pag2);
+            updateStatusUI(tr, trx);
+            calcTotals();
+        }
+
+        function applyAllUsr(usrNum) {
+            parsedTransactions.forEach(trx => {
+                const tr = document.querySelector(`tr[data-id="${trx.id}"]`);
+                if (!tr || tr.style.display === 'none') return;
+                
+                if (usrNum === 1) {
+                    trx.pag1 = trx.valor_original;
+                    trx.pag2 = 0;
+                } else {
+                    trx.pag1 = 0;
+                    trx.pag2 = trx.valor_original;
+                }
+                const p1 = tr.querySelector('.pag1-input');
+                const p2 = tr.querySelector('.pag2-input');
+                if(p1) p1.value = formatCurrency(trx.pag1);
+                if(p2) p2.value = formatCurrency(trx.pag2);
+                updateStatusUI(tr, trx);
+            });
+            calcTotals();
+        }
+
+        async function saveDespesasMensais() {
+            const btn = document.getElementById('saveMensaisBtn');
+            const status = document.getElementById('saveMensaisStatus');
+            btn.disabled = true;
+            btn.innerText = 'Salvando...';
+            
+            const rows = [];
+            // Usamos o mês_referencia do upload (ou atual se vazio)
+            let mesRef = new Date().toISOString().substring(0, 7);
+            if(parsedTransactions.length > 0) {
+                const parts = parsedTransactions[0].data.split('/');
+                if(parts.length === 3) mesRef = `${parts[2]}-${parts[1]}`;
+            }
+
+            parsedTransactions.forEach(trx => {
+                const tr = document.querySelector(`tr[data-id="${trx.id}"]`);
+                if (!tr) return;
+                
+                rows.push({
+                    data: trx.data,
+                    descricao: trx.descricao,
+                    valor_original: trx.valor_original,
+                    moeda: trx.moeda,
+                    cambio_eur: trx.cambio,
+                    valor_eur: trx.valor_eur,
+                    usr1: trx.pag1,
+                    usr2: trx.pag2,
+                    diferenca_original: Math.abs(trx.valor_original - (trx.pag1+trx.pag2)),
+                    status_pago: tr.querySelector(`#st_${trx.id}`).textContent,
+                    categoria_final: tr.querySelector(`#cat_${trx.id}`).value,
+                    receita: tr.querySelector(`#rec_${trx.id}`).checked ? 1 : 0,
+                    conta_bancaria: tr.querySelector(`#cta_${trx.id}`).value,
+                    comentarios: tr.querySelector(`#com_${trx.id}`).value,
+                    mes_referencia: mesRef
+                });
+            });
+
+            try {
+                const res = await fetch('/api/despesas_mensais/batch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(rows)
+                });
+                if(res.ok) {
+                    status.innerText = 'Dados salvos com sucesso em Despesas Mensais!';
+                    status.style.color = 'var(--success)';
+                } else {
+                    const err = await res.json();
+                    status.innerText = 'Erro ao salvar: ' + (err.error || 'Desconhecido');
+                    status.style.color = 'var(--error)';
+                }
+            } catch(e) {
+                status.innerText = 'Erro de conexão.';
+                status.style.color = 'var(--error)';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Despesas Mensais';
+                setTimeout(() => status.innerText = '', 5000);
+            }
+        }
+
         function calcTotals() {
             let sumOrig = 0, sumEur = 0, sumPag1 = 0, sumPag2 = 0, sumDiff = 0;
             const rows = tableBody.querySelectorAll('tr');
@@ -1053,12 +2984,21 @@
             document.getElementById('sumDiff').textContent = formatCurrency(sumDiff);
         }
 
-        function showReviewScreen() {
+        async function showReviewScreen() {
             uploadSection.style.display = 'none';
             reviewSection.style.display = 'block';
             document.getElementById('extratosModule').classList.add('expanded');
             let nav = document.getElementById('userNav');
             if (nav) nav.style.maxWidth = '1550px';
+
+            const defaultConta = document.getElementById('uploadContaBancaria').value;
+
+            // Busca categorias e receitas
+            try {
+                const [dRes, rRes] = await Promise.all([fetch('/api/cad_despesas'), fetch('/api/cad_receitas')]);
+                window.DYNAMIC_CATEGORIES = (await dRes.json()).map(x => x.despesa);
+                window.DYNAMIC_RECEITAS = (await rRes.json()).map(x => x.descricao);
+            } catch(e) {}
             
             tableBody.innerHTML = '';
             parsedTransactions.forEach((trx, i) => {
@@ -1066,46 +3006,58 @@
                 tr.setAttribute('data-id', trx.id);
                 const badgeClass = trx.is_debit ? 'val-badge debit' : 'val-badge';
 
+                const catOptions = (window.DYNAMIC_CATEGORIES && window.DYNAMIC_CATEGORIES.length > 0) ? window.DYNAMIC_CATEGORIES : CATEGORIES;
+
                 tr.innerHTML = `
                     <td>${trx.data}</td>
-                    <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${trx.descricao}">${trx.descricao}</td>
+                    <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${trx.descricao}">${trx.descricao}</td>
                     <td>
                         <span class="${badgeClass}">${formatCurrency(trx.valor_original)}</span>
                         <span class="currency-badge">${trx.moeda}</span>
                     </td>
-                    <td>${trx.cambio !== 1 ? '1 EUR = ' + formatCurrency(trx.cambio) : '-'}</td>
+                    <td>${trx.cambio !== 1 ? formatCurrency(trx.cambio) : '-'}</td>
                     <td>
                         <span class="${badgeClass}">
                             € ${formatCurrency(trx.valor_eur)}
                         </span>
                     </td>
-                    <td><input type="text" class="val-input pag1-input" id="p1_${trx.id}" value="${formatCurrency(trx.pag1)}"></td>
-                    <td><input type="text" class="val-input pag2-input" id="p2_${trx.id}" value="${formatCurrency(trx.pag2)}"></td>
+                    <td style="position:relative; min-width:120px;">
+                        <input type="text" class="val-input pag1-input" id="p1_${trx.id}" value="${formatCurrency(trx.pag1)}">
+                        <button onclick="applyTrxAllUsr(1, '${trx.id}')" style="position:absolute;right:2px;top:2px;padding:2px 4px;font-size:0.6rem;background:var(--primary);border:none;border-radius:4px;cursor:pointer;color:white;">100%</button>
+                    </td>
+                    <td style="position:relative; min-width:120px;">
+                        <input type="text" class="val-input pag2-input" id="p2_${trx.id}" value="${formatCurrency(trx.pag2)}">
+                        <button onclick="applyTrxAllUsr(2, '${trx.id}')" style="position:absolute;right:2px;top:2px;padding:2px 4px;font-size:0.6rem;background:var(--primary);border:none;border-radius:4px;cursor:pointer;color:white;">100%</button>
+                    </td>
                     <td><span class="val-badge" id="diff_${trx.id}"></span></td>
                     <td><span class="val-badge" id="st_${trx.id}"></span></td>
+                    <td style="text-align:center;"><input type="checkbox" id="rec_${trx.id}" onchange="updateCatDropdown('${trx.id}')"></td>
                     <td>
-                        <select id="cat_${trx.id}" style="width: 250px;">
-                            ${CATEGORIES.map(c => `<option value="${c}" ${trx.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
+                        <select id="cat_${trx.id}" style="width: 200px;">
+                            ${catOptions.map(c => `<option value="${c}" ${trx.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
                         </select>
-                        <div class="save-indicator" id="ind_${trx.id}"><i class="fa-solid fa-check"></i> Salvo DB</div>
                     </td>
+                    <td>
+                        <select id="cta_${trx.id}" style="width: 150px;">
+                            <option value="">—</option>
+                            ${(window.CONTAS_CACHE||[]).map(c => `<option value="${c.descricao}" ${c.descricao===defaultConta?'selected':''}>${c.descricao}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td><input type="text" id="com_${trx.id}" class="auth-input" style="width:150px;padding:4px;font-size:0.8rem;" placeholder="..."></td>
                 `;
                 tableBody.appendChild(tr);
 
                 updateStatusUI(tr, trx);
 
-                // Initialize Searchable Dropdown with TomSelect
-                new TomSelect(`#cat_${trx.id}`, {
-                    create: false,
+                new TomSelect(`#cat_${trx.id}`, { 
+                    create: false, 
                     sortField: { field: "text", direction: "asc" },
-                    onChange: function(value) {
-                        trx.categoria = value;
-                        if(value !== 'Não Categorizado') saveCategoryRule(trx.descricao, value, trx.id);
-                        applyFilters(); // atualiza caso haja filtro de cat ativo
+                    onChange: function(val) {
+                        trx.categoria = val;
+                        if(val !== 'Não Categorizado') saveCategoryRule(trx.descricao, val, trx.userId);
                     }
                 });
 
-                // Listeners Pag1 and Pag2
                 tr.querySelector(`#p1_${trx.id}`).addEventListener('blur', (e) => { 
                     trx.pag1 = parseCurrencyBR(e.target.value);
                     e.target.value = formatCurrency(trx.pag1);
@@ -1119,8 +3071,17 @@
                     calcTotals();
                 });
             });
+            calcTotals();
+        }
+
+        function updateCatDropdown(id) {
+            const isRec = document.getElementById(`rec_${id}`).checked;
+            const sel = document.getElementById(`cat_${id}`);
+            if(!sel || !sel.tomselect) return;
             
-            calcTotals(); // Initial calc
+            const options = isRec ? (window.DYNAMIC_RECEITAS || []) : (window.DYNAMIC_CATEGORIES || CATEGORIES);
+            sel.tomselect.clearOptions();
+            sel.tomselect.addOptions(options.map(o => ({value: o, text: o})));
         }
 
         uploadBtn.addEventListener('click', () => {

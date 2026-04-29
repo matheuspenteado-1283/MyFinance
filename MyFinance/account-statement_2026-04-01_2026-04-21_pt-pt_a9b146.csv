@@ -1,0 +1,56 @@
+Tipo,Produto,Data de início,Data de Conclusão,Descrição,Montante,Comissão,Moeda,Estado,Saldo
+Cobrança,Atual,2026-04-02 09:15:33,2026-04-02 09:15:33,Comissão de manutenção de conta pacote Premium,0.00,9.35,EUR,CONCLUÍDA,793.91
+Pagamento com cartão,Atual,2026-04-01 07:16:36,2026-04-02 23:01:17,Apple,-5.99,0.00,EUR,CONCLUÍDA,787.92
+Pagamento com cartão,Atual,2026-04-02 06:25:12,2026-04-03 00:10:08,Pico De Gallo,-48.80,0.00,EUR,CONCLUÍDA,739.12
+Transferência,Atual,2026-04-03 06:30:13,2026-04-03 06:30:14,Transferência imediata intrabancária de JEFFERSON GOUVEA SILVA,48.80,0.00,EUR,CONCLUÍDA,787.92
+Pagamento com cartão,Atual,2026-04-03 00:25:25,2026-04-05 00:34:24,Google One,-16.41,0.00,EUR,CONCLUÍDA,771.51
+Pagamento com cartão,Atual,2026-04-04 20:52:00,2026-04-05 19:46:41,Continente,-59.11,0.00,EUR,CONCLUÍDA,712.40
+Pagamento com cartão,Atual,2026-04-05 05:41:41,2026-04-05 20:01:56,Crazy Dolphin Pub,-4.50,0.00,EUR,CONCLUÍDA,707.90
+Pagamento com cartão,Atual,2026-04-05 01:01:54,2026-04-05 20:06:02,O Meu Acai,-11.00,0.00,EUR,CONCLUÍDA,696.90
+Pagamento com cartão,Atual,2026-04-05 08:08:18,2026-04-06 17:13:02,Bardo Taverna,-30.00,0.00,EUR,CONCLUÍDA,666.90
+Pagamento com cartão,Atual,2026-04-05 20:38:13,2026-04-06 17:45:16,Continente,-7.78,0.00,EUR,CONCLUÍDA,659.12
+Pagamento com cartão,Atual,2026-04-01 18:52:44,2026-04-06 22:52:26,Koreanair Service Center,-60.99,0.00,EUR,CONCLUÍDA,598.13
+Transferência,Atual,2026-04-06 23:28:03,2026-04-06 23:28:04,Transferência imediata intrabancária de JEFFERSON GOUVEA SILVA,62.00,0.00,EUR,CONCLUÍDA,660.13
+Pagamento com cartão,Atual,2026-04-07 12:00:36,2026-04-08 01:15:25,Picsart,-72.00,0.00,EUR,CONCLUÍDA,588.13
+Pagamento com cartão,Atual,2026-04-08 03:21:40,2026-04-09 17:44:02,Uber Eats,-59.49,0.00,EUR,CONCLUÍDA,528.64
+Pagamento com cartão,Atual,2026-04-08 14:00:12,2026-04-09 17:49:28,Holafly,-59.90,0.00,EUR,CONCLUÍDA,468.74
+Carregamento,Atual,2026-04-10 16:01:16,2026-04-10 16:02:12,Carregamento com cartão *6026,2000.00,0.00,EUR,CONCLUÍDA,2468.74
+Pagamento com cartão,Atual,2026-04-10 01:43:02,2026-04-10 18:12:21,Apple,-12.99,0.00,EUR,CONCLUÍDA,2455.75
+Pagamento com cartão,Atual,2026-04-09 19:24:19,2026-04-10 18:20:18,Heymondo,-58.53,0.00,EUR,CONCLUÍDA,2397.22
+Pagamento com cartão,Atual,2026-04-09 20:18:06,2026-04-10 18:57:36,Uber Eats,-39.25,0.00,EUR,CONCLUÍDA,2357.97
+Pagamento com cartão,Atual,2026-04-10 21:05:32,2026-04-11 18:18:16,T-Mobile,-8.00,0.00,EUR,CONCLUÍDA,2349.97
+Pagamento com cartão,Atual,2026-04-10 16:07:31,2026-04-11 18:26:10,Uber,-38.97,0.00,EUR,CONCLUÍDA,2311.00
+Pagamento com cartão,Atual,2026-04-10 16:58:18,2026-04-11 19:21:09,Go To Lisboa,-11.95,0.00,EUR,CONCLUÍDA,2299.05
+ATM,Atual,2026-04-12 13:12:48,2026-04-12 22:54:04,Levantamento de numerário em Minamitsuru-gun,-162.55,0.00,EUR,CONCLUÍDA,2136.50
+Pagamento com cartão,Atual,2026-04-11 17:37:02,2026-04-13 22:26:45,"MYSTAYS HOTEL MANAGEMENT Co., Ltd.",-16.14,0.00,EUR,CONCLUÍDA,2120.36
+Pagamento com cartão,Atual,2026-04-13 15:00:05,2026-04-14 19:50:34,Uber,-2.00,0.00,EUR,CONCLUÍDA,2118.36
+Pagamento com cartão,Atual,2026-04-12 13:05:53,2026-04-14 22:59:06,Kawaguchiko Station,-8.72,0.00,EUR,CONCLUÍDA,2109.64
+Pagamento com cartão,Atual,2026-04-12 12:18:41,2026-04-14 22:59:53,Shimoyoshidakurabu,-2.16,0.00,EUR,CONCLUÍDA,2107.48
+Pagamento com cartão,Atual,2026-04-13 12:37:40,2026-04-15 23:12:17,Lawson,-0.87,0.00,EUR,CONCLUÍDA,2106.61
+Pagamento com cartão,Atual,2026-04-12 17:42:21,2026-04-15 23:12:41,7-Eleven,-26.52,0.00,EUR,CONCLUÍDA,2080.09
+Pagamento com cartão,Atual,2026-04-12 00:48:49,2026-04-15 23:12:41,Apple,-16.14,0.00,EUR,CONCLUÍDA,2063.95
+Pagamento com cartão,Atual,2026-04-12 08:35:01,2026-04-15 23:12:41,Apple,-26.90,0.00,EUR,CONCLUÍDA,2037.05
+Transferência,Atual,2026-04-16 21:39:04,2026-04-16 21:39:04,Transferência imediata intrabancária de FLAVIO CALDAS SPINA,41.00,0.00,EUR,CONCLUÍDA,2078.05
+Transferência,Atual,2026-04-16 21:54:13,2026-04-16 21:54:13,Transferência imediata intrabancária de RICARDO MARCELINO DA SILVA,41.00,0.00,EUR,CONCLUÍDA,2119.05
+Pagamento com cartão,Atual,2026-04-15 21:46:14,2026-04-17 21:01:11,82ALE HOUSE,-8.73,0.00,EUR,CONCLUÍDA,2110.32
+Pagamento com cartão,Atual,2026-04-15 13:06:43,2026-04-17 21:01:45,Lawson,-3.29,0.00,EUR,CONCLUÍDA,2107.03
+Pagamento com cartão,Atual,2026-04-14 21:23:11,2026-04-17 21:02:01,7-Eleven,-6.58,0.00,EUR,CONCLUÍDA,2100.45
+Pagamento com cartão,Atual,2026-04-16 21:36:52,2026-04-18 22:27:01,Tsukijisushiko Shinjiyu,-123.24,0.00,EUR,CONCLUÍDA,1977.21
+Pagamento com cartão,Atual,2026-04-16 13:34:23,2026-04-18 22:27:43,Lawson,-2.78,0.00,EUR,CONCLUÍDA,1974.43
+Pagamento com cartão,Atual,2026-04-15 18:50:26,2026-04-18 22:27:57,Apple,-26.81,0.00,EUR,CONCLUÍDA,1947.62
+Pagamento com cartão,Atual,2026-04-19 11:16:18,,Tokyo Solamachi,-3.77,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-19 14:59:44,,Ichikakuya Harajyuku,-14.87,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-19 21:05:10,,Ikinarisuteaki,-21.01,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-19 21:27:09,,7-Eleven,-9.69,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-20 16:17:15,,Airport Limousine Bus,-19.34,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-20 19:14:22,,UNIQLO,-105.74,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-17 23:59:10,2026-04-20 21:33:23,Mermaid,-11.31,0.00,EUR,CONCLUÍDA,1936.31
+Pagamento com cartão,Atual,2026-04-18 13:33:34,2026-04-20 21:34:00,Belgian Beer Weeke,-21.49,0.00,EUR,CONCLUÍDA,1914.82
+Pagamento com cartão,Atual,2026-04-18 16:19:45,2026-04-20 21:34:02,Yuurakutiyou Sakananohama,-42.59,0.00,EUR,CONCLUÍDA,1872.23
+Pagamento com cartão,Atual,2026-04-18 23:00:02,2026-04-20 21:35:06,Ce La Vi Tokyo,-53.85,0.00,EUR,CONCLUÍDA,1818.38
+Pagamento com cartão,Atual,2026-04-18 23:00:41,2026-04-20 21:35:06,Ce La Vi Tokyo,-28.00,0.00,EUR,CONCLUÍDA,1790.38
+Pagamento com cartão,Atual,2026-04-18 23:12:34,2026-04-20 21:35:06,Ce La Vi Tokyo,-5.39,0.00,EUR,CONCLUÍDA,1784.99
+Pagamento com cartão,Atual,2026-04-18 02:28:28,2026-04-20 21:35:06,Asobi Bar,-20.99,0.00,EUR,CONCLUÍDA,1764.00
+Pagamento com cartão,Atual,2026-04-17 13:14:12,2026-04-20 21:35:15,7-Eleven,-3.34,0.00,EUR,CONCLUÍDA,1760.66
+Pagamento com cartão,Atual,2026-04-20 21:54:37,,Ikinarisuteaki,-15.57,0.00,EUR,PENDENTE,
+Pagamento com cartão,Atual,2026-04-21 12:00:37,,Asahi Softdrink Sales,-0.76,0.00,EUR,PENDENTE,
