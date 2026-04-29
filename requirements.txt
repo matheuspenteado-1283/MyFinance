@@ -1,0 +1,8 @@
+Flask
+pandas
+werkzeug
+openpyxl
+requests
+pdfplumber
+beautifulsoup4
+python-dateutil
