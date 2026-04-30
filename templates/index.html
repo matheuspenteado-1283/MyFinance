@@ -30,6 +30,45 @@
             --warning: #f59e0b;
         }
 
+        /* Layout improvements */
+        body {
+            overflow: auto; /* enable both vertical and horizontal scroll */
+        }
+        .module-container {
+            min-height: 100vh;
+            overflow: auto;
+        }
+        .form-row-gap {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-row-gap .form-field {
+            margin-bottom: 0.5rem;
+        }
+        .btn-full {
+            width: 100%;
+            max-width: 340px; /* same width as Despesas Mensais buttons */
+        }
+        .action-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .action-bar .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .upload-area {
+            background: rgba(15, 23, 42, 0.4);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg-color);
@@ -90,13 +129,19 @@
         .upload-area {
             border: 2px dashed rgba(59, 130, 246, 0.5);
             border-radius: 16px;
-            padding: 3rem 2rem;
+            padding: 4rem 3rem;
             transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
             background: rgba(15, 23, 42, 0.4);
             overflow: hidden;
             margin-bottom: 1.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
         }
 
         .upload-area:hover, .upload-area.dragover {
@@ -106,20 +151,21 @@
         }
 
         .upload-icon {
-            font-size: 3rem;
+            font-size: 4rem;
             color: var(--primary);
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             transition: transform 0.3s ease;
         }
 
         .upload-text {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
         }
 
         .upload-subtext {
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: var(--text-muted);
         }
 
@@ -241,7 +287,117 @@
         }
         .save-indicator.show { opacity: 1; }
         .btn-group { display: flex; gap: 1rem; justify-content: center; }
-        
+
+        /* Form Fields Padronizados */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+        }
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+        }
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+        }
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .form-field label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .form-field .auth-input {
+            padding: 0.75rem 1rem;
+            min-height: 44px;
+        }
+
+        /* Botões Padronizados */
+        .btn-lg {
+            min-width: 220px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 12px;
+        }
+        .btn-md {
+            min-width: 180px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 10px;
+        }
+        .btn-sm {
+            min-width: 140px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+        }
+
+        /* Module Container Full Screen */
+        .module-fullscreen {
+            max-width: 1550px;
+            width: 100%;
+            min-height: calc(100vh - 100px);
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        /* Form Panel Padronizado */
+        .form-panel {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-panel h3 {
+            margin-bottom: 1.25rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        /* Action Bar Padronizada */
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            justify-content: space-between;
+        }
+        .action-bar-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .action-bar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Table Container Full */
+        .table-full {
+            max-height: calc(100vh - 380px);
+            overflow-x: auto;
+            overflow-y: auto;
+            margin-bottom: 2rem;
+        }
+
         .loader {
             display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3);
             border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite;
@@ -412,6 +568,17 @@
             margin: 0 auto;
         }
 
+        .sort-icon {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .sort-icon:hover {
+            color: var(--primary) !important;
+        }
+        th .filter-input {
+            margin-top: 4px;
+        }
+
     </style>
 </head>
 <body>
@@ -436,7 +603,7 @@
         <form class="auth-form" id="authForm" onsubmit="handleAuth(event)">
             <input type="email" id="authEmail" class="auth-input" placeholder="Seu e-mail" required>
             <input type="password" id="authPassword" class="auth-input" placeholder="Sua senha" required>
-            <button type="submit" class="btn" id="authBtn">Entrar</button>
+            <button type="submit" class="btn btn-sm secondary" id="authBtn">Entrar</button>
             <div id="loginError"></div>
         </form>
         
@@ -452,14 +619,6 @@
             <div class="menu-card" onclick="openModule('extratos')">
                 <i class="fa-solid fa-file-invoice-dollar menu-icon"></i>
                 <div class="menu-title">Upload de Extratos</div>
-            </div>
-            <div class="menu-card" onclick="openModule('receitas')">
-                <i class="fa-solid fa-hand-holding-dollar menu-icon"></i>
-                <div class="menu-title">Atualizar Receitas</div>
-            </div>
-            <div class="menu-card" onclick="openModule('investimentos')">
-                <i class="fa-solid fa-chart-line menu-icon"></i>
-                <div class="menu-title">Atualizar Investimentos</div>
             </div>
             <div class="menu-card" onclick="openModule('despesas_mensais')">
                 <i class="fa-solid fa-wallet menu-icon"></i>
@@ -477,14 +636,6 @@
                 <i class="fa-solid fa-chart-pie menu-icon"></i>
                 <div class="menu-title">Dashboard</div>
             </div>
-            <div class="menu-card" onclick="openModule('controles')">
-                <i class="fa-solid fa-sliders menu-icon"></i>
-                <div class="menu-title">Controles</div>
-            </div>
-            <div class="menu-card" onclick="openModule('despesas_flex')">
-                <i class="fa-solid fa-wallet menu-icon"></i>
-                <div class="menu-title">Despesas Flex</div>
-            </div>
             <div class="menu-card" onclick="openModule('receitas_mensais')">
                 <i class="fa-solid fa-coins menu-icon"></i>
                 <div class="menu-title">Receitas Mensais</div>
@@ -497,9 +648,17 @@
                 <i class="fa-solid fa-money-bill-transfer menu-icon"></i>
                 <div class="menu-title">Empréstimos</div>
             </div>
-            <div class="menu-card" onclick="openModule('patrimonio')">
-                <i class="fa-solid fa-vault menu-icon"></i>
-                <div class="menu-title">Patrimônio</div>
+            <div class="menu-card" onclick="openModule('investimentos')">
+                <i class="fa-solid fa-chart-line menu-icon"></i>
+                <div class="menu-title">Investimentos</div>
+            </div>
+            <div class="menu-card" onclick="openModule('lcto_investimentos')">
+                <i class="fa-solid fa-coins menu-icon"></i>
+                <div class="menu-title">Lançamentos Invest.</div>
+            </div>
+            <div class="menu-card" onclick="openModule('trader')">
+                <i class="fa-solid fa-arrow-trend-up menu-icon"></i>
+                <div class="menu-title">Trader</div>
             </div>
             <div class="menu-card" onclick="openModule('acessos')">
                 <i class="fa-solid fa-users-gear menu-icon"></i>
@@ -513,14 +672,14 @@
     </div>
 
     <!-- Módulo Temporário (Em Construção) -->
-    <div class="container module-container" id="placeholderModule">
+    <div class="container module-container module-fullscreen" id="placeholderModule">
         <i class="fa-solid fa-person-digging" style="font-size: 4rem; color: var(--warning); margin-bottom: 1rem;"></i>
         <h1 id="placeholderTitle">Módulo</h1>
         <p>Este módulo está atualmente em desenvolvimento.</p>
     </div>
 
     <!-- Módulo Configurações -->
-    <div class="container module-container" id="configuracoesModule">
+    <div class="container module-container module-fullscreen" id="configuracoesModule">
         <h1 style="text-align: center; margin-bottom: 2rem;">Configurações</h1>
         <div class="menu-grid">
             <div class="menu-card" onclick="openModule('cad_despesas')">
@@ -543,39 +702,43 @@
                 <i class="fa-solid fa-users menu-icon"></i>
                 <div class="menu-title">Cadastro de Usuários</div>
             </div>
+            <div class="menu-card" onclick="openModule('cad_tipo_imposto')">
+                <i class="fa-solid fa-percent menu-icon"></i>
+                <div class="menu-title">Cadastro de Tipos de Imposto</div>
+            </div>
         </div>
     </div>
 
     <!-- Módulo Cadastro de Despesas -->
-    <div class="container module-container" id="cadDespesasModule">
+    <div class="container module-container module-fullscreen" id="cadDespesasModule">
         <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Despesas</h1>
         
         <!-- Formulário Manual -->
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+        <div class="form-panel">
             <h3 id="cadDespesaTitle">Cadastro Rápido Manual</h3>
             <form id="cadDespesaForm" onsubmit="addDespesa(event)">
                 <input type="hidden" id="cd_id" value="">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
-                    <div>
-                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Despesa</label>
-                        <input type="text" id="cd_nome" class="auth-input" style="width: 100%;" placeholder="Ex: Aluguel, Internet..." required>
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label>Despesa</label>
+                        <input type="text" id="cd_nome" class="auth-input" placeholder="Ex: Aluguel, Internet..." required>
                     </div>
-                    <div>
-                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Tipo de Despesa</label>
-                        <input type="text" id="cd_tipo" class="auth-input" style="width: 100%;" placeholder="Ex: Moradia, Transporte..." required>
+                    <div class="form-field">
+                        <label>Tipo de Despesa</label>
+                        <input type="text" id="cd_tipo" class="auth-input" placeholder="Ex: Moradia, Transporte..." required>
                     </div>
-                    <div>
-                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Fator de Divisão (1 = menor impacto, 10 = maior)</label>
-                        <select id="cd_fator" class="auth-input" style="width: 100%;">
+                    <div class="form-field">
+                        <label>Fator de Divisão (1 = menor impacto, 10 = maior)</label>
+                        <select id="cd_fator" class="auth-input">
                             <option value="1">1</option><option value="2">2</option><option value="3">3</option>
                             <option value="4">4</option><option value="5">5</option><option value="6">6</option>
                             <option value="7">7</option><option value="8">8</option><option value="9">9</option>
                             <option value="10">10</option>
                         </select>
                     </div>
-                    <div>
-                        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Prioridade</label>
-                        <select id="cd_prio" class="auth-input" style="width: 100%;">
+                    <div class="form-field">
+                        <label>Prioridade</label>
+                        <select id="cd_prio" class="auth-input">
                             <option value="Baixa">Baixa</option>
                             <option value="Média">Média</option>
                             <option value="Alta">Alta</option>
@@ -583,8 +746,8 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 12px; margin-top: 1.5rem; align-items: center;">
-                    <button type="submit" class="btn" id="cadDespesaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn secondary" id="cadDespesaCancelBtn" style="display:none;" onclick="cancelEditDespesa()">
+                    <button type="submit" class="btn btn-sm secondary" id="cadDespesaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadDespesaCancelBtn" style="display:none;" onclick="cancelEditDespesa()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                     <span id="cadDespesaEditLabel" style="display:none; color: var(--warning); font-size: 0.9rem;">
@@ -596,14 +759,14 @@
 
         <!-- Tabela -->
         <h3>Despesas Cadastradas</h3>
-        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+        <div class="table-container table-full">
             <table id="despesasTable">
                 <thead>
                     <tr>
-                        <th>Despesa</th>
-                        <th>Tipo</th>
-                        <th>Fator de Divisão</th>
-                        <th>Prioridade</th>
+                        <th onclick="sortTableGeneric('despesasTable', 0)">Despesa <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                        <th onclick="sortTableGeneric('despesasTable', 1)">Tipo <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                        <th style="text-align:center;" onclick="sortTableGeneric('despesasTable', 2)">Fator de Divisão <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                        <th onclick="sortTableGeneric('despesasTable', 3)">Prioridade <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
                         <th style="width: 110px; text-align: center;">Ações</th>
                     </tr>
                 </thead>
@@ -613,59 +776,60 @@
             </table>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
             <!-- Upload Area -->
-            <div style="flex: 1; border: 2px dashed var(--glass-border); border-radius: 12px; padding: 1.5rem; text-align: center; position: relative;">
+            <div class="upload-area" id="cd_dropZone" style="flex: 1;">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-subtext">CSV, Excel, XML</div>
                 <input type="file" id="cd_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx,.xml" onchange="uploadDespesasFile(this)">
-                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
-                <div>Arraste uma planilha ou clique para <b>Sobrescrever tudo</b> (Upload)</div>
-                <div id="cd_upload_status" style="color: var(--warning); margin-top: 5px; font-size: 0.9rem;"></div>
+                <div id="cd_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
 
             <!-- Export -->
-            <button class="btn secondary" onclick="window.location.href='/api/cad_despesas/export'">
+            <button class="btn btn-sm secondary" onclick="window.location.href='/api/cad_despesas/export'">
                 <i class="fa-solid fa-file-excel"></i> Exportar Tabela
             </button>
         </div>
     </div>
 
     <!-- Módulo Cadastro de Contas Bancárias -->
-    <div class="container module-container" id="cadContasModule">
+    <div class="container module-container module-fullscreen" id="cadContasModule">
         <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Contas Bancárias</h1>
 
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+        <div class="form-panel">
             <h3 id="cadContaTitle">Nova Conta</h3>
             <form id="cadContaForm" onsubmit="saveConta(event)">
                 <input type="hidden" id="cc_id" value="">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Descrição</label>
-                        <input type="text" id="cc_desc" class="auth-input" style="width:100%;" placeholder="Ex: Nubank, Santander..." required>
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label>Descrição</label>
+                        <input type="text" id="cc_desc" class="auth-input" placeholder="Ex: Nubank, Santander..." required>
                     </div>
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Agência</label>
-                        <input type="text" id="cc_agencia" class="auth-input" style="width:100%;" placeholder="0000">
+                    <div class="form-field">
+                        <label>Agência</label>
+                        <input type="text" id="cc_agencia" class="auth-input" placeholder="0000">
                     </div>
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Conta</label>
-                        <input type="text" id="cc_conta" class="auth-input" style="width:100%;" placeholder="00000-0">
+                    <div class="form-field">
+                        <label>Conta</label>
+                        <input type="text" id="cc_conta" class="auth-input" placeholder="00000-0">
                     </div>
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Dados de Acesso (Login/URL)</label>
-                        <input type="text" id="cc_acesso" class="auth-input" style="width:100%;" placeholder="app.banco.com.br ou CPF">
+                    <div class="form-field">
+                        <label>Dados de Acesso (Login/URL)</label>
+                        <input type="text" id="cc_acesso" class="auth-input" placeholder="app.banco.com.br ou CPF">
                     </div>
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Senha</label>
-                        <input type="password" id="cc_senha" class="auth-input" style="width:100%;" placeholder="••••••">
+                    <div class="form-field">
+                        <label>Senha</label>
+                        <input type="password" id="cc_senha" class="auth-input" placeholder="••••••">
                     </div>
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Comentários</label>
-                        <input type="text" id="cc_obs" class="auth-input" style="width:100%;" placeholder="Observações livres">
+                    <div class="form-field">
+                        <label>Comentários</label>
+                        <input type="text" id="cc_obs" class="auth-input" placeholder="Observações livres">
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn" id="cadContaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn secondary" id="cadContaCancelBtn" style="display:none;" onclick="cancelEditConta()">
+                    <button type="submit" class="btn btn-sm secondary" id="cadContaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadContaCancelBtn" style="display:none;" onclick="cancelEditConta()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -673,15 +837,32 @@
         </div>
 
         <h3>Contas Cadastradas</h3>
-        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+        <div class="table-container table-full">
             <table id="contasTable">
                 <thead><tr>
-                    <th>Descrição</th><th>Agência</th><th>Conta</th>
-                    <th>Dados Acesso</th><th>Senha</th><th>Comentários</th>
+                    <th onclick="sortTableGeneric('contasTable', 0)">Descrição <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortTableGeneric('contasTable', 1)">Agência <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th onclick="sortTableGeneric('contasTable', 2)">Conta <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th onclick="sortTableGeneric('contasTable', 3)">Dados Acesso <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                    <th>Senha</th>
+                    <th onclick="sortTableGeneric('contasTable', 5)">Comentários <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
                     <th style="width:120px;text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="contasTableBody"></tbody>
             </table>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
+            <div class="upload-area" id="cc_dropZone" style="flex: 1;">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-subtext">CSV, Excel</div>
+                <input type="file" id="cc_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadContasFile(this)">
+                <div id="cc_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_contas'">
+                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
+            </button>
         </div>
     </div>
 
@@ -693,46 +874,46 @@
             <input type="password" id="modalAppPassword" class="auth-input" style="width:100%;margin-bottom:1rem;" placeholder="Sua senha do App" autofocus>
             <div id="modalSenhaError" style="color:var(--error);font-size:0.85rem;margin-bottom:0.8rem;display:none;"></div>
             <div style="display:flex;gap:12px;">
-                <button class="btn" id="modalConfirmBtn" onclick="confirmRevealSenha()"><i class="fa-solid fa-eye"></i> Visualizar</button>
-                <button class="btn secondary" onclick="closeSenhaModal()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                <button class="btn btn-sm secondary" id="modalConfirmBtn" onclick="confirmRevealSenha()"><i class="fa-solid fa-eye"></i> Visualizar</button>
+                <button class="btn btn-sm secondary" onclick="closeSenhaModal()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
             </div>
         </div>
     </div>
 
     <!-- Módulo Cadastro de Usuários -->
-    <div class="container module-container" id="cadUsuariosModule">
+    <div class="container module-container module-fullscreen" id="cadUsuariosModule">
         <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Usuários</h1>
 
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+        <div class="form-panel">
             <h3 id="cadUsuarioTitle">Novo Usuário</h3>
             <form id="cadUsuarioForm" onsubmit="saveUsuario(event)">
                 <input type="hidden" id="cu_id" value="">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Nome</label>
-                        <input type="text" id="cu_nome" class="auth-input" style="width:100%;" placeholder="Nome completo" required>
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label>Nome</label>
+                        <input type="text" id="cu_nome" class="auth-input" placeholder="Nome completo" required>
                     </div>
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Fator de Pagamento</label>
-                        <select id="cu_fator" class="auth-input" style="width:100%;">
+                    <div class="form-field">
+                        <label>Fator de Pagamento</label>
+                        <select id="cu_fator" class="auth-input">
                             <option value="1">1</option><option value="2">2</option><option value="3">3</option>
                             <option value="4">4</option><option value="5">5</option><option value="6">6</option>
                             <option value="7">7</option><option value="8">8</option><option value="9">9</option>
                             <option value="10">10</option>
                         </select>
                     </div>
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Chave Usr1</label>
-                        <input type="text" id="cu_usr1" class="auth-input" style="width:100%;" placeholder="Identificador 1">
+                    <div class="form-field">
+                        <label>Chave Usr1</label>
+                        <input type="text" id="cu_usr1" class="auth-input" placeholder="Identificador 1">
                     </div>
-                    <div>
-                        <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Chave Usr2</label>
-                        <input type="text" id="cu_usr2" class="auth-input" style="width:100%;" placeholder="Identificador 2">
+                    <div class="form-field">
+                        <label>Chave Usr2</label>
+                        <input type="text" id="cu_usr2" class="auth-input" placeholder="Identificador 2">
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn" id="cadUsuarioBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
+                    <button type="submit" class="btn btn-sm secondary" id="cadUsuarioBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -740,33 +921,50 @@
         </div>
 
         <h3>Usuários Cadastrados</h3>
-        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+        <div class="table-container table-full">
             <table id="usuariosTable">
                 <thead><tr>
-                    <th>Nome</th><th>Chave Usr1</th><th>Chave Usr2</th>
-                    <th style="text-align:center;">Fator de Pagamento</th>
+                    <th onclick="sortTableGeneric('usuariosTable', 0)">Nome <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortTableGeneric('usuariosTable', 1)">Chave Usr1 <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th onclick="sortTableGeneric('usuariosTable', 2)">Chave Usr2 <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th style="text-align:center;" onclick="sortTableGeneric('usuariosTable', 3)">Fator de Pagamento <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
                     <th style="width:120px;text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="usuariosTableBody"></tbody>
             </table>
         </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
+            <div class="upload-area" id="cu_dropZone" style="flex: 1;">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-subtext">CSV, Excel</div>
+                <input type="file" id="cu_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadUsuariosFile(this)">
+                <div id="cu_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_usuarios'">
+                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
+            </button>
+        </div>
     </div>
 
     <!-- Módulo Cadastro de Receitas -->
-    <div class="container module-container" id="cadReceitasModule">
+    <div class="container module-container module-fullscreen" id="cadReceitasModule">
         <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Receitas</h1>
 
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+        <div class="form-panel">
             <h3 id="cadReceitaTitle">Nova Receita</h3>
             <form id="cadReceitaForm" onsubmit="saveReceita(event)">
                 <input type="hidden" id="cr_id" value="">
-                <div style="margin-top:1.5rem;">
-                    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Descrição da Receita</label>
-                    <input type="text" id="cr_desc" class="auth-input" style="width:100%;" placeholder="Ex: Salário, Freelance, Aluguel Recebido..." required>
+                <div class="form-row">
+                    <div class="form-field" style="grid-column: 1 / -1;">
+                        <label>Descrição da Receita</label>
+                        <input type="text" id="cr_desc" class="auth-input" placeholder="Ex: Salário, Freelance, Aluguel Recebido..." required>
+                    </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn" id="cadReceitaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn secondary" id="cadReceitaCancelBtn" style="display:none;" onclick="cancelEditReceita()">
+                    <button type="submit" class="btn btn-sm secondary" id="cadReceitaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadReceitaCancelBtn" style="display:none;" onclick="cancelEditReceita()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -774,32 +972,47 @@
         </div>
 
         <h3>Receitas Cadastradas</h3>
-        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+        <div class="table-container table-full">
             <table id="receitasTable">
                 <thead><tr>
-                    <th>Descrição</th>
+                    <th onclick="sortTableGeneric('receitasTable', 0)">Descrição <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
                     <th style="width:120px;text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="receitasTableBody"></tbody>
             </table>
         </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
+            <div class="upload-area" id="cr_dropZone" style="flex: 1;">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-subtext">CSV, Excel</div>
+                <input type="file" id="cr_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadReceitasFile(this)">
+                <div id="cr_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_receitas'">
+                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
+            </button>
+        </div>
     </div>
 
     <!-- Módulo Cadastro de Investimentos -->
-    <div class="container module-container" id="cadInvestimentosModule">
+    <div class="container module-container module-fullscreen" id="cadInvestimentosModule">
         <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Investimentos</h1>
 
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+        <div class="form-panel">
             <h3 id="cadInvestTitle">Novo Investimento</h3>
             <form id="cadInvestForm" onsubmit="saveInvest(event)">
                 <input type="hidden" id="ci_id" value="">
-                <div style="margin-top:1.5rem;">
-                    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:6px;">Descrição do Investimento</label>
-                    <input type="text" id="ci_desc" class="auth-input" style="width:100%;" placeholder="Ex: Tesouro Direto, Ações PETR4, CDB..." required>
+                <div class="form-row">
+                    <div class="form-field" style="grid-column: 1 / -1;">
+                        <label>Descrição do Investimento</label>
+                        <input type="text" id="ci_desc" class="auth-input" placeholder="Ex: Tesouro Direto, Ações PETR4, CDB..." required>
+                    </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn" id="cadInvestBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn secondary" id="cadInvestCancelBtn" style="display:none;" onclick="cancelEditInvest()">
+                    <button type="submit" class="btn btn-sm secondary" id="cadInvestBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadInvestCancelBtn" style="display:none;" onclick="cancelEditInvest()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -807,18 +1020,95 @@
         </div>
 
         <h3>Investimentos Cadastrados</h3>
-        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1rem;">
+        <div class="table-container table-full">
             <table id="investimentosTable">
                 <thead><tr>
-                    <th>Descrição</th>
+                    <th onclick="sortTableGeneric('investimentosTable', 0)">Descrição <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
                     <th style="width:120px;text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="investimentosTableBody"></tbody>
             </table>
         </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
+            <div class="upload-area" id="ci_dropZone" style="flex: 1;">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-subtext">CSV, Excel</div>
+                <input type="file" id="ci_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadInvestimentosFile(this)">
+                <div id="ci_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_investimentos'">
+                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
+            </button>
+        </div>
     </div>
 
-    <div class="container module-container" id="extratosModule">
+    <!-- Módulo Cadastro de Tipo de Imposto -->
+    <div class="container module-container module-fullscreen" id="cadTipoImpostoModule">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Tipos de Imposto</h1>
+
+        <div class="form-panel">
+            <h3 id="cadTipoImpostoTitle">Novo Tipo de Imposto</h3>
+            <form id="cadTipoImpostoForm" onsubmit="saveTipoImposto(event)">
+                <input type="hidden" id="cti_id" value="">
+                <div class="form-row-3">
+                    <div class="form-field">
+                        <label>Tipo de Imposto</label>
+                        <input type="text" id="cti_tp_imposto" class="auth-input" placeholder="Ex: IVA, IRS, IRC..." required>
+                    </div>
+                    <div class="form-field">
+                        <label>Alíquota (%)</label>
+                        <input type="number" step="0.01" id="cti_alq_imposto" class="auth-input" placeholder="Ex: 23.00" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Frequência de Pagamento</label>
+                        <select id="cti_pagamento" class="auth-input" required>
+                            <option value="">— Selecione —</option>
+                            <option value="Mensal">Mensal</option>
+                            <option value="Trimestral">Trimestral</option>
+                            <option value="Anual">Anual</option>
+                            <option value="Evento">Evento</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary" id="cadTipoImpostoBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadTipoImpostoCancelBtn" style="display:none;" onclick="cancelEditTipoImposto()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <h3>Tipos de Imposto Cadastrados</h3>
+        <div class="table-container table-full">
+            <table id="tipoImpostoTable">
+                <thead><tr>
+                    <th onclick="sortTableGeneric('tipoImpostoTable', 0)">Tipo de Imposto <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortTableGeneric('tipoImpostoTable', 1)">Alíquota (%) <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th onclick="sortTableGeneric('tipoImpostoTable', 2)">Pagamento <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th style="width:120px;text-align:center;">Ações</th>
+                </tr></thead>
+                <tbody id="tipoImpostoTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
+            <div class="upload-area" id="cti_dropZone" style="flex: 1;">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-subtext">CSV, Excel</div>
+                <input type="file" id="cti_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadTipoImpostoFile(this)">
+                <div id="cti_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_tipo_imposto'">
+                <i class="fa-solid fa-file-excel"></i> Exportar
+            </button>
+        </div>
+    </div>
+
+    <div class="container module-container module-fullscreen" id="extratosModule">
         
         <div id="uploadSection">
             <h1>Extração de Extratos</h1>
@@ -842,7 +1132,7 @@
                 <div style="font-size:0.8rem; color:var(--text-muted);">Será aplicada a todas as linhas do extrato (editável após)</div>
             </div>
 
-            <button class="btn" id="uploadBtn" disabled>
+            <button class="btn btn-sm secondary" id="uploadBtn" disabled>
                 <div class="loader" id="loader"></div>
                 <i class="fa-solid fa-wand-magic-sparkles" id="btnIcon"></i>
                 <span id="btnText">Processar Base Documental</span>
@@ -854,7 +1144,7 @@
             <h1>Revisão e Categorização</h1>
             <p>Revise suas categorias, ajuste os filtros e as cotas "Pag1/Pag2".</p>
 
-            <div class="table-container">
+            <div class="table-container table-full">
                 <table id="transactionsTable">
                     <thead>
                         <tr>
@@ -891,14 +1181,14 @@
                 </table>
             </div>
 
-            <div class="btn-group">
-                <button class="btn secondary" id="exportBtn">
+            <div class="btn-group action-bar" style="justify-content: center;">
+                <button class="btn btn-sm secondary" id="exportBtn">
                     <i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX
                 </button>
-                <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" id="saveMensaisBtn" onclick="saveDespesasMensais()">
+                <button class="btn btn-sm secondary" style="background: linear-gradient(135deg, #10b981, #059669);" id="saveMensaisBtn" onclick="saveDespesasMensais()">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar Despesas Mensais
                 </button>
-                <button class="btn" onclick="location.reload()">
+                <button class="btn btn-sm secondary" onclick="location.reload()">
                     <i class="fa-solid fa-arrow-rotate-left"></i> Processar Novos Arquivos
                 </button>
             </div>
@@ -907,9 +1197,9 @@
 
     </div>
 
-    <div class="container module-container" id="despesasMensaisModule" style="max-width:1550px;">
+    <div class="container module-container module-fullscreen" id="despesasMensaisModule">
         <h1 style="text-align:center; margin-bottom:0.5rem;">Despesas Mensais</h1>
-        
+
         <!-- Cabeçalhos Dinâmicos de Mês e Ano -->
         <div style="display:flex; justify-content:center; gap:30px; margin-bottom:1.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; padding:15px; box-shadow:0 8px 32px 0 rgba(0,0,0,0.2);">
             <div style="text-align:center;">
@@ -924,21 +1214,21 @@
         </div>
 
         <!-- Barra de Filtro por Mês + Botões -->
-        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:1.5rem; justify-content: space-between;">
-            <div style="display:flex; gap:12px; align-items:center;">
+        <div class="action-bar">
+            <div class="action-bar-left">
                 <div>
                     <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:4px;">Selecione o Período</label>
                     <input type="month" id="dmMesRef" class="auth-input" style="width:200px;" onchange="loadDespesasMensais()">
                 </div>
                 <div style="margin-top:20px;">
-                    <button class="btn" onclick="openDmForm(null)" style="min-width:220px; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:12px;"><i class="fa-solid fa-plus"></i> Nova Linha Manual</button>
+                    <button class="btn btn-sm secondary" onclick="openDmForm(null)"><i class="fa-solid fa-plus"></i> Nova Linha Manual</button>
                 </div>
             </div>
-            <div id="dmBotoesArea" style="margin-top:20px; gap:10px; display:flex;">
-                <button onclick="openDmDetalhes()" style="background:#8b5cf6; color:white; padding:15px 30px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; min-width:220px;">
+            <div id="dmBotoesArea" class="action-bar-right">
+                <button class="btn btn-sm secondary" onclick="openDmDetalhes()" style="background:#8b5cf6;">
                     <i class="fa-solid fa-list-check"></i> Detalhe de Lançamentos
                 </button>
-                <button onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669); color:white; padding:15px 30px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; min-width:220px;">
+                <button class="btn btn-sm secondary" onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669);">
                     <i class="fa-solid fa-calendar-check"></i> Salvar Dados Despesas Anuais
                 </button>
                 <div id="dmStatusMsg" style="font-size:14px; font-weight:bold;"></div>
@@ -946,102 +1236,102 @@
         </div>
 
         <!-- Formulário de Adição/Edição -->
-        <div id="dmFormPanel" style="display:none; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
+        <div id="dmFormPanel" class="form-panel" style="display:none;">
             <h3 id="dmFormTitle">Nova Despesa</h3>
             <form id="dmForm" onsubmit="saveDmRow(event)">
                 <input type="hidden" id="dm_id" value="">
-                <div style="display:grid; grid-template-columns:1fr 2fr 1fr 1fr; gap:1rem; margin-top:1rem;">
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Data</label>
-                        <input type="date" id="dm_data" class="auth-input" style="width:100%;" required>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Data</label>
+                        <input type="date" id="dm_data" class="auth-input" required>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Descrição</label>
-                        <input type="text" id="dm_desc" class="auth-input" style="width:100%;" required>
+                    <div class="form-field">
+                        <label>Descrição</label>
+                        <input type="text" id="dm_desc" class="auth-input" required>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor Original</label>
-                        <input type="number" step="0.01" id="dm_valor_orig" class="auth-input" style="width:100%;" oninput="calcDmEur()">
+                    <div class="form-field">
+                        <label>Valor Original</label>
+                        <input type="number" step="0.01" id="dm_valor_orig" class="auth-input" oninput="calcDmEur()">
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Moeda</label>
-                        <input type="text" id="dm_moeda" class="auth-input" value="BRL" style="width:100%;">
+                    <div class="form-field">
+                        <label>Moeda</label>
+                        <input type="text" id="dm_moeda" class="auth-input" value="BRL">
                     </div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; margin-top:1rem;">
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Câmbio EUR</label>
-                        <input type="number" step="0.0001" id="dm_cambio" class="auth-input" value="1" style="width:100%;" oninput="calcDmEur()">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Câmbio EUR</label>
+                        <input type="number" step="0.0001" id="dm_cambio" class="auth-input" value="1" oninput="calcDmEur()">
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor Final (EUR)</label>
-                        <input type="number" step="0.01" id="dm_valor_eur" class="auth-input" style="width:100%;opacity:0.7;" readonly>
+                    <div class="form-field">
+                        <label>Valor Final (EUR)</label>
+                        <input type="number" step="0.01" id="dm_valor_eur" class="auth-input" style="opacity:0.7;" readonly>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Usr1</label>
-                        <select id="dm_usr1" class="auth-input" style="width:100%;">
+                    <div class="form-field">
+                        <label>Usr1</label>
+                        <select id="dm_usr1" class="auth-input">
                             <option value="">— Selecione —</option>
                         </select>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Usr2</label>
-                        <select id="dm_usr2" class="auth-input" style="width:100%;">
+                    <div class="form-field">
+                        <label>Usr2</label>
+                        <select id="dm_usr2" class="auth-input">
                             <option value="">— Selecione —</option>
                         </select>
                     </div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; margin-top:1rem;">
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Status Pago</label>
-                        <select id="dm_status" class="auth-input" style="width:100%;">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Status Pago</label>
+                        <select id="dm_status" class="auth-input">
                             <option value="Pendente">Pendente</option>
                             <option value="Pago">Pago</option>
                         </select>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Categoria Final</label>
-                        <select id="dm_cat" class="auth-input" style="width:100%;"><option value="">—</option></select>
+                    <div class="form-field">
+                        <label>Categoria Final</label>
+                        <select id="dm_cat" class="auth-input"><option value="">—</option></select>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Conta Bancária</label>
-                        <select id="dm_conta" class="auth-input" style="width:100%;"><option value="">—</option></select>
+                    <div class="form-field">
+                        <label>Conta Bancária</label>
+                        <select id="dm_conta" class="auth-input"><option value="">—</option></select>
                     </div>
-                    <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:6px;">
-                        <label style="font-size:0.9rem;cursor:pointer;">
+                    <div class="form-field" style="justify-content:flex-end;padding-bottom:6px;">
+                        <label style="font-size:0.95rem;cursor:pointer;">
                             <input type="checkbox" id="dm_receita" style="margin-right:6px;" onchange="onDmReceitaChanged()"> É Receita
                         </label>
                     </div>
                 </div>
-                <div style="margin-top:1rem;">
-                    <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Comentários</label>
-                    <input type="text" id="dm_comments" class="auth-input" style="width:100%;" placeholder="Observações livres...">
+                <div class="form-field" style="margin-top:1rem;">
+                    <label>Comentários</label>
+                    <input type="text" id="dm_comments" class="auth-input" placeholder="Observações livres...">
                 </div>
-                <div style="display:flex;gap:12px;margin-top:1.2rem;">
-                    <button type="submit" class="btn" id="dmSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
-                    <button type="button" class="btn secondary" onclick="closeDmForm()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+<div style="display:flex;gap:12px;margin-top:1.2rem;">
+                    <button type="submit" class="btn btn-sm secondary" id="dmSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                    <button type="button" class="btn btn-sm secondary" onclick="closeDmForm()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
                 </div>
             </form>
         </div>
 
         <!-- Tabela Principal conforme Especificação -->
-        
-        <div class="table-container" style="max-height:calc(100vh - 350px);overflow-y:auto;margin-bottom:2rem;">
+
+        <div class="table-container table-full">
             <table id="dmTable">
                 <thead><tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                    <th style="text-align:right;">Valor Original</th>
-                    <th style="text-align:center;">Moeda Original</th>
-                    <th style="text-align:center;">Câmbio EUR</th>
-                    <th style="text-align:right;">Valor Final (EUR)</th>
-                    <th style="text-align:right;">USR1</th>
-                    <th style="text-align:right;">USR2</th>
-                    <th style="text-align:center;">Diferença Original</th>
-                    <th style="text-align:center;">Status Pago</th>
-                    <th>Categoria Final</th>
-                    <th style="text-align:center;">Receita</th>
-                    <th>Comentários</th>
-                    <th>Conta Bancária</th>
+                    <th onclick="sortDmTable(0)">Data <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortDmTable(1)">Descrição <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th style="text-align:right;" onclick="sortDmTable(2)">Valor Original <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(3)">Moeda Original <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(4)">Câmbio EUR <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
+                    <th style="text-align:right;" onclick="sortDmTable(5)">Valor Final (EUR) <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
+                    <th style="text-align:right;" onclick="sortDmTable(6)">USR1 <i class="sort-icon fa-solid fa-sort" data-col="6"></i></th>
+                    <th style="text-align:right;" onclick="sortDmTable(7)">USR2 <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(8)">Diferença Original <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(9)">Status Pago <i class="sort-icon fa-solid fa-sort" data-col="9"></i></th>
+                    <th onclick="sortDmTable(10)">Categoria Final <i class="sort-icon fa-solid fa-sort" data-col="10"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(11)">Receita <i class="sort-icon fa-solid fa-sort" data-col="11"></i></th>
+                    <th onclick="sortDmTable(12)">Comentários <i class="sort-icon fa-solid fa-sort" data-col="12"></i></th>
+                    <th onclick="sortDmTable(13)">Conta Bancária <i class="sort-icon fa-solid fa-sort" data-col="13"></i></th>
                     <th style="width:100px;text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="dmTableBody"></tbody>
@@ -1050,10 +1340,10 @@
 
         <!-- Botões de Consolidação e Exportação -->
         <div style="margin-top:1.5rem; display:flex; gap:10px; flex-wrap:wrap;">
-            <button onclick="openDmConsolidacao()" style="background:#f59e0b; color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; border:none;">
+            <button class="btn btn-sm secondary" onclick="openDmConsolidacao()" style="background:#f59e0b;">
                 <i class="fa-solid fa-chart-bar"></i> Consolidação
             </button>
-            <button onclick="exportDmConsolidacao()" style="background:#ef4444; color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; border:none;">
+            <button class="btn btn-sm secondary" onclick="exportDmConsolidacao()" style="background:#ef4444;">
                 <i class="fa-solid fa-file-excel"></i> Exportar Consolidação
             </button>
         </div>
@@ -1086,16 +1376,16 @@
     </div>
 
     <!-- Módulo Detalhe de Lançamentos -->
-    <div class="container module-container" id="dmDetalhesModule" style="max-width:1550px;">
+    <div class="container module-container module-fullscreen" id="dmDetalhesModule">
         <div style="display:flex; align-items:center; gap:15px; margin-bottom:1.5rem;">
-            <button class="btn secondary" onclick="closeDmDetalhes()" style="padding:0.5rem 1rem;">
+            <button class="btn btn-sm secondary" onclick="closeDmDetalhes()">
                 <i class="fa-solid fa-arrow-left"></i> Voltar
             </button>
             <h1 style="margin:0; text-align:left;"><i class="fa-solid fa-list-check"></i> Detalhe de Lançamentos</h1>
         </div>
-        
+
         <div style="display:flex; gap:12px; margin-bottom:1.5rem; flex-wrap:wrap;">
-            <button onclick="exportDdTable()" style="background:#ef4444; color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; border:none;">
+            <button class="btn btn-sm secondary" onclick="exportDdTable()" style="background:#ef4444;">
                 <i class="fa-solid fa-file-excel"></i> Exportar para Excel
             </button>
         </div>
@@ -1111,7 +1401,7 @@
             </div>
         </div>
 
-        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto;">
+        <div class="table-container table-full">
             <table id="ddTable">
                 <thead><tr>
                     <th>Data</th>
@@ -1133,15 +1423,15 @@
             </table>
         </div>
 
-        <div style="margin-top:1.5rem;">
-            <button class="btn secondary" onclick="exportDdTable()">
+        <div style="margin-top:1.5rem; text-align: right;">
+            <button class="btn btn-sm secondary" onclick="exportDdTable()">
                 <i class="fa-solid fa-file-excel"></i> Exportar para Excel
             </button>
         </div>
     </div>
 
     <!-- Módulo Receitas Mensais -->
-    <div class="container module-container" id="receitasMensaisModule" style="max-width:1550px;">
+    <div class="container module-container module-fullscreen" id="receitasMensaisModule">
         <h1 style="text-align:center; margin-bottom:0.5rem;"><i class="fa-solid fa-coins" style="color:#10b981;"></i> Receitas Mensais</h1>
         
         <div style="display:flex; justify-content:center; gap:30px; margin-bottom:1.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; padding:15px;">
@@ -1151,20 +1441,20 @@
             </div>
         </div>
 
-        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:1.5rem; justify-content:space-between;">
-            <div style="display:flex; gap:12px; align-items:center;">
+        <div class="action-bar">
+            <div class="action-bar-left">
                 <div>
                     <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:4px;">Selecione o Período</label>
                     <input type="month" id="rmMesRef" class="auth-input" style="width:200px;" onchange="loadReceitasMensais()">
                 </div>
                 <div style="margin-top:20px;">
-                    <button class="btn" onclick="syncReceitasFromDespesas()" style="background:#10b981; width:auto;">
+                    <button class="btn btn-sm secondary" onclick="syncReceitasFromDespesas()" style="background:#10b981;">
                         <i class="fa-solid fa-sync"></i> Sincronizar de Despesas
                     </button>
                 </div>
             </div>
             <div style="margin-top:20px;">
-                <button class="btn" onclick="openRmForm(null)" style="background:#10b981; width:auto;">
+                <button class="btn btn-sm secondary" onclick="openRmForm(null)" style="background:#10b981;">
                     <i class="fa-solid fa-plus"></i> Nova Receita Manual
                 </button>
             </div>
@@ -1187,88 +1477,87 @@
             </div>
         </div>
 
-        <div id="rmFormPanel" style="display:none; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">
+        <div id="rmFormPanel" class="form-panel" style="display:none;">
             <h3 id="rmFormTitle">Nova Receita</h3>
             <form id="rmForm" onsubmit="saveRmRow(event)">
                 <input type="hidden" id="rm_id" value="">
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; margin-top:1rem;">
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Data</label>
-                        <input type="date" id="rm_data" class="auth-input" style="width:100%;" required>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Data</label>
+                        <input type="date" id="rm_data" class="auth-input" required>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Tipo de Receita</label>
-                        <select id="rm_tipo" class="auth-input" style="width:100%;"><option value="">—</option></select>
+                    <div class="form-field">
+                        <label>Tipo de Receita</label>
+                        <select id="rm_tipo" class="auth-input"><option value="">—</option></select>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor Original</label>
-                        <input type="number" step="0.01" id="rm_valor_orig" class="auth-input" style="width:100%;" oninput="calcRmEur()">
+                    <div class="form-field">
+                        <label>Valor Original</label>
+                        <input type="number" step="0.01" id="rm_valor_orig" class="auth-input" oninput="calcRmEur()">
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Moeda Original</label>
-                        <select id="rm_moeda" class="auth-input" style="width:100%;" onchange="calcRmEur()">
+                    <div class="form-field">
+                        <label>Moeda Original</label>
+                        <select id="rm_moeda" class="auth-input" onchange="calcRmEur()">
                             <option value="BRL">BRL</option>
                             <option value="EUR">EUR</option>
                             <option value="USD">USD</option>
                         </select>
                     </div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; margin-top:1rem;">
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Cotação</label>
-                        <input type="number" step="0.0001" id="rm_cotacao" class="auth-input" value="1" style="width:100%;" oninput="calcRmEur()">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Cotação</label>
+                        <input type="number" step="0.0001" id="rm_cotacao" class="auth-input" value="1" oninput="calcRmEur()">
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor EUR</label>
-                        <input type="number" step="0.01" id="rm_valor_eur" class="auth-input" style="width:100%;" readonly>
+                    <div class="form-field">
+                        <label>Valor EUR</label>
+                        <input type="number" step="0.01" id="rm_valor_eur" class="auth-input" readonly>
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Valor BRL</label>
-                        <input type="number" step="0.01" id="rm_valor_brl" class="auth-input" style="width:100%;">
+                    <div class="form-field">
+                        <label>Valor BRL</label>
+                        <input type="number" step="0.01" id="rm_valor_brl" class="auth-input">
                     </div>
-                    <div>
-                        <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Conta Bancária</label>
-                        <select id="rm_conta" class="auth-input" style="width:100%;"><option value="">—</option></select>
+                    <div class="form-field">
+                        <label>Conta Bancária</label>
+                        <select id="rm_conta" class="auth-input"><option value="">—</option></select>
                     </div>
                 </div>
-                <div style="margin-top:1rem;">
-                    <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:4px;">Comentários</label>
-                    <input type="text" id="rm_comments" class="auth-input" style="width:100%;" placeholder="Observações...">
+                <div class="form-field" style="margin-top:1rem;">
+                    <label>Comentários</label>
+                    <input type="text" id="rm_comments" class="auth-input" placeholder="Observações...">
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.2rem;">
-                    <button type="submit" class="btn" id="rmSaveBtn" style="background:#10b981; width:auto;"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
-                    <button type="button" class="btn secondary" onclick="closeRmForm()" style="width:auto;"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                    <button type="submit" class="btn btn-sm secondary" id="rmSaveBtn" style="background:#10b981;"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                    <button type="button" class="btn btn-sm secondary" onclick="closeRmForm()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
                 </div>
             </form>
         </div>
 
-        <div class="table-container" style="max-height: calc(100vh - 350px); overflow-y: auto; margin-bottom: 1.5rem;">
+        <div class="table-container table-full" style="margin-bottom: 1.5rem;">
             <table id="rmTable">
                 <thead><tr>
-                    <th>Data</th>
-                    <th>Tipo de Receita</th>
-                    <th style="text-align:right;">Valor Original</th>
-                    <th style="text-align:center;">Moeda</th>
-                    <th style="text-align:center;">Cotação</th>
-                    <th style="text-align:right;">Valor EUR</th>
-                    <th style="text-align:right;">Valor BRL</th>
-                    <th>Conta</th>
-                    <th>Comentários</th>
+                    <th onclick="sortRmTable(0)">Data <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortRmTable(1)">Tipo de Receita <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th style="text-align:right;" onclick="sortRmTable(2)">Valor Original <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th style="text-align:center;" onclick="sortRmTable(3)">Moeda <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                    <th style="text-align:center;" onclick="sortRmTable(4)">Cotação <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
+                    <th style="text-align:right;" onclick="sortRmTable(5)">Valor EUR <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
+                    <th style="text-align:right;" onclick="sortRmTable(6)">Valor BRL <i class="sort-icon fa-solid fa-sort" data-col="6"></i></th>
+                    <th onclick="sortRmTable(7)">Conta <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
+                    <th onclick="sortRmTable(8)">Comentários <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
                     <th style="width:100px; text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="rmTableBody"></tbody>
             </table>
         </div>
 
-        <div style="display:flex; gap:12px;">
-            <button onclick="exportRmTable()" style="background:#ef4444; color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; border:none;">
+            <button class="btn btn-sm secondary" onclick="exportRmTable()">
                 <i class="fa-solid fa-file-excel"></i> Exportar para Excel
             </button>
         </div>
     </div>
 
     <!-- Módulo Relatório Mensal -->
-    <div class="container module-container" id="relatorioMesModule" style="max-width:1100px;">
+    <div class="container module-container module-fullscreen" id="relatorioMesModule">
         <h1 style="text-align:center;"><i class="fa-solid fa-file-invoice-dollar"></i> Relatório Mensal</h1>
         
         <div style="display:flex; justify-content:center; gap:12px; align-items:center; margin-bottom:2rem;">
@@ -1292,16 +1581,16 @@
             </div>
         </div>
 
-        <div class="table-container">
+        <div class="table-container table-full">
             <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-list-check"></i> Consolidação por Categoria</h3>
             <table id="relMesTable">
                 <thead>
                     <tr>
-                        <th>Categoria</th>
-                        <th style="text-align:center;">Receita/Despesa</th>
-                        <th style="text-align:center;">Total Usr1</th>
-                        <th style="text-align:center;">Total Usr2</th>
-                        <th style="text-align:center;">Total Geral</th>
+                        <th onclick="sortRelMesTable(0)">Categoria <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                        <th style="text-align:center;" onclick="sortRelMesTable(1)">Receita/Despesa <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                        <th style="text-align:center;" onclick="sortRelMesTable(2)">Total Usr1 <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                        <th style="text-align:center;" onclick="sortRelMesTable(3)">Total Usr2 <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                        <th style="text-align:center;" onclick="sortRelMesTable(4)">Total Geral <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
                     </tr>
                 </thead>
                 <tbody id="relMesTableBody"></tbody>
@@ -1310,7 +1599,7 @@
     </div>
 
     <!-- Módulo Dashboard -->
-    <div class="container module-container" id="dashboardModule" style="max-width:1400px;">
+    <div class="container module-container module-fullscreen" id="dashboardModule">
         <h1 style="text-align:center;"><i class="fa-solid fa-chart-line"></i> Dashboard Inicial</h1>
         
         <div style="display:flex; gap:12px; align-items:center; margin-bottom:2rem; justify-content:center;">
@@ -1335,7 +1624,7 @@
     </div>
 
     <!-- Módulo Relatório Anual -->
-    <div class="container module-container" id="relatorioAnoModule" style="max-width:1100px;">
+    <div class="container module-container module-fullscreen" id="relatorioAnoModule">
         <h1 style="text-align:center;"><i class="fa-solid fa-calendar-days"></i> Relatório Anual Consolidado</h1>
         
         <div style="display:flex; gap:12px; align-items:center; margin-bottom:2rem; justify-content:center;">
@@ -1345,21 +1634,361 @@
                 <option value="2025">2025</option>
                 <option value="2023">2023</option>
             </select>
-            <button class="btn" style="padding:0.5rem 1rem;" onclick="loadRelatorioAnual()"><i class="fa-solid fa-sync"></i> Carregar</button>
+            <button class="btn btn-sm secondary" onclick="loadRelatorioAnual()"><i class="fa-solid fa-sync"></i> Carregar</button>
         </div>
 
-        <div class="table-container">
+        <div class="table-container table-full">
             <table id="relAnoTable">
                 <thead>
                     <tr>
-                        <th>Categoria Final</th>
-                        <th style="text-align:center;">Total Usr1</th>
-                        <th style="text-align:center;">Total Usr2</th>
-                        <th style="text-align:center;">Total Geral</th>
+                        <th onclick="sortRelAnoTable(0)">Categoria Final <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                        <th style="text-align:center;" onclick="sortRelAnoTable(1)">Total Usr1 <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                        <th style="text-align:center;" onclick="sortRelAnoTable(2)">Total Usr2 <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                        <th style="text-align:center;" onclick="sortRelAnoTable(3)">Total Geral <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
                     </tr>
                 </thead>
                 <tbody id="relAnoTableBody"></tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Módulo Impostos -->
+    <div class="container module-container module-fullscreen" id="impostosModule" style="display:none;">
+        <h1 style="text-align:center; margin-bottom:0.5rem;"><i class="fa-solid fa-building-columns"></i> Lançamento de Impostos</h1>
+        
+        <!-- Dashboard de Impostos -->
+        <div id="impostosDashboard" style="display:none; margin-bottom:2rem;">
+            <h3 style="text-align:center; color:var(--primary); margin-bottom:1rem;">Resumo de Impostos por Tipo</h3>
+            <div id="impostosDashboardGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem;"></div>
+        </div>
+
+        <!-- Abas -->
+        <div style="display:flex; gap:10px; margin-bottom:1.5rem; justify-content:center; flex-wrap:wrap;">
+            <button class="btn btn-sm secondary" id="impBtnLancamentos" onclick="showImpTab('lancamentos')">Lançamentos</button>
+            <button class="btn btn-sm secondary" id="impBtnDashboard" onclick="showImpTab('dashboard')">Dashboard</button>
+        </div>
+
+        <!-- Tab Lançamentos -->
+        <div id="impTabLancamentos">
+            <!-- Formulário -->
+            <div class="form-panel">
+                <h3 id="impFormTitle" style="margin-bottom:1rem;">Novo Lançamento</h3>
+                <form id="impForm" onsubmit="saveImposto(event)">
+                    <input type="hidden" id="imp_id" value="">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Mês/Ano Referência</label>
+                            <input type="month" id="imp_mes_ano" class="auth-input" required>
+                        </div>
+                        <div class="form-field">
+                            <label>Tipo de Imposto</label>
+                            <select id="imp_tp_imposto" class="auth-input" onchange="updateImpAliquota()" required>
+                                <option value="">— Selecione —</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Alíquota (%)</label>
+                            <input type="text" id="imp_aliquota" class="auth-input" style="opacity:0.7;" readonly>
+                        </div>
+                        <div class="form-field">
+                            <label>Pagamento</label>
+                            <input type="text" id="imp_pagamento" class="auth-input" style="opacity:0.7;" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Moeda Faturado</label>
+                            <select id="imp_moeda_faturado" class="auth-input">
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="BRL">BRL</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Valor Faturado</label>
+                            <input type="number" step="0.01" id="imp_valor_faturado" class="auth-input" oninput="calcImpValor()" required>
+                        </div>
+                        <div class="form-field">
+                            <label>Valor Imposto</label>
+                            <input type="number" step="0.01" id="imp_valor_imposto" class="auth-input" style="opacity:0.7;" readonly>
+                        </div>
+                        <div class="form-field">
+                            <label>Desconto IVA</label>
+                            <input type="number" step="0.01" id="imp_desconto_iva" class="auth-input" value="0">
+                        </div>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-field">
+                            <label>Moeda Pagamento</label>
+                            <select id="imp_moeda_pagamento" class="auth-input">
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="BRL">BRL</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Pagamento Mês/Ano</label>
+                            <input type="month" id="imp_pagamento_mes_ano" class="auth-input">
+                        </div>
+                        <div style="display:flex; align-items:flex-end; gap:10px;">
+                            <button type="submit" class="btn btn-sm secondary" id="impBtnSubmit"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                            <button type="button" class="btn btn-sm secondary" id="impBtnCancel" style="display:none;" onclick="cancelEditImposto()">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabela de Lançamentos -->
+            <h3>Lançamentos Cadastrados</h3>
+            <div class="table-container table-full" style="margin-bottom:1rem;">
+                <table id="impostosTable">
+                    <thead>
+                        <tr>
+                            <th>Mês/Ano</th>
+                            <th>Tipo Imposto</th>
+                            <th>Valor Faturado</th>
+                            <th>Valor Imposto</th>
+                            <th>Desconto IVA</th>
+                            <th>Vl. Líquido</th>
+                            <th>Pagamento</th>
+                            <th>Pagto Mês/Ano</th>
+                            <th style="width:100px;text-align:center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="impostosTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Export -->
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn btn-sm secondary" onclick="exportImpostos()">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo Empréstimos -->
+    <div class="container module-container module-fullscreen" id="emprestimosModule" style="display:none;">
+        <h1 style="text-align:center; margin-bottom:0.5rem;"><i class="fa-solid fa-money-bill-transfer"></i> Controle de Empréstimos</h1>
+
+        <!-- Cards de Saldo -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+            <div style="background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.3); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:#fca5a5; text-transform:uppercase;">Total Emprestado</span>
+                <h2 id="empTotalEmprestado" style="margin:0.5rem 0 0; color:#fca5a5; font-size:1.5rem;">R$ 0,00</h2>
+            </div>
+            <div style="background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.3); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:#10b981; text-transform:uppercase;">Total Pago</span>
+                <h2 id="empTotalPago" style="margin:0.5rem 0 0; color:#10b981; font-size:1.5rem;">R$ 0,00</h2>
+            </div>
+            <div style="background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.3); border-radius:12px; padding:1.5rem; text-align:center;">
+                <span style="font-size:0.8rem; color:#3b82f6; text-transform:uppercase;">Saldo Devedor</span>
+                <h2 id="empSaldo" style="margin:0.5rem 0 0; color:#3b82f6; font-size:1.5rem;">R$ 0,00</h2>
+            </div>
+        </div>
+
+        <!-- Formulário -->
+        <div class="form-panel">
+            <h3 id="empFormTitle">Novo Registro</h3>
+            <form id="empForm" onsubmit="saveEmprestimo(event)">
+                <input type="hidden" id="emp_id" value="">
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label>Tipo</label>
+                        <select id="emp_tipo" class="auth-input" required>
+                            <option value="">— Selecione —</option>
+                            <option value="Empréstimo">Empréstimo</option>
+                            <option value="Pagamento">Pagamento</option>
+                            <option value="Abatimento">Abatimento</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Beneficiado</label>
+                        <input type="text" id="emp_beneficiario" class="auth-input" placeholder="Nome do beneficiário" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Valor Operação</label>
+                        <input type="number" step="0.01" id="emp_valor_operacao" class="auth-input" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Data de Empréstimo</label>
+                        <input type="date" id="emp_data_emprestimo" class="auth-input">
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label>Data da Operação</label>
+                        <input type="date" id="emp_data_operacao" class="auth-input">
+                    </div>
+                    <div class="form-field">
+                        <label>Status</label>
+                        <select id="emp_status" class="auth-input">
+                            <option value="Ativo">Ativo</option>
+                            <option value="Quitado">Quitado</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="form-field" style="grid-column: span 2;">
+                        <label>Observações</label>
+                        <input type="text" id="emp_obs" class="auth-input" placeholder="Observações livres...">
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary" id="empSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-sm secondary" id="empCancelBtn" style="display:none;" onclick="cancelEditEmprestimo()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela -->
+        <h3>Registros Cadastrados</h3>
+        <div class="table-container table-full" style="margin-bottom:1rem;">
+            <table id="empTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTableGeneric('empTable', 0)">Tipo <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                        <th onclick="sortTableGeneric('empTable', 1)">Beneficiado <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                        <th style="text-align:right;" onclick="sortTableGeneric('empTable', 2)">Valor Operação <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                        <th style="text-align:center;">Moeda</th>
+                        <th onclick="sortTableGeneric('empTable', 4)">Data Emp. <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
+                        <th onclick="sortTableGeneric('empTable', 5)">Data Op. <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
+                        <th onclick="sortTableGeneric('empTable', 6)">Status <i class="sort-icon fa-solid fa-sort" data-col="6"></i></th>
+                        <th onclick="sortTableGeneric('empTable', 7)">Observações <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
+                        <th style="width:100px;text-align:center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="empTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Módulo Trader -->
+    <div class="container module-container module-fullscreen" id="traderModule" style="display:none;">
+        <h1 style="text-align:center;"><i class="fa-solid fa-arrow-trend-up"></i> Trader</h1>
+        <p>Módulo de operações de trading.</p>
+    </div>
+
+    <!-- Módulo Lançamento Investimentos -->
+    <div class="container module-container module-fullscreen" id="lctoInvestimentosModule" style="display:none;">
+        <h1 style="text-align:center; margin-bottom:0.5rem;"><i class="fa-solid fa-chart-line"></i> Lançamentos de Investimentos</h1>
+        
+        <!-- Formulário -->
+        <div class="form-panel">
+            <h3 id="liFormTitle">Novo Lançamento</h3>
+            <form id="liForm" onsubmit="saveLctoInvestimento(event)">
+                <input type="hidden" id="li_id" value="">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Banco</label>
+                        <input type="text" id="li_banco" class="auth-input" placeholder="Ex: Nubank, XP, Clear..." required>
+                    </div>
+                    <div class="form-field">
+                        <label>Tipo Investimento</label>
+                        <input type="text" id="li_tp_investimento" class="auth-input" placeholder="Ex: Ações, ETF, FII, Tesouro..." required>
+                    </div>
+                    <div class="form-field">
+                        <label>Data Investimento</label>
+                        <input type="date" id="li_data_inv" class="auth-input" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Moeda</label>
+                        <select id="li_moeda" class="auth-input">
+                            <option value="BRL">BRL</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Valor Unitário</label>
+                        <input type="number" step="0.01" id="li_valor_inv" class="auth-input" oninput="calcLiTotais()">
+                    </div>
+                    <div class="form-field">
+                        <label>Quantidade</label>
+                        <input type="number" step="0.0001" id="li_qtd" class="auth-input" oninput="calcLiTotais()">
+                    </div>
+                    <div class="form-field">
+                        <label>Taxa (R$)</label>
+                        <input type="number" step="0.01" id="li_taxa" class="auth-input" value="0" oninput="calcLiTotais()">
+                    </div>
+                    <div class="form-field">
+                        <label>Aporte (R$)</label>
+                        <input type="number" step="0.01" id="li_aporte" class="auth-input" value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Valor Atual</label>
+                        <input type="number" step="0.01" id="li_valor_atual" class="auth-input" oninput="calcLiTotais()">
+                    </div>
+                    <div class="form-field">
+                        <label>Valor Mês Anterior</label>
+                        <input type="number" step="0.01" id="li_val_mes_ant" class="auth-input" value="0" oninput="calcLiTotais()">
+                    </div>
+                    <div class="form-field">
+                        <label>Valor Total Investido</label>
+                        <input type="text" id="li_valor_tot_inv" class="auth-input" style="opacity:0.7;" readonly>
+                    </div>
+                    <div class="form-field">
+                        <label>Valor Líquido Mês</label>
+                        <input type="text" id="li_valor_liq_mes" class="auth-input" style="opacity:0.7;" readonly>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:1rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary" id="liSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-sm secondary" id="liCancelBtn" style="display:none;" onclick="cancelEditLctoInvest()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela -->
+        <h3>Lançamentos Cadastrados</h3>
+        <div class="table-container table-full" style="margin-bottom:1rem;">
+            <table id="lctoInvestTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTableGeneric('lctoInvestTable', 0)">Banco <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                        <th onclick="sortTableGeneric('lctoInvestTable', 1)">Tipo Investimento <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                        <th onclick="sortTableGeneric('lctoInvestTable', 2)">Data <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                        <th style="text-align:right;">Valor Unit.</th>
+                        <th style="text-align:center;">Moeda</th>
+                        <th style="text-align:right;">Qtd</th>
+                        <th style="text-align:right;">Taxa</th>
+                        <th style="text-align:right;">Total Investido</th>
+                        <th style="text-align:right;">Valor Atual</th>
+                        <th style="text-align:right;">Liq. Mês</th>
+                        <th style="text-align:right;">Mês Ant.</th>
+                        <th style="text-align:right;">Aporte</th>
+                        <th style="text-align:right;">Lucro Op.</th>
+                        <th style="text-align:right;">Lucro Mês</th>
+                        <th style="text-align:right;">% Rent.</th>
+                        <th style="width:100px;text-align:center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lctoInvestTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Upload e Export -->
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem;">
+            <div class="upload-area" id="li_dropZone" style="flex: 1;">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-subtext">CSV, Excel</div>
+                <input type="file" id="li_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadLctoInvestFile(this)">
+                <div id="li_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+            <button class="btn btn-sm secondary" onclick="exportLctoInvestimentos()">
+                <i class="fa-solid fa-file-excel"></i> Exportar Excel
+            </button>
         </div>
     </div>
 
@@ -1418,6 +2047,7 @@
             'extratos': 'Upload de Extratos',
             'receitas': 'Atualizar Receitas',
             'investimentos': 'Atualizar Investimentos',
+            'lcto_investimentos': 'Lançamentos de Investimentos',
             'relatorio_mes': 'Relatório Mensal',
             'relatorio_ano': 'Relatório Anual',
             'dashboard': 'Dashboard',
@@ -1431,7 +2061,8 @@
             'cad_despesas': 'Cadastro de Despesas',
             'cad_contas': 'Cadastro de Contas',
             'cad_receitas': 'Cadastro de Receitas',
-            'cad_investimentos': 'Cadastro de Investimentos'
+            'cad_investimentos': 'Cadastro de Investimentos',
+            'cad_tipo_imposto': 'Cadastro de Tipos de Imposto',
         };
 
         async function checkAuthStatus() {
@@ -1467,12 +2098,17 @@
                 'cad_contas':        () => { document.getElementById('cadContasModule').style.display = 'block'; nav.style.maxWidth = '1200px'; loadContas(); },
                 'cad_receitas':      () => { document.getElementById('cadReceitasModule').style.display = 'block'; nav.style.maxWidth = '900px'; loadReceitas(); },
                 'cad_investimentos': () => { document.getElementById('cadInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '900px'; loadInvestimentos(); },
+                'cad_tipo_imposto': () => { document.getElementById('cadTipoImpostoModule').style.display = 'block'; nav.style.maxWidth = '1000px'; loadTipoImposto(); },
                 'cad_usuarios':      () => { document.getElementById('cadUsuariosModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadUsuarios(); },
                 'despesas_mensais':  () => { document.getElementById('despesasMensaisModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initDespesasMensais(); },
                 'receitas_mensais':  () => { document.getElementById('receitasMensaisModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initReceitasMensais(); },
                 'dashboard':         () => { document.getElementById('dashboardModule').style.display = 'block'; nav.style.maxWidth = '1400px'; loadDashboard(); },
                 'relatorio_ano':     () => { document.getElementById('relatorioAnoModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadRelatorioAnual(); },
                 'relatorio_mes':     () => { document.getElementById('relatorioMesModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadRelatorioMensal(); },
+                'impostos':          () => { document.getElementById('impostosModule').style.display = 'block'; nav.style.maxWidth = '1200px'; initImpostos(); },
+                'emprestimos':       () => { document.getElementById('emprestimosModule').style.display = 'block'; nav.style.maxWidth = '1200px'; initEmprestimos(); loadEmprestimos(); },
+                'trader':            () => { document.getElementById('traderModule').style.display = 'block'; nav.style.maxWidth = '1200px'; },
+                'lcto_investimentos': () => { document.getElementById('lctoInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadLctoInvestimentos(); },
             };
 
             if (moduleMap[moduleKey]) {
@@ -1488,27 +2124,32 @@
             try {
                 const res = await fetch('/api/cad_despesas');
                 const data = await res.json();
-                const tbody = document.getElementById('despesasTableBody');
-                tbody.innerHTML = '';
-                data.forEach(d => {
-                    tbody.innerHTML += `<tr>
-                        <td>${d.despesa}</td>
-                        <td>${d.tipo_despesa}</td>
-                        <td style="text-align: center;">${d.fator_divisao}</td>
-                        <td><span class="val-badge">${d.prioridade}</span></td>
-                        <td style="text-align: center;">
-                            <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;"
-                                onclick="editDespesa(${d.id},'${d.despesa.replace(/'/g, "\\'")}','${d.tipo_despesa.replace(/'/g, "\\'")}','${d.fator_divisao}','${d.prioridade}')" title="Editar">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
-                                onclick="deleteDespesa(${d.id})" title="Excluir">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>`;
-                });
+                window.despesasTableData = data;
+                renderDespesasTable();
             } catch(e) {}
+        }
+
+        function renderDespesasTable() {
+            const tbody = document.getElementById('despesasTableBody');
+            tbody.innerHTML = '';
+            window.despesasTableData.forEach(d => {
+                tbody.innerHTML += `<tr>
+                    <td>${d.despesa}</td>
+                    <td>${d.tipo_despesa}</td>
+                    <td style="text-align: center;">${d.fator_divisao}</td>
+                    <td><span class="val-badge">${d.prioridade}</span></td>
+                    <td style="text-align: center;">
+                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;"
+                            onclick="editDespesa(${d.id},'${d.despesa.replace(/'/g, "\\'")}','${d.tipo_despesa.replace(/'/g, "\\'")}','${d.fator_divisao}','${d.prioridade}')" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
+                            onclick="deleteDespesa(${d.id})" title="Excluir">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
         }
 
         async function deleteDespesa(id){
@@ -1611,10 +2252,15 @@
         async function loadContas() {
             const res = await fetch('/api/cad_contas');
             const data = await res.json();
-            window.CONTAS_CACHE = data; // Cache for other selects
+            window.CONTAS_CACHE = data;
+            window.contasTableData = data;
+            renderContasTable();
+        }
+
+        function renderContasTable() {
             const tbody = document.getElementById('contasTableBody');
             tbody.innerHTML = '';
-            data.forEach(c => {
+            window.contasTableData.forEach(c => {
                 const temSenha = !!(c.senha);
                 tbody.innerHTML += `<tr>
                     <td>${c.descricao||''}</td>
@@ -1701,14 +2347,46 @@
             loadContas();
         }
 
+        async function uploadContasFile(input){
+            if(!input.files.length) return;
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const statusDiv = document.getElementById('cc_upload_status');
+            statusDiv.innerText = 'Fazendo upload e processando...';
+            
+            try {
+                const res = await fetch('/api/upload_contas', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(res.ok) {
+                    statusDiv.innerText = `${data.count} contas cadastradas!`;
+                    statusDiv.style.color = 'var(--success)';
+                    loadContas();
+                } else {
+                    statusDiv.innerText = data.error || 'Erro.';
+                    statusDiv.style.color = 'var(--error)';
+                }
+            } catch (e) {
+                statusDiv.innerText = 'Erro de conexão.';
+                statusDiv.style.color = 'var(--error)';
+            }
+            input.value = '';
+        }
+
         // ── Receitas ─────────────────────────────────────────────────────────────
         async function loadReceitas(){
             const res = await fetch('/api/cad_receitas');
             const data = await res.json();
+            window.receitasTableData = data;
+            renderReceitasTable();
+        }
+
+        function renderReceitasTable() {
             const tbody = document.getElementById('receitasTableBody');
-            tbody.innerHTML='';
-            data.forEach(r=>{
-                tbody.innerHTML+=`<tr>
+            tbody.innerHTML = '';
+            window.receitasTableData.forEach(r => {
+                tbody.innerHTML += `<tr>
                     <td>${r.descricao}</td>
                     <td style="text-align:center;">
                         <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
@@ -1758,14 +2436,46 @@
             loadReceitas();
         }
 
+        async function uploadReceitasFile(input){
+            if(!input.files.length) return;
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const statusDiv = document.getElementById('cr_upload_status');
+            statusDiv.innerText = 'Fazendo upload e processando...';
+            
+            try {
+                const res = await fetch('/api/upload_receitas', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(res.ok) {
+                    statusDiv.innerText = `${data.count} receitas cadastradas!`;
+                    statusDiv.style.color = 'var(--success)';
+                    loadReceitas();
+                } else {
+                    statusDiv.innerText = data.error || 'Erro.';
+                    statusDiv.style.color = 'var(--error)';
+                }
+            } catch (e) {
+                statusDiv.innerText = 'Erro de conexão.';
+                statusDiv.style.color = 'var(--error)';
+            }
+            input.value = '';
+        }
+
         // ── Investimentos ─────────────────────────────────────────────────────────
         async function loadInvestimentos(){
             const res=await fetch('/api/cad_investimentos');
             const data=await res.json();
+            window.investimentosTableData = data;
+            renderInvestimentosTable();
+        }
+
+        function renderInvestimentosTable() {
             const tbody=document.getElementById('investimentosTableBody');
-            tbody.innerHTML='';
-            data.forEach(i=>{
-                tbody.innerHTML+=`<tr>
+            tbody.innerHTML = '';
+            window.investimentosTableData.forEach(i => {
+                tbody.innerHTML += `<tr>
                     <td>${i.descricao}</td>
                     <td style="text-align:center;">
                         <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
@@ -1815,8 +2525,225 @@
             loadInvestimentos();
         }
 
+        async function uploadInvestimentosFile(input){
+            if(!input.files.length) return;
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const statusDiv = document.getElementById('ci_upload_status');
+            statusDiv.innerText = 'Fazendo upload e processando...';
+            
+            try {
+                const res = await fetch('/api/upload_investimentos', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(res.ok) {
+                    statusDiv.innerText = `${data.count} investimentos cadastrados!`;
+                    statusDiv.style.color = 'var(--success)';
+                    loadInvestimentos();
+                } else {
+                    statusDiv.innerText = data.error || 'Erro.';
+                    statusDiv.style.color = 'var(--error)';
+                }
+            } catch (e) {
+                statusDiv.innerText = 'Erro de conexão.';
+                statusDiv.style.color = 'var(--error)';
+            }
+            input.value = '';
+        }
+
+        // ── Tipo de Imposto ─────────────────────────────────────────────────
+        async function loadTipoImposto(){
+            try {
+                const res = await fetch('/api/cad_tipo_imposto');
+                const data = await res.json();
+                window.tipoImpostoTableData = data;
+                renderTipoImpostoTable();
+            } catch(e) { console.error(e); }
+        }
+
+        function renderTipoImpostoTable(){
+            const tbody = document.getElementById('tipoImpostoTableBody');
+            if(!window.tipoImpostoTableData || !window.tipoImpostoTableData.length){
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Nenhum tipo de imposto encontrado.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = window.tipoImpostoTableData.map(t => `<tr>
+                <td>${t.tp_imposto}</td>
+                <td style="text-align:center;">${t.alq_imposto}%</td>
+                <td>${t.pagamento}</td>
+                <td style="text-align:center;">
+                    <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;" onclick="editTipoImposto(${t.id},'${esc(t.tp_imposto)}',${t.alq_imposto},'${t.pagamento}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);" onclick="deleteTipoImposto(${t.id})" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>`).join('');
+        }
+
+        function editTipoImposto(id, tp_imposto, alq_imposto, pagamento){
+            document.getElementById('cti_id').value = id;
+            document.getElementById('cti_tp_imposto').value = tp_imposto;
+            document.getElementById('cti_alq_imposto').value = alq_imposto;
+            document.getElementById('cti_pagamento').value = pagamento;
+            document.getElementById('cadTipoImpostoTitle').innerText = 'Editando Tipo de Imposto';
+            document.getElementById('cadTipoImpostoBtn').innerHTML = '<i class="fa-solid fa-save"></i> Salvar';
+            document.getElementById('cadTipoImpostoCancelBtn').style.display = 'inline-flex';
+        }
+
+        function cancelEditTipoImposto(){
+            document.getElementById('cadTipoImpostoForm').reset();
+            document.getElementById('cti_id').value = '';
+            document.getElementById('cadTipoImpostoTitle').innerText = 'Novo Tipo de Imposto';
+            document.getElementById('cadTipoImpostoBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('cadTipoImpostoCancelBtn').style.display = 'none';
+        }
+
+        async function saveTipoImposto(e){
+            e.preventDefault();
+            const id = document.getElementById('cti_id').value;
+            const payload = {
+                tp_imposto: document.getElementById('cti_tp_imposto').value,
+                alq_imposto: parseFloat(document.getElementById('cti_alq_imposto').value),
+                pagamento: document.getElementById('cti_pagamento').value
+            };
+            const url = id ? `/api/cad_tipo_imposto/${id}` : '/api/cad_tipo_imposto';
+            const method = id ? 'PUT' : 'POST';
+            const res = await fetch(url, {method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+            if(res.ok){ cancelEditTipoImposto(); loadTipoImposto(); }
+        }
+
+        async function deleteTipoImposto(id){
+            if(!confirm('Excluir este tipo de imposto?')) return;
+            await fetch(`/api/cad_tipo_imposto/${id}`,{method:'DELETE'});
+            loadTipoImposto();
+        }
+
+        async function uploadTipoImpostoFile(input){
+            if(!input.files.length) return;
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            const statusDiv = document.getElementById('cti_upload_status');
+            statusDiv.innerText = 'Processando...';
+            try {
+                const res = await fetch('/api/upload_tipo_imposto', {method: 'POST', body: formData});
+                const data = await res.json();
+                if(res.ok){
+                    statusDiv.innerText = `${data.count} tipos importados!`;
+                    statusDiv.style.color = 'var(--success)';
+                    loadTipoImposto();
+                } else {
+                    statusDiv.innerText = data.error || 'Erro';
+                    statusDiv.style.color = 'var(--error)';
+                }
+            } catch(e){
+                statusDiv.innerText = 'Erro de conexão';
+                statusDiv.style.color = 'var(--error)';
+            }
+            input.value = '';
+        }
+
         // Helper: escapa aspas simples para uso em onclick inline
         function esc(s){ return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+        // ── Ordenação Genérica de Tabelas ─────────────────────────────────────
+        function sortTableGeneric(tableId, colIndex) {
+            const key = tableId + 'Data';
+            const stateKey = tableId + 'SortState';
+            if (!window[key]) return;
+            
+            const state = window[stateKey] = window[stateKey] || { col: -1, asc: true };
+            
+            if (state.col === colIndex) {
+                state.asc = !state.asc;
+            } else {
+                state.col = colIndex;
+                state.asc = true;
+            }
+            
+            window[key].sort((a, b) => {
+                let valA = Object.values(a)[colIndex];
+                let valB = Object.values(b)[colIndex];
+                
+                if (typeof valA === 'number') {
+                    return state.asc ? valA - valB : valB - valA;
+                }
+                
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+                return state.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            });
+            
+            updateSortIcons(tableId, colIndex, state.asc);
+            renderTableById(tableId);
+        }
+
+        function renderTableById(tableId) {
+            const renderFn = {
+                'despesasTable': renderDespesasTable,
+                'contasTable': renderContasTable,
+                'receitasTable': renderReceitasTable,
+                'investimentosTable': renderInvestimentosTable,
+                'usuariosTable': renderUsuariosTable,
+                'tipoImpostoTable': renderTipoImpostoTable
+            };
+            if (renderFn[tableId]) renderFn[tableId]();
+        }
+
+        // ── Ordenação de Tabelas ─────────────────────────────────────────────
+        let tableSortState = {};
+
+        function sortTable(tableId, colIndex, dataCallback) {
+            if (!tableSortState[tableId]) tableSortState[tableId] = { col: -1, asc: true };
+            const state = tableSortState[tableId];
+            
+            if (state.col === colIndex) {
+                state.asc = !state.asc;
+            } else {
+                state.col = colIndex;
+                state.asc = true;
+            }
+            
+            const data = dataCallback();
+            data.sort((a, b) => {
+                let valA = a[colIndex];
+                let valB = b[colIndex];
+                
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    return state.asc ? valA - valB : valB - valA;
+                }
+                
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+                
+                if (state.asc) return valA.localeCompare(valB);
+                return valB.localeCompare(valA);
+            });
+            
+            updateSortIcons(tableId, colIndex, state.asc);
+            return data;
+        }
+
+        function updateSortIcons(tableId, colIndex, asc) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            const headers = table.querySelectorAll('th');
+            headers.forEach((th, i) => {
+                const icon = th.querySelector('.sort-icon');
+                if (icon) {
+                    if (i === colIndex) {
+                        icon.className = 'sort-icon fa-solid ' + (asc ? 'fa-sort-up' : 'fa-sort-down');
+                        icon.style.color = 'var(--primary)';
+                    } else {
+                        icon.className = 'sort-icon fa-solid fa-sort';
+                        icon.style.color = 'var(--text-muted)';
+                    }
+                }
+            });
+        }
+
+        function getSortableHeaderHtml(colName, colIndex, tableId) {
+            return `${colName} <i class="sort-icon fa-solid fa-sort" style="color:var(--text-muted);margin-left:5px;font-size:0.8rem;cursor:pointer;" onclick="event.stopPropagation();"></i>`;
+        }
 
         // ── Modal Visualizar Senha (Contas Bancárias) ────────────────────────────
         let _senhaModalContaId = null;
@@ -1871,9 +2798,14 @@
         async function loadUsuarios(){
             const res = await fetch('/api/cad_usuarios');
             const data = await res.json();
+            window.usuariosTableData = data;
+            renderUsuariosTable();
+        }
+
+        function renderUsuariosTable() {
             const tbody = document.getElementById('usuariosTableBody');
             tbody.innerHTML = '';
-            data.forEach(u => {
+            window.usuariosTableData.forEach(u => {
                 tbody.innerHTML += `<tr>
                     <td>${u.nome}</td>
                     <td>${u.chave_usr1||'—'}</td>
@@ -1936,6 +2868,33 @@
             loadUsuarios();
         }
 
+        async function uploadUsuariosFile(input){
+            if(!input.files.length) return;
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const statusDiv = document.getElementById('cu_upload_status');
+            statusDiv.innerText = 'Fazendo upload e processando...';
+            
+            try {
+                const res = await fetch('/api/upload_usuarios', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(res.ok) {
+                    statusDiv.innerText = `${data.count} usuários cadastrados!`;
+                    statusDiv.style.color = 'var(--success)';
+                    loadUsuarios();
+                } else {
+                    statusDiv.innerText = data.error || 'Erro.';
+                    statusDiv.style.color = 'var(--error)';
+                }
+            } catch (e) {
+                statusDiv.innerText = 'Erro de conexão.';
+                statusDiv.style.color = 'var(--error)';
+            }
+            input.value = '';
+        }
+
         function returnToMenu() {
             document.getElementById('loginContainer').style.display = 'none';
             document.querySelectorAll('.module-container').forEach(el => el.style.display = 'none');
@@ -1959,6 +2918,240 @@
             parsedTransactions = [];
             document.getElementById('tableBody').innerHTML = '';
             showLoginUI();
+        }
+
+        // ── Módulo Impostos ─────────────────────────────────────────────
+        let impTipoImpostos = [];
+        
+        async function initImpostos() {
+            // Define current month
+            const now = new Date();
+            const currentMonth = now.toISOString().substring(0, 7);
+            document.getElementById('imp_mes_ano').value = currentMonth;
+            document.getElementById('imp_pagamento_mes_ano').value = currentMonth;
+            
+            // Load tipo impostos
+            await loadImpTipoImpostos();
+            
+            // Load table
+            loadImpostosTable();
+            
+            // Show dashboard by default
+            showImpTab('lancamentos');
+        }
+
+        async function loadImpTipoImpostos() {
+            try {
+                const res = await fetch('/api/cad_tipo_imposto');
+                impTipoImpostos = await res.json();
+                
+                const sel = document.getElementById('imp_tp_imposto');
+                sel.innerHTML = '<option value="">— Selecione —</option>' + 
+                    impTipoImpostos.map(t => `<option value="${t.tp_imposto}" data-alq="${t.alq_imposto}" data-pag="${t.pagamento}">${t.tp_imposto}</option>`).join('');
+            } catch(e) {
+                console.error('Erro ao carregar tipos de imposto:', e);
+            }
+        }
+
+        function updateImpAliquota() {
+            const sel = document.getElementById('imp_tp_imposto');
+            const opt = sel.options[sel.selectedIndex];
+            const alq = opt.getAttribute('data-alq') || '';
+            const pag = opt.getAttribute('data-pag') || '';
+            
+            document.getElementById('imp_aliquota').value = alq;
+            document.getElementById('imp_pagamento').value = pag;
+            
+            calcImpValor();
+        }
+
+        function calcImpValor() {
+            const alq = parseFloat(document.getElementById('imp_aliquota').value) || 0;
+            const fat = parseFloat(document.getElementById('imp_valor_faturado').value) || 0;
+            const vlImposto = fat * (alq / 100);
+            document.getElementById('imp_valor_imposto').value = vlImposto.toFixed(2);
+        }
+
+        async function loadImpostosTable() {
+            try {
+                const res = await fetch('/api/lcto_impostos');
+                const data = await res.json();
+                
+                const tbody = document.getElementById('impostosTableBody');
+                if(!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);">Nenhum lançamento encontrado.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.map(d => {
+                    const vlLiquido = (d.valor_imposto || 0) - (d.desconto_iva || 0);
+                    return `<tr>
+                        <td>${d.mes_ano || '—'}</td>
+                        <td>${d.tp_imposto || '—'}</td>
+                        <td style="text-align:right;">${formatCurrency(d.valor_faturado)} ${d.moeda_faturado || ''}</td>
+                        <td style="text-align:right;">${formatCurrency(d.valor_imposto)} ${d.moeda_pagamento || ''}</td>
+                        <td style="text-align:right;color:var(--success);">${formatCurrency(d.desconto_iva)}</td>
+                        <td style="text-align:right;font-weight:bold;color:var(--primary);">${formatCurrency(vlLiquido)}</td>
+                        <td>${d.pagamento || '—'}</td>
+                        <td>${d.pagamento_mes_ano || '—'}</td>
+                        <td style="text-align:center;">
+                            <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;" onclick="editImposto(${d.id})" title="Editar">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="btn" style="padding:0.3rem 0.5rem;font-size:0.75rem;background:var(--error);" onclick="deleteImposto(${d.id})" title="Excluir">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch(e) {
+                console.error('Erro ao carregar lançamentos:', e);
+            }
+        }
+
+        async function saveImposto(e) {
+            e.preventDefault();
+            const id = document.getElementById('imp_id').value;
+            const payload = {
+                mes_ano: document.getElementById('imp_mes_ano').value,
+                tp_imposto: document.getElementById('imp_tp_imposto').value,
+                moeda_faturado: document.getElementById('imp_moeda_faturado').value,
+                valor_faturado: parseFloat(document.getElementById('imp_valor_faturado').value) || 0,
+                valor_imposto: parseFloat(document.getElementById('imp_valor_imposto').value) || 0,
+                moeda_pagamento: document.getElementById('imp_moeda_pagamento').value,
+                pagamento: document.getElementById('imp_pagamento').value,
+                pagamento_mes_ano: document.getElementById('imp_pagamento_mes_ano').value,
+                desconto_iva: parseFloat(document.getElementById('imp_desconto_iva').value) || 0
+            };
+            
+            const url = id ? `/api/lcto_impostos/${id}` : '/api/lcto_impostos';
+            const method = id ? 'PUT' : 'POST';
+            
+            const res = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            
+            if(res.ok) {
+                cancelEditImposto();
+                loadImpostosTable();
+            }
+        }
+
+        async function editImposto(id) {
+            const res = await fetch('/api/lcto_impostos');
+            const data = await res.json();
+            const imp = data.find(d => d.id === id);
+            if(!imp) return;
+            
+            document.getElementById('imp_id').value = imp.id;
+            document.getElementById('imp_mes_ano').value = imp.mes_ano;
+            document.getElementById('imp_tp_imposto').value = imp.tp_imposto;
+            document.getElementById('imp_moeda_faturado').value = imp.moeda_faturado || 'EUR';
+            document.getElementById('imp_valor_faturado').value = imp.valor_faturado;
+            document.getElementById('imp_valor_imposto').value = imp.valor_imposto;
+            document.getElementById('imp_moeda_pagamento').value = imp.moeda_pagamento || 'EUR';
+            document.getElementById('imp_pagamento').value = imp.pagamento;
+            document.getElementById('imp_pagamento_mes_ano').value = imp.pagamento_mes_ano;
+            document.getElementById('imp_desconto_iva').value = imp.desconto_iva;
+            
+            // Update aliquota display
+            const tipo = impTipoImpostos.find(t => t.tp_imposto === imp.tp_imposto);
+            document.getElementById('imp_aliquota').value = tipo ? tipo.alq_imposto : '';
+            
+            document.getElementById('impFormTitle').innerText = 'Editando Lançamento';
+            document.getElementById('impBtnSubmit').innerHTML = '<i class="fa-solid fa-save"></i> Salvar';
+            document.getElementById('impBtnCancel').style.display = 'inline-flex';
+        }
+
+        function cancelEditImposto() {
+            document.getElementById('impForm').reset();
+            document.getElementById('imp_id').value = '';
+            document.getElementById('impFormTitle').innerText = 'Novo Lançamento';
+            document.getElementById('impBtnSubmit').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('impBtnCancel').style.display = 'none';
+            
+            const now = new Date();
+            document.getElementById('imp_mes_ano').value = now.toISOString().substring(0, 7);
+            document.getElementById('imp_pagamento_mes_ano').value = now.toISOString().substring(0, 7);
+            document.getElementById('imp_aliquota').value = '';
+            document.getElementById('imp_pagamento').value = '';
+            document.getElementById('imp_desconto_iva').value = '0';
+        }
+
+        async function deleteImposto(id) {
+            if(!confirm('Excluir este lançamento?')) return;
+            await fetch(`/api/lcto_impostos/${id}`, {method: 'DELETE'});
+            loadImpostosTable();
+        }
+
+        async function showImpTab(tab) {
+            if(tab === 'lancamentos') {
+                document.getElementById('impTabLancamentos').style.display = 'block';
+                document.getElementById('impostosDashboard').style.display = 'none';
+                document.getElementById('impBtnLancamentos').className = 'btn';
+                document.getElementById('impBtnDashboard').className = 'btn secondary';
+            } else {
+                document.getElementById('impTabLancamentos').style.display = 'none';
+                document.getElementById('impostosDashboard').style.display = 'block';
+                document.getElementById('impBtnLancamentos').className = 'btn secondary';
+                document.getElementById('impBtnDashboard').className = 'btn';
+                loadImpostosDashboard();
+            }
+        }
+
+        async function loadImpostosDashboard() {
+            try {
+                const res = await fetch('/api/dashboard_impostos');
+                const data = await res.json();
+                
+                const grid = document.getElementById('impostosDashboardGrid');
+                if(!data.length) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:2rem;">Nenhum dado disponível para o dashboard.</div>';
+                    return;
+                }
+                
+                const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+                
+                grid.innerHTML = data.map((d, idx) => {
+                    const color = colors[idx % colors.length];
+                    const vlLiquido = d.valor_liquido || 0;
+                    const vlTotal = d.total_imposto || 0;
+                    const vlDesconto = d.total_desconto || 0;
+                    
+                    return `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:12px;padding:1.5rem;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+                        <h4 style="color:${color};margin:0 0 1rem 0;font-size:1.1rem;border-bottom:1px solid var(--glass-border);padding-bottom:0.5rem;">
+                            <i class="fa-solid fa-file-invoice-dollar"></i> ${d.tp_imposto}
+                        </h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9rem;">
+                            <div>
+                                <span style="color:var(--text-muted);">Pagamento:</span>
+                                <div style="font-weight:500;">${d.pagamento}</div>
+                            </div>
+                            <div>
+                                <span style="color:var(--text-muted);">Total Imposto:</span>
+                                <div style="font-weight:600;color:var(--warning);">€ ${formatCurrency(vlTotal)}</div>
+                            </div>
+                            <div>
+                                <span style="color:var(--text-muted);">Descontos:</span>
+                                <div style="font-weight:600;color:var(--success);">€ ${formatCurrency(vlDesconto)}</div>
+                            </div>
+                            <div>
+                                <span style="color:var(--text-muted);">Valor Líquido:</span>
+                                <div style="font-weight:700;color:${color};font-size:1.2rem;">€ ${formatCurrency(vlLiquido)}</div>
+                            </div>
+                        </div>
+                        ${d.periodos.length ? `<div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);">Períodos: ${d.periodos.slice(0,5).join(', ')}${d.periodos.length > 5 ? '...' : ''}</div>` : ''}
+                    </div>`;
+                }).join('');
+            } catch(e) {
+                console.error('Erro ao carregar dashboard:', e);
+            }
+        }
+
+        async function exportImpostos() {
+            window.location.href = '/api/export_lcto_impostos';
         }
 
         // ── Módulo Despesas Mensais ─────────────────────────────────────────────
@@ -2048,6 +3241,12 @@
             const res = await fetch(`/api/despesas_mensais?mes=${mesValue}`);
             const data = await res.json();
             
+            window.dmData = data;
+            renderDmTable(data);
+            updateDmSumTable(data);
+        }
+
+        function renderDmTable(data) {
             const tbody = document.getElementById('dmTableBody');
             tbody.innerHTML = '';
             
@@ -2079,8 +3278,45 @@
                     </td>
                 </tr>`;
             });
+        }
+
+        function sortDmTable(colIndex) {
+            if (!window.dmData) return;
+            const state = window.dmSortState = window.dmSortState || { col: -1, asc: true };
             
-            updateDmSumTable(data);
+            if (state.col === colIndex) {
+                state.asc = !state.asc;
+            } else {
+                state.col = colIndex;
+                state.asc = true;
+            }
+            
+            const colMap = {
+                0: 'data', 1: 'descricao', 2: 'valor_original', 3: 'moeda',
+                4: 'cambio_eur', 5: 'valor_eur', 6: 'usr1', 7: 'usr2',
+                8: 'diferenca_original', 9: 'status_pago', 10: 'categoria_final',
+                11: 'receita', 12: 'comentarios', 13: 'conta_bancaria'
+            };
+            const key = colMap[colIndex];
+            const isNumeric = [2,4,5,6,7,8,11].includes(colIndex);
+            
+            window.dmData.sort((a, b) => {
+                let valA = colIndex === 8 ? Math.abs((parseFloat(a.usr1)||0)+(parseFloat(a.usr2)||0)-a.valor_original) : (key ? a[key] : a[colIndex]);
+                let valB = colIndex === 8 ? Math.abs((parseFloat(b.usr1)||0)+(parseFloat(b.usr2)||0)-b.valor_original) : (key ? b[key] : b[colIndex]);
+                
+                if (colIndex === 11) { valA = a.receita ? 1 : 0; valB = b.receita ? 1 : 0; }
+                
+                if (isNumeric || typeof valA === 'number') {
+                    return state.asc ? (parseFloat(valA)||0) - (parseFloat(valB)||0) : (parseFloat(valB)||0) - (parseFloat(valA)||0);
+                }
+                
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+                return state.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            });
+            
+            updateSortIcons('dmTable', colIndex, state.asc);
+            renderDmTable(window.dmData);
         }
 
         function updateDmSumTable(data) {
@@ -2349,6 +3585,11 @@
             document.getElementById('rmTotalEur').innerText = '€ ' + formatCurrency(totalEur);
             document.getElementById('rmTotalBrl').innerText = 'R$ ' + formatCurrency(totalBrl);
             
+            window.rmData = data;
+            renderRmTable(data);
+        }
+
+        function renderRmTable(data) {
             const tbody = document.getElementById('rmTableBody');
             tbody.innerHTML = '';
             data.forEach(r => {
@@ -2368,6 +3609,38 @@
                     </td>
                 </tr>`;
             });
+        }
+
+        function sortRmTable(colIndex) {
+            if (!window.rmData) return;
+            const state = window.rmSortState = window.rmSortState || { col: -1, asc: true };
+            
+            if (state.col === colIndex) {
+                state.asc = !state.asc;
+            } else {
+                state.col = colIndex;
+                state.asc = true;
+            }
+            
+            const colMap = { 0: 'data', 1: 'tipo_receita', 2: 'valor_original', 3: 'moeda_original', 4: 'cotacao', 5: 'valor_eur', 6: 'valor_brl', 7: 'conta_bancaria', 8: 'comentarios' };
+            const key = colMap[colIndex];
+            const isNumeric = [2,4,5,6].includes(colIndex);
+            
+            window.rmData.sort((a, b) => {
+                let valA = key ? a[key] : a[colIndex];
+                let valB = key ? b[key] : b[colIndex];
+                
+                if (isNumeric || typeof valA === 'number') {
+                    return state.asc ? (parseFloat(valA)||0) - (parseFloat(valB)||0) : (parseFloat(valB)||0) - (parseFloat(valA)||0);
+                }
+                
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+                return state.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            });
+            
+            updateSortIcons('rmTable', colIndex, state.asc);
+            renderRmTable(window.rmData);
         }
 
         function openRmForm(id, data) {
@@ -2666,18 +3939,59 @@
                 const res = await fetch(`/api/relatorio_anual?ano=${ano}`);
                 const data = await res.json();
                 
-                const tbody = document.getElementById('relAnoTableBody');
-                tbody.innerHTML = '';
+                window.relAnoData = data.map(d => ({
+                    categoria: d.categoria_final || 'Sem Categoria',
+                    usr1: d.total_usr1,
+                    usr2: d.total_usr2,
+                    total: d.total_geral
+                }));
                 
-                data.forEach(d => {
-                    tbody.innerHTML += `<tr>
-                        <td><b>${d.categoria_final || 'Sem Categoria'}</b></td>
-                        <td style="text-align:center;">${formatCurrency(d.total_usr1)}</td>
-                        <td style="text-align:center;">${formatCurrency(d.total_usr2)}</td>
-                        <td style="text-align:center;"><b>${formatCurrency(d.total_geral)}</b></td>
-                    </tr>`;
-                });
+                renderRelAnoTable(window.relAnoData);
             } catch(e) { console.error("Erro relatório anual:", e); }
+        }
+
+        function renderRelAnoTable(data) {
+            const tbody = document.getElementById('relAnoTableBody');
+            tbody.innerHTML = '';
+            data.forEach(d => {
+                tbody.innerHTML += `<tr>
+                    <td><b>${d.categoria}</b></td>
+                    <td style="text-align:center;">${formatCurrency(d.usr1)}</td>
+                    <td style="text-align:center;">${formatCurrency(d.usr2)}</td>
+                    <td style="text-align:center;"><b>${formatCurrency(d.total)}</b></td>
+                </tr>`;
+            });
+        }
+
+        function sortRelAnoTable(colIndex) {
+            if (!window.relAnoData) return;
+            const state = window.relAnoSortState = window.relAnoSortState || { col: -1, asc: true };
+            
+            if (state.col === colIndex) {
+                state.asc = !state.asc;
+            } else {
+                state.col = colIndex;
+                state.asc = true;
+            }
+            
+            const keys = ['categoria', 'usr1', 'usr2', 'total'];
+            const key = keys[colIndex];
+            
+            window.relAnoData.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+                
+                if ([1,2,3].includes(colIndex)) {
+                    return state.asc ? valA - valB : valB - valA;
+                }
+                
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+                return state.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            });
+            
+            updateSortIcons('relAnoTable', colIndex, state.asc);
+            renderRelAnoTable(window.relAnoData);
         }
 
         // ── Relatório Mensal ──────────────────────────────────────────────────
@@ -2725,22 +4039,66 @@
                 const tbody = document.getElementById('relMesTableBody');
                 tbody.innerHTML = '';
                 
-                Object.keys(categories).sort().forEach(cat => {
-                    const c = categories[cat];
-                    const typeBadge = c.isReceita ? 
-                        '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">Receita</span>' : 
-                        '<span class="val-badge" style="background:rgba(59,130,246,0.15);color:var(--primary);">Despesa</span>';
-                    
-                    tbody.innerHTML += `<tr>
-                        <td><b>${cat}</b></td>
-                        <td style="text-align:center;">${typeBadge}</td>
-                        <td style="text-align:center;">${formatCurrency(c.usr1)}</td>
-                        <td style="text-align:center;">${formatCurrency(c.usr2)}</td>
-                        <td style="text-align:center;"><b>${formatCurrency(c.total)}</b></td>
-                    </tr>`;
-                });
+                window.relMesData = Object.keys(categories).map(cat => ({
+                    categoria: cat,
+                    tipo: categories[cat].isReceita ? 1 : 0,
+                    usr1: categories[cat].usr1,
+                    usr2: categories[cat].usr2,
+                    total: categories[cat].total
+                }));
+                
+                renderRelMesTable(window.relMesData);
 
             } catch(e) { console.error("Erro relatório mensal:", e); }
+        }
+
+        function renderRelMesTable(data) {
+            const tbody = document.getElementById('relMesTableBody');
+            tbody.innerHTML = '';
+            data.forEach(c => {
+                const typeBadge = c.tipo === 1 ? 
+                    '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">Receita</span>' : 
+                    '<span class="val-badge" style="background:rgba(59,130,246,0.15);color:var(--primary);">Despesa</span>';
+                
+                tbody.innerHTML += `<tr>
+                    <td><b>${c.categoria}</b></td>
+                    <td style="text-align:center;">${typeBadge}</td>
+                    <td style="text-align:center;">${formatCurrency(c.usr1)}</td>
+                    <td style="text-align:center;">${formatCurrency(c.usr2)}</td>
+                    <td style="text-align:center;"><b>${formatCurrency(c.total)}</b></td>
+                </tr>`;
+            });
+        }
+
+        function sortRelMesTable(colIndex) {
+            if (!window.relMesData) return;
+            const state = window.relMesSortState = window.relMesSortState || { col: -1, asc: true };
+            
+            if (state.col === colIndex) {
+                state.asc = !state.asc;
+            } else {
+                state.col = colIndex;
+                state.asc = true;
+            }
+            
+            const keys = ['categoria', 'tipo', 'usr1', 'usr2', 'total'];
+            const key = keys[colIndex];
+            
+            window.relMesData.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+                
+                if ([2,3,4].includes(colIndex)) {
+                    return state.asc ? valA - valB : valB - valA;
+                }
+                
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+                return state.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            });
+            
+            updateSortIcons('relMesTable', colIndex, state.asc);
+            renderRelMesTable(window.relMesData);
         }
 
         // Run checkAuthStatus on mount
@@ -3149,6 +4507,275 @@
                 exportBtn.disabled = false;
             });
         });
+        // Setup Drag and Drop styling for all config upload areas
+        document.querySelectorAll('.upload-area input[type="file"]').forEach(input => {
+            const zone = input.closest('.upload-area');
+            if (zone) {
+                input.addEventListener('dragenter', () => zone.classList.add('dragover'));
+                input.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+                input.addEventListener('drop', () => zone.classList.remove('dragover'));
+            }
+        });
+
+        // ── Empréstimos ──────────────────────────────────────────────────────────────
+        let empData = [];
+
+        async function initEmprestimos() {
+            await loadEmprestimos();
+        }
+
+        async function loadEmprestimos() {
+            try {
+                const [listRes, saldoRes] = await Promise.all([
+                    fetch('/api/lcto_emprestimos'),
+                    fetch('/api/lcto_emprestimos/saldo')
+                ]);
+                empData = await listRes.json();
+                const saldo = await saldoRes.json();
+                renderEmpTable();
+                document.getElementById('empTotalEmprestado').textContent = formatCurrency(saldo.total_emprestado);
+                document.getElementById('empTotalPago').textContent = formatCurrency(saldo.total_pago);
+                document.getElementById('empSaldo').textContent = formatCurrency(saldo.saldo);
+            } catch(e) { console.error(e); }
+        }
+
+        function renderEmpTable() {
+            const tbody = document.getElementById('empTableBody');
+            tbody.innerHTML = '';
+            const tipoBadge = { 'Empréstimo': 'style="background:rgba(239,68,68,0.2);color:#fca5a5;"', 'Pagamento': 'style="background:rgba(16,185,129,0.2);color:#6ee7b7;"', 'Abatimento': 'style="background:rgba(245,158,11,0.2);color:#fcd34d;"' };
+            empData.forEach(d => {
+                const statusBadge = d.status === 'Ativo' ? 'val-badge' : (d.status === 'Quitado' ? 'val-badge' : 'val-badge debit');
+                tbody.innerHTML += `<tr>
+                    <td><span class="val-badge" ${tipoBadge[d.tipo] || ''}>${d.tipo || ''}</span></td>
+                    <td>${d.beneficiario || ''}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_operacao)}</td>
+                    <td style="text-align:center;"><span class="currency-badge">${d.moeda_emp || 'BRL'}</span></td>
+                    <td>${d.data_emprestimo || ''}</td>
+                    <td>${d.data_operacao || ''}</td>
+                    <td><span class="${statusBadge}">${d.status || ''}</span></td>
+                    <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.obs || ''}</td>
+                    <td style="text-align:center;">
+                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;" onclick="editEmprestimo(${d.id})" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);" onclick="deleteEmprestimo(${d.id})" title="Excluir">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        async function saveEmprestimo(e) {
+            e.preventDefault();
+            const id = document.getElementById('emp_id').value;
+            const data = {
+                tipo: document.getElementById('emp_tipo').value,
+                beneficiario: document.getElementById('emp_beneficiario').value,
+                valor_operacao: parseFloat(document.getElementById('emp_valor_operacao').value) || 0,
+                moeda_emp: document.getElementById('emp_moeda_emp').value,
+                data_emprestimo: document.getElementById('emp_data_emprestimo').value,
+                data_operacao: document.getElementById('emp_data_operacao').value,
+                obs: document.getElementById('emp_obs').value,
+                status: document.getElementById('emp_status').value
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/lcto_emprestimos/${id}` : '/api/lcto_emprestimos';
+            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if(res.ok) {
+                document.getElementById('empForm').reset();
+                document.getElementById('emp_id').value = '';
+                document.getElementById('empSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+                document.getElementById('empCancelBtn').style.display = 'none';
+                loadEmprestimos();
+            }
+        }
+
+        function editEmprestimo(id) {
+            const d = empData.find(x => x.id === id);
+            if(!d) return;
+            document.getElementById('emp_id').value = d.id;
+            document.getElementById('emp_tipo').value = d.tipo || '';
+            document.getElementById('emp_beneficiario').value = d.beneficiario || '';
+            document.getElementById('emp_valor_operacao').value = d.valor_operacao || '';
+            document.getElementById('emp_moeda_emp').value = d.moeda_emp || 'BRL';
+            document.getElementById('emp_data_emprestimo').value = d.data_emprestimo || '';
+            document.getElementById('emp_data_operacao').value = d.data_operacao || '';
+            document.getElementById('emp_obs').value = d.obs || '';
+            document.getElementById('emp_status').value = d.status || 'Ativo';
+            document.getElementById('empSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+            document.getElementById('empCancelBtn').style.display = 'inline-block';
+        }
+
+        function cancelEditEmprestimo() {
+            document.getElementById('emp_id').value = '';
+            document.getElementById('empForm').reset();
+            document.getElementById('empSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('empCancelBtn').style.display = 'none';
+        }
+
+        async function deleteEmprestimo(id) {
+            if(!confirm('Confirmar exclusão?')) return;
+            await fetch(`/api/lcto_emprestimos/${id}`, { method: 'DELETE' });
+            loadEmprestimos();
+        }
+
+        // ── Lançamento Investimentos ─────────────────────────────────────────────────
+        let lctoInvestData = [];
+
+        async function loadLctoInvestimentos() {
+            try {
+                const res = await fetch('/api/lcto_investimentos');
+                lctoInvestData = await res.json();
+                renderLctoInvestTable();
+            } catch(e) { console.error(e); }
+        }
+
+        function renderLctoInvestTable() {
+            const tbody = document.getElementById('lctoInvestTableBody');
+            tbody.innerHTML = '';
+            lctoInvestData.forEach(d => {
+                const valTotInv = (d.valor_inv || 0) * (d.qtd || 0);
+                const valorLiqMes = (d.valor_atual || 0) - (valTotInv + (d.taxa || 0));
+                const lucroOp = (d.valor_atual || 0) - valTotInv;
+                const lucroMes = (d.valor_atual || 0) - (d.val_mes_ant || 0);
+                const pctRent = valTotInv > 0 ? (lucroOp / valTotInv * 100) : 0;
+                const badgeClass = pctRent >= 0 ? 'val-badge' : 'val-badge debit';
+                tbody.innerHTML += `<tr>
+                    <td>${d.banco || ''}</td>
+                    <td>${d.tp_investimento || ''}</td>
+                    <td>${d.data_inv || ''}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_inv)}</td>
+                    <td style="text-align:center;"><span class="currency-badge">${d.moeda}</span></td>
+                    <td style="text-align:right;">${d.qtd || 0}</td>
+                    <td style="text-align:right;">${formatCurrency(d.taxa)}</td>
+                    <td style="text-align:right;">${formatCurrency(valTotInv)}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_atual)}</td>
+                    <td style="text-align:right;">${formatCurrency(valorLiqMes)}</td>
+                    <td style="text-align:right;">${formatCurrency(d.val_mes_ant)}</td>
+                    <td style="text-align:right;">${formatCurrency(d.aporte)}</td>
+                    <td style="text-align:right;">${formatCurrency(lucroOp)}</td>
+                    <td style="text-align:right;">${formatCurrency(lucroMes)}</td>
+                    <td style="text-align:right;"><span class="${badgeClass}">${pctRent.toFixed(2)}%</span></td>
+                    <td style="text-align:center;">
+                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;"
+                            onclick="editLctoInvest(${d.id})" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
+                            onclick="deleteLctoInvest(${d.id})" title="Excluir">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function calcLiTotais() {
+            const valor = parseFloat(document.getElementById('li_valor_inv').value) || 0;
+            const qtd = parseFloat(document.getElementById('li_qtd').value) || 0;
+            const taxa = parseFloat(document.getElementById('li_taxa').value) || 0;
+            const valAtual = parseFloat(document.getElementById('li_valor_atual').value) || 0;
+            const valMesAnt = parseFloat(document.getElementById('li_val_mes_ant').value) || 0;
+            
+            const totalInv = valor * qtd;
+            const liqMes = valAtual - (totalInv + taxa);
+            
+            document.getElementById('li_valor_tot_inv').value = formatCurrency(totalInv);
+            document.getElementById('li_valor_liq_mes').value = formatCurrency(liqMes);
+        }
+
+        async function saveLctoInvestimento(e) {
+            e.preventDefault();
+            const id = document.getElementById('li_id').value;
+            const data = {
+                banco: document.getElementById('li_banco').value,
+                tp_investimento: document.getElementById('li_tp_investimento').value,
+                data_inv: document.getElementById('li_data_inv').value,
+                valor_inv: parseFloat(document.getElementById('li_valor_inv').value) || 0,
+                moeda: document.getElementById('li_moeda').value,
+                qtd: parseFloat(document.getElementById('li_qtd').value) || 0,
+                taxa: parseFloat(document.getElementById('li_taxa').value) || 0,
+                valor_atual: parseFloat(document.getElementById('li_valor_atual').value) || 0,
+                val_mes_ant: parseFloat(document.getElementById('li_val_mes_ant').value) || 0,
+                aporte: parseFloat(document.getElementById('li_aporte').value) || 0
+            };
+            
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/lcto_investimentos/${id}` : '/api/lcto_investimentos';
+            
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if(res.ok) {
+                document.getElementById('liForm').reset();
+                document.getElementById('li_id').value = '';
+                document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+                document.getElementById('liCancelBtn').style.display = 'none';
+                loadLctoInvestimentos();
+            }
+        }
+
+        function editLctoInvest(id) {
+            const d = lctoInvestData.find(x => x.id === id);
+            if(!d) return;
+            document.getElementById('li_id').value = d.id;
+            document.getElementById('li_banco').value = d.banco || '';
+            document.getElementById('li_tp_investimento').value = d.tp_investimento || '';
+            document.getElementById('li_data_inv').value = d.data_inv || '';
+            document.getElementById('li_valor_inv').value = d.valor_inv || '';
+            document.getElementById('li_moeda').value = d.moeda || 'BRL';
+            document.getElementById('li_qtd').value = d.qtd || '';
+            document.getElementById('li_taxa').value = d.taxa || '';
+            document.getElementById('li_valor_atual').value = d.valor_atual || '';
+            document.getElementById('li_val_mes_ant').value = d.val_mes_ant || '';
+            document.getElementById('li_aporte').value = d.aporte || '';
+            document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+            document.getElementById('liCancelBtn').style.display = 'inline-block';
+            calcLiTotais();
+        }
+
+        function cancelEditLctoInvest() {
+            document.getElementById('li_id').value = '';
+            document.getElementById('liForm').reset();
+            document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+            document.getElementById('liCancelBtn').style.display = 'none';
+        }
+
+        async function deleteLctoInvest(id) {
+            if(!confirm('Confirmar exclusão?')) return;
+            await fetch(`/api/lcto_investimentos/${id}`, { method: 'DELETE' });
+            loadLctoInvestimentos();
+        }
+
+        async function uploadLctoInvestFile(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            const status = document.getElementById('li_upload_status');
+            status.innerText = 'Processando...';
+            try {
+                const res = await fetch('/api/upload_lcto_investimentos', { method: 'POST', body: formData });
+                if(res.ok) {
+                    status.innerText = 'Importado com sucesso!';
+                    loadLctoInvestimentos();
+                } else {
+                    const data = await res.json();
+                    status.innerText = 'Erro: ' + (data.error || 'Erro desconhecido');
+                }
+            } catch(e) {
+                status.innerText = 'Erro: ' + e.message;
+            }
+            setTimeout(() => status.innerText = '', 3000);
+        }
+
+        function exportLctoInvestimentos() {
+            window.location.href = '/api/export_lcto_investimentos';
+        }
     </script>
 </body>
 </html>

@@ -119,7 +119,39 @@ def init_db():
             criado_em TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS tb_tipo_imposto (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tp_imposto TEXT NOT NULL,
+            alq_imposto REAL,
+            pagamento TEXT
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS lcto_impostos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT,
+            mes_ano TEXT NOT NULL,
+            tp_imposto TEXT,
+            moeda_faturado TEXT DEFAULT 'EUR',
+            valor_faturado REAL DEFAULT 0,
+            valor_imposto REAL DEFAULT 0,
+            moeda_pagamento TEXT DEFAULT 'EUR',
+            pagamento TEXT,
+            pagamento_mes_ano TEXT,
+            desconto_iva REAL DEFAULT 0,
+            criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
     conn.commit()
+    
+    # Verificar e adicionar coluna pagamento_mes_ano se não existir
+    try:
+        c.execute("SELECT pagamento_mes_ano FROM lcto_impostos LIMIT 1")
+    except:
+        c.execute("ALTER TABLE lcto_impostos ADD COLUMN pagamento_mes_ano TEXT")
+        conn.commit()
+    
     conn.close()
 
 def save_category_rule(description: str, category: str):
@@ -164,9 +196,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 def register_user(email: str, password: str) -> bool:
     conn = get_connection()
     c = conn.cursor()
+    email_lower = email.lower().strip()
     try:
+        c.execute('DELETE FROM despesas_mensais WHERE user_email = ?', (email_lower,))
+        c.execute('DELETE FROM despesas_anuais WHERE user_email = ?', (email_lower,))
+        c.execute('DELETE FROM receitas_mensais WHERE user_email = ?', (email_lower,))
+        c.execute('DELETE FROM lcto_impostos WHERE user_email = ?', (email_lower,))
         c.execute('INSERT INTO users (email, password_hash) VALUES (?, ?)', 
-                  (email.lower().strip(), generate_password_hash(password, method='pbkdf2:sha256')))
+                  (email_lower, generate_password_hash(password, method='pbkdf2:sha256')))
         conn.commit()
         return True
     except sqlite3.IntegrityError:
@@ -235,8 +272,41 @@ def overwrite_despesas(despesas_list):
     conn.commit()
     conn.close()
 
+def init_lcto_emprestimos():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS lcto_emprestimos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT,
+            tipo TEXT NOT NULL,
+            beneficiario TEXT,
+            valor_operacao REAL NOT NULL,
+            moeda_emp TEXT DEFAULT 'BRL',
+            data_emprestimo TEXT,
+            data_operacao TEXT,
+            obs TEXT,
+            status TEXT DEFAULT 'Ativo',
+            criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def migrate_lcto_emprestimos_moeda():
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT moeda_emp FROM lcto_emprestimos LIMIT 1")
+    except:
+        c.execute("ALTER TABLE lcto_emprestimos ADD COLUMN moeda_emp TEXT DEFAULT 'BRL'")
+        conn.commit()
+    conn.close()
+
 # Inicializa o banco ao importar
 init_db()
+init_lcto_emprestimos()
+migrate_lcto_emprestimos_moeda()
 
 # ── Contas Bancárias ───────────────────────────────────────────────────────────
 def get_all_contas():
@@ -260,6 +330,11 @@ def update_conta(c_id, descricao, agencia, conta, dados_acesso, senha, comentari
 def delete_conta(c_id):
     conn = get_connection()
     conn.execute('DELETE FROM cad_contas WHERE id=?', (c_id,))
+    conn.commit(); conn.close()
+
+def clear_contas():
+    conn = get_connection()
+    conn.execute('DELETE FROM cad_contas')
     conn.commit(); conn.close()
 
 def get_senha_conta(c_id):
@@ -296,6 +371,11 @@ def update_usuario(u_id, chave_usr1, chave_usr2, nome, fator_pagamento):
 def delete_usuario(u_id):
     conn = get_connection()
     conn.execute('DELETE FROM cad_usuarios WHERE id=?', (u_id,))
+    conn.commit(); conn.close()
+
+def clear_usuarios():
+    conn = get_connection()
+    conn.execute('DELETE FROM cad_usuarios')
     conn.commit(); conn.close()
 
 # ── Despesas Mensais ───────────────────────────────────────────────────────────────
@@ -518,6 +598,11 @@ def delete_receita(r_id):
     conn.execute('DELETE FROM cad_receitas WHERE id=?', (r_id,))
     conn.commit(); conn.close()
 
+def clear_receitas():
+    conn = get_connection()
+    conn.execute('DELETE FROM cad_receitas')
+    conn.commit(); conn.close()
+
 # ── Investimentos ───────────────────────────────────────────────────────────────
 def get_all_investimentos():
     conn = get_connection()
@@ -538,6 +623,11 @@ def update_investimento(i_id, descricao):
 def delete_investimento(i_id):
     conn = get_connection()
     conn.execute('DELETE FROM cad_investimentos WHERE id=?', (i_id,))
+    conn.commit(); conn.close()
+
+def clear_investimentos():
+    conn = get_connection()
+    conn.execute('DELETE FROM cad_investimentos')
     conn.commit(); conn.close()
 
 def get_dashboard_data(user_email: str, mes_referencia: str):
@@ -597,3 +687,266 @@ def get_annual_report(user_email: str, ano: int):
     rows = [dict(row) for row in c.fetchall()]
     conn.close()
     return rows
+
+def get_all_tipo_imposto():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM tb_tipo_imposto ORDER BY tp_imposto')
+    rows = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return rows
+
+def add_tipo_imposto(tp_imposto: str, alq_imposto: float, pagamento: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('INSERT INTO tb_tipo_imposto (tp_imposto, alq_imposto, pagamento) VALUES (?, ?, ?)',
+              (tp_imposto, alq_imposto, pagamento))
+    conn.commit()
+    conn.close()
+
+def update_tipo_imposto(id: int, tp_imposto: str, alq_imposto: float, pagamento: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('UPDATE tb_tipo_imposto SET tp_imposto=?, alq_imposto=?, pagamento=? WHERE id=?',
+              (tp_imposto, alq_imposto, pagamento, id))
+    conn.commit()
+    conn.close()
+
+def delete_tipo_imposto(id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM tb_tipo_imposto WHERE id=?', (id,))
+    conn.commit()
+    conn.close()
+
+def clear_tipo_imposto():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM tb_tipo_imposto')
+    conn.commit()
+    conn.close()
+
+def get_all_lcto_impostos(user_email: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM lcto_impostos WHERE user_email=? ORDER BY mes_ano DESC, tp_imposto', (user_email,))
+    rows = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return rows
+
+def add_lcto_imposto(user_email: str, mes_ano: str, tp_imposto: str, moeda_faturado: str, valor_faturado: float, valor_imposto: float, moeda_pagamento: str, pagamento: str, pagamento_mes_ano: str, desconto_iva: float):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''INSERT INTO lcto_impostos (user_email, mes_ano, tp_imposto, moeda_faturado, valor_faturado, valor_imposto, moeda_pagamento, pagamento, pagamento_mes_ano, desconto_iva)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+              (user_email, mes_ano, tp_imposto, moeda_faturado, valor_faturado, valor_imposto, moeda_pagamento, pagamento, pagamento_mes_ano, desconto_iva))
+    conn.commit()
+    conn.close()
+
+def update_lcto_imposto(id: int, mes_ano: str, tp_imposto: str, moeda_faturado: str, valor_faturado: float, valor_imposto: float, moeda_pagamento: str, pagamento: str, pagamento_mes_ano: str, desconto_iva: float):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''UPDATE lcto_impostos SET mes_ano=?, tp_imposto=?, moeda_faturado=?, valor_faturado=?, valor_imposto=?, moeda_pagamento=?, pagamento=?, pagamento_mes_ano=?, desconto_iva=? WHERE id=?''',
+              (mes_ano, tp_imposto, moeda_faturado, valor_faturado, valor_imposto, moeda_pagamento, pagamento, pagamento_mes_ano, desconto_iva, id))
+    conn.commit()
+    conn.close()
+
+def delete_lcto_imposto(id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM lcto_impostos WHERE id=?', (id,))
+    conn.commit()
+    conn.close()
+
+def init_lcto_emprestimos():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS lcto_emprestimos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT,
+            tipo TEXT NOT NULL,
+            beneficiario TEXT,
+            valor_operacao REAL NOT NULL,
+            data_emprestimo TEXT,
+            data_operacao TEXT,
+            obs TEXT,
+            status TEXT DEFAULT 'Ativo',
+            criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def get_all_lcto_emprestimos(user_email: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM lcto_emprestimos WHERE user_email=? ORDER BY data_operacao DESC, id DESC', (user_email,))
+    rows = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return rows
+
+def add_lcto_emprestimo(user_email: str, tipo: str, beneficiario: str, valor_operacao: float, moeda_emp: str, data_emprestimo: str, data_operacao: str, obs: str, status: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''INSERT INTO lcto_emprestimos (user_email, tipo, beneficiario, valor_operacao, moeda_emp, data_emprestimo, data_operacao, obs, status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+              (user_email, tipo, beneficiario, valor_operacao, moeda_emp, data_emprestimo, data_operacao, obs, status))
+    conn.commit()
+    conn.close()
+
+def update_lcto_emprestimo(id: int, tipo: str, beneficiario: str, valor_operacao: float, moeda_emp: str, data_emprestimo: str, data_operacao: str, obs: str, status: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''UPDATE lcto_emprestimos SET tipo=?, beneficiario=?, valor_operacao=?, moeda_emp=?, data_emprestimo=?, data_operacao=?, obs=?, status=? WHERE id=?''',
+              (tipo, beneficiario, valor_operacao, moeda_emp, data_emprestimo, data_operacao, obs, status, id))
+    conn.commit()
+    conn.close()
+
+def delete_lcto_emprestimo(id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM lcto_emprestimos WHERE id=?', (id,))
+    conn.commit()
+    conn.close()
+
+def get_saldo_emprestimos(user_email: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        SELECT 
+            SUM(CASE WHEN tipo = 'Empréstimo' THEN valor_operacao ELSE 0 END) as total_emprestado,
+            SUM(CASE WHEN tipo IN ('Pagamento', 'Abatimento') THEN valor_operacao ELSE 0 END) as total_pago
+        FROM lcto_emprestimos
+        WHERE user_email = ?
+    ''', (user_email,))
+    row = c.fetchone()
+    conn.close()
+    total_emprestado = row['total_emprestado'] or 0
+    total_pago = row['total_pago'] or 0
+    saldo = total_emprestado - total_pago
+    return {'total_emprestado': total_emprestado, 'total_pago': total_pago, 'saldo': saldo}
+
+def limpar_dados_usuario(email: str):
+    conn = get_connection()
+    c = conn.cursor()
+    email_lower = email.lower().strip()
+    c.execute('DELETE FROM despesas_mensais WHERE user_email = ?', (email_lower,))
+    c.execute('DELETE FROM despesas_anuais WHERE user_email = ?', (email_lower,))
+    c.execute('DELETE FROM receitas_mensais WHERE user_email = ?', (email_lower,))
+    c.execute('DELETE FROM lcto_impostos WHERE user_email = ?', (email_lower,))
+    c.execute('DELETE FROM lcto_emprestimos WHERE user_email = ?', (email_lower,))
+    c.execute('DELETE FROM categorias_aprendidas')
+    conn.commit()
+    conn.close()
+
+def get_dashboard_impostos(user_email: str):
+    """Retorna dados para o Dashboard de Impostos agrupados por tipo e pagamento"""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        SELECT 
+            tp_imposto,
+            pagamento,
+            SUM(valor_imposto) as total_imposto,
+            SUM(desconto_iva) as total_desconto,
+            SUM(valor_imposto - COALESCE(desconto_iva, 0)) as valor_liquido,
+            pagamento_mes_ano
+        FROM lcto_impostos
+        WHERE user_email = ?
+        GROUP BY tp_imposto, pagamento, pagamento_mes_ano
+        ORDER BY tp_imposto, pagamento_mes_ano DESC
+    ''', (user_email,))
+    rows = [dict(row) for row in c.fetchall()]
+    
+    tipo_imposto_map = {}
+    for r in rows:
+        tp = r['tp_imposto'] or 'Não especificado'
+        pag = r['pagamento'] or 'Não especificado'
+        key = f"{tp}|{pag}"
+        if key not in tipo_imposto_map:
+            tipo_imposto_map[key] = {'tp_imposto': tp, 'pagamento': pag, 'total_imposto': 0, 'total_desconto': 0, 'valor_liquido': 0, 'periodos': []}
+        tipo_imposto_map[key]['total_imposto'] += r['total_imposto'] or 0
+        tipo_imposto_map[key]['total_desconto'] += r['total_desconto'] or 0
+        tipo_imposto_map[key]['valor_liquido'] += r['valor_liquido'] or 0
+        if r['pagamento_mes_ano']:
+            tipo_imposto_map[key]['periodos'].append(r['pagamento_mes_ano'])
+    
+    conn.close()
+    return list(tipo_imposto_map.values())
+
+# ── Lançamento de Investimentos ─────────────────────────────────────────────────────
+def init_lcto_investimentos():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS lcto_investimentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT,
+            banco TEXT,
+            tp_investimento TEXT,
+            data_inv TEXT,
+            valor_inv REAL,
+            moeda TEXT DEFAULT 'BRL',
+            qtd REAL,
+            taxa REAL,
+            valor_atual REAL,
+            val_mes_ant REAL,
+            aporte REAL,
+            criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_lcto_investimentos()
+
+def get_all_lcto_investimentos(user_email: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM lcto_investimentos WHERE user_email=? ORDER BY data_inv DESC, id DESC', (user_email,))
+    rows = [dict(row) for row in c.fetchall()]
+    conn.close()
+    for r in rows:
+        r['valor_tot_inv'] = (r.get('valor_inv') or 0) * (r.get('qtd') or 0)
+        taxa = r.get('taxa') or 0
+        r['valor_liq_mes'] = (r.get('valor_atual') or 0) - (r['valor_tot_inv'] + taxa)
+        val_mes_ant = r.get('val_mes_ant') or 0
+        r['lucro_mes'] = (r.get('valor_atual') or 0) - val_mes_ant
+        r['lucro_op'] = (r.get('valor_atual') or 0) - r['valor_tot_inv']
+        r['pct_rent'] = (r['lucro_op'] / r['valor_tot_inv'] * 100) if r['valor_tot_inv'] > 0 else 0
+    return rows
+
+def add_lcto_investimento(user_email: str, banco: str, tp_investimento: str, data_inv: str, valor_inv: float, moeda: str, qtd: float, taxa: float, valor_atual: float, val_mes_ant: float, aporte: float):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''INSERT INTO lcto_investimentos 
+        (user_email, banco, tp_investimento, data_inv, valor_inv, moeda, qtd, taxa, valor_atual, val_mes_ant, aporte)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (user_email, banco, tp_investimento, data_inv, valor_inv, moeda, qtd, taxa, valor_atual, val_mes_ant, aporte))
+    conn.commit()
+    conn.close()
+
+def update_lcto_investimento(id: int, banco: str, tp_investimento: str, data_inv: str, valor_inv: float, moeda: str, qtd: float, taxa: float, valor_atual: float, val_mes_ant: float, aporte: float):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''UPDATE lcto_investimentos SET 
+        banco=?, tp_investimento=?, data_inv=?, valor_inv=?, moeda=?, qtd=?, taxa=?, valor_atual=?, val_mes_ant=?, aporte=?
+        WHERE id=?''',
+        (banco, tp_investimento, data_inv, valor_inv, moeda, qtd, taxa, valor_atual, val_mes_ant, aporte, id))
+    conn.commit()
+    conn.close()
+
+def delete_lcto_investimento(id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM lcto_investimentos WHERE id=?', (id,))
+    conn.commit()
+    conn.close()
+
+def clear_lcto_investimentos():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM lcto_investimentos')
+    conn.commit()
+    conn.close()
