@@ -21,13 +21,16 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --primary: #3b82f6;
             --primary-hover: #2563eb;
+            --primary-gradient: linear-gradient(135deg, #3b82f6, #2563eb);
             --secondary: #8b5cf6;
             --secondary-hover: #7c3aed;
+            --secondary-gradient: linear-gradient(135deg, #8b5cf6, #7c3aed);
             --text-light: #f8fafc;
             --text-muted: #94a3b8;
             --success: #10b981;
             --error: #ef4444;
             --warning: #f59e0b;
+            --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
         }
 
         /* Layout improvements */
@@ -172,29 +175,30 @@
         #fileInput { display: none; }
 
         .btn {
-            background: var(--primary);
+            background: var(--primary-gradient);
             color: white;
             border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
             font-family: inherit;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             width: auto;
-            min-width: 100px;
+            min-width: 120px;
             font-weight: 600;
-            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
+            text-decoration: none;
         }
 
-        .btn.secondary { background: var(--secondary); box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.5); }
-        .btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4); }
-        .btn.secondary:hover { background: var(--secondary-hover); }
-        .btn:disabled { background: var(--text-muted); cursor: not-allowed; opacity: 0.7; }
+        .btn.secondary { background: var(--secondary-gradient); box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); filter: brightness(1.1); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { background: var(--text-muted); cursor: not-allowed; opacity: 0.6; transform: none; }
 
         /* Tabela de Revisão */
         #reviewSection {
@@ -370,7 +374,7 @@
             border-radius: 8px;
         }
         .btn-xs {
-            min-width: 80px;
+            min-width: 110px; /* Aumentado de 80px conforme Skill UI UX */
             padding: 8px 16px;
             font-size: 13px;
             font-weight: 500;
@@ -392,18 +396,30 @@
             margin: 0 !important;
         }
 
-        /* Form Panel Padronizado */
+        /* Form Panel Padronizado (Premium Card) */
         .form-panel {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(8px);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+        .form-panel:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(30, 41, 59, 0.5);
         }
         .form-panel h3 {
-            margin-bottom: 1.25rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
             font-weight: 600;
             color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
         }
 
         /* Action Bar Padronizada */
@@ -756,11 +772,11 @@
 
     <!-- Módulo Cadastro de Despesas -->
     <div class="container module-container module-fullscreen" id="cadDespesasModule">
-        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Despesas</h1>
+        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-list-check" style="margin-right: 15px;"></i>Cadastro de Despesas</h1>
         
         <!-- Formulário Manual -->
         <div class="form-panel">
-            <h3 id="cadDespesaTitle">Cadastro Rápido Manual</h3>
+            <h3 id="cadDespesaTitle"><i class="fa-solid fa-pen-to-square"></i> Cadastro Rápido Manual</h3>
             <form id="cadDespesaForm" onsubmit="addDespesa(event)">
                 <input type="hidden" id="cd_id" value="">
                 <div class="form-row-2">
@@ -790,12 +806,12 @@
                         </select>
                     </div>
                 </div>
-                <div style="display: flex; gap: 12px; margin-top: 1.5rem; align-items: center;">
-                    <button type="submit" class="btn btn-xs secondary" id="cadDespesaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-xs secondary" id="cadDespesaCancelBtn" style="display:none;" onclick="cancelEditDespesa()">
-                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                <div style="display: flex; gap: 15px; margin-top: 2rem; align-items: center;">
+                    <button type="submit" class="btn btn-sm" id="cadDespesaBtn"><i class="fa-solid fa-check"></i> Salvar Despesa</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadDespesaCancelBtn" style="display:none;" onclick="cancelEditDespesa()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
-                    <span id="cadDespesaEditLabel" style="display:none; color: var(--warning); font-size: 0.9rem;">
+                    <span id="cadDespesaEditLabel" style="display:none; color: var(--warning); font-size: 0.9rem; margin-left: 10px;">
                         <i class="fa-solid fa-triangle-exclamation"></i> Editando despesa existente
                     </span>
                 </div>
@@ -803,7 +819,7 @@
         </div>
 
         <!-- Tabela -->
-        <h3>Despesas Cadastradas</h3>
+        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-table-list"></i> Despesas Cadastradas</h3>
         <div class="table-container table-full">
             <table id="despesasTable">
                 <thead>
@@ -821,29 +837,33 @@
             </table>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: stretch;">
             <!-- Upload Area -->
-            <div class="upload-area" id="cd_dropZone" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
-                <div class="upload-subtext">CSV, Excel, XML</div>
+            <div class="upload-area" id="cd_dropZone" style="margin-bottom: 0;">
+                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
+                <div class="upload-text">Importar via Planilha</div>
+                <div class="upload-subtext">Arraste ou clique para sobrescrever tudo (CSV, Excel, XML)</div>
                 <input type="file" id="cd_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx,.xml" onchange="uploadDespesasFile(this)">
                 <div id="cd_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
 
             <!-- Export -->
-            <button class="btn btn-xs secondary" onclick="window.location.href='/api/cad_despesas/export'">
-                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
-            </button>
+            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
+                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
+                <div style="font-weight: 600;">Exportar Dados</div>
+                <button class="btn btn-sm secondary" onclick="window.location.href='/api/cad_despesas/export'" style="width: 100%;">
+                    <i class="fa-solid fa-download"></i> Baixar XLSX
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Módulo Cadastro de Contas Bancárias -->
     <div class="container module-container module-fullscreen" id="cadContasModule">
-        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Contas Bancárias</h1>
+        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-building-columns" style="margin-right: 15px;"></i>Cadastro de Contas</h1>
 
         <div class="form-panel">
-            <h3 id="cadContaTitle">Nova Conta</h3>
+            <h3 id="cadContaTitle"><i class="fa-solid fa-plus-circle"></i> Nova Conta Bancária</h3>
             <form id="cadContaForm" onsubmit="saveConta(event)">
                 <input type="hidden" id="cc_id" value="">
                 <div class="form-row-2">
@@ -872,16 +892,16 @@
                         <input type="text" id="cc_obs" class="auth-input" placeholder="Observações livres">
                     </div>
                 </div>
-                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-xs secondary" id="cadContaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-xs secondary" id="cadContaCancelBtn" style="display:none;" onclick="cancelEditConta()">
-                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm" id="cadContaBtn"><i class="fa-solid fa-check"></i> Salvar Conta</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadContaCancelBtn" style="display:none;" onclick="cancelEditConta()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
             </form>
         </div>
 
-        <h3>Contas Cadastradas</h3>
+        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-ul"></i> Contas Cadastradas</h3>
         <div class="table-container table-full">
             <table id="contasTable">
                 <thead><tr>
@@ -897,17 +917,21 @@
             </table>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
-            <div class="upload-area" id="cc_dropZone" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
-                <div class="upload-subtext">CSV, Excel</div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: stretch;">
+            <div class="upload-area" id="cc_dropZone" style="margin-bottom: 0;">
+                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
+                <div class="upload-text">Importar via Planilha</div>
+                <div class="upload-subtext">Arraste ou clique para sobrescrever tudo (CSV, Excel)</div>
                 <input type="file" id="cc_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadContasFile(this)">
                 <div id="cc_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_contas'">
-                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
-            </button>
+            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
+                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
+                <div style="font-weight: 600;">Exportar Dados</div>
+                <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_contas'" style="width: 100%;">
+                    <i class="fa-solid fa-download"></i> Baixar XLSX
+                </button>
+            </div>
         </div>
     </div>
 
@@ -927,10 +951,10 @@
 
     <!-- Módulo Cadastro de Usuários -->
     <div class="container module-container module-fullscreen" id="cadUsuariosModule">
-        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Usuários</h1>
+        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-users" style="margin-right: 15px;"></i>Cadastro de Usuários</h1>
 
         <div class="form-panel">
-            <h3 id="cadUsuarioTitle">Novo Usuário</h3>
+            <h3 id="cadUsuarioTitle"><i class="fa-solid fa-user-plus"></i> Novo Usuário do Sistema</h3>
             <form id="cadUsuarioForm" onsubmit="saveUsuario(event)">
                 <input type="hidden" id="cu_id" value="">
                 <div class="form-row-2">
@@ -956,16 +980,16 @@
                         <input type="text" id="cu_usr2" class="auth-input" placeholder="Identificador 2">
                     </div>
                 </div>
-                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-xs secondary" id="cadUsuarioBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-xs secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
-                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm" id="cadUsuarioBtn"><i class="fa-solid fa-check"></i> Salvar Usuário</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
             </form>
         </div>
 
-        <h3>Usuários Cadastrados</h3>
+        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-address-book"></i> Usuários Cadastrados</h3>
         <div class="table-container table-full">
             <table id="usuariosTable">
                 <thead><tr>
@@ -979,26 +1003,30 @@
             </table>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
-            <div class="upload-area" id="cu_dropZone" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
-                <div class="upload-subtext">CSV, Excel</div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: stretch;">
+            <div class="upload-area" id="cu_dropZone" style="margin-bottom: 0;">
+                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
+                <div class="upload-text">Importar via Planilha</div>
+                <div class="upload-subtext">Arraste ou clique para sobrescrever tudo (CSV, Excel)</div>
                 <input type="file" id="cu_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadUsuariosFile(this)">
                 <div id="cu_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_usuarios'">
-                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
-            </button>
+            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
+                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
+                <div style="font-weight: 600;">Exportar Dados</div>
+                <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_usuarios'" style="width: 100%;">
+                    <i class="fa-solid fa-download"></i> Baixar XLSX
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Módulo Cadastro de Receitas -->
     <div class="container module-container module-fullscreen" id="cadReceitasModule">
-        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Receitas</h1>
+        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-file-invoice-dollar" style="margin-right: 15px;"></i>Cadastro de Receitas</h1>
 
         <div class="form-panel">
-            <h3 id="cadReceitaTitle">Nova Receita</h3>
+            <h3 id="cadReceitaTitle"><i class="fa-solid fa-plus-circle"></i> Nova Categoria de Receita</h3>
             <form id="cadReceitaForm" onsubmit="saveReceita(event)">
                 <input type="hidden" id="cr_id" value="">
                 <div class="form-row">
@@ -1007,16 +1035,16 @@
                         <input type="text" id="cr_desc" class="auth-input" placeholder="Ex: Salário, Freelance, Aluguel Recebido..." required>
                     </div>
                 </div>
-                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-xs secondary" id="cadReceitaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-xs secondary" id="cadReceitaCancelBtn" style="display:none;" onclick="cancelEditReceita()">
-                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm" id="cadReceitaBtn"><i class="fa-solid fa-check"></i> Salvar Receita</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadReceitaCancelBtn" style="display:none;" onclick="cancelEditReceita()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
             </form>
         </div>
 
-        <h3>Receitas Cadastradas</h3>
+        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-ol"></i> Receitas Cadastradas</h3>
         <div class="table-container table-full">
             <table id="receitasTable">
                 <thead><tr>
@@ -1027,26 +1055,30 @@
             </table>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
-            <div class="upload-area" id="cr_dropZone" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
-                <div class="upload-subtext">CSV, Excel</div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: stretch;">
+            <div class="upload-area" id="cr_dropZone" style="margin-bottom: 0;">
+                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
+                <div class="upload-text">Importar via Planilha</div>
+                <div class="upload-subtext">Arraste ou clique para sobrescrever tudo (CSV, Excel)</div>
                 <input type="file" id="cr_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadReceitasFile(this)">
                 <div id="cr_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_receitas'">
-                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
-            </button>
+            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
+                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
+                <div style="font-weight: 600;">Exportar Dados</div>
+                <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_receitas'" style="width: 100%;">
+                    <i class="fa-solid fa-download"></i> Baixar XLSX
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Módulo Cadastro de Investimentos -->
     <div class="container module-container module-fullscreen" id="cadInvestimentosModule">
-        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Investimentos</h1>
+        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-chart-pie" style="margin-right: 15px;"></i>Cadastro de Investimentos</h1>
 
         <div class="form-panel">
-            <h3 id="cadInvestTitle">Novo Investimento</h3>
+            <h3 id="cadInvestTitle"><i class="fa-solid fa-plus-circle"></i> Nova Categoria de Investimento</h3>
             <form id="cadInvestForm" onsubmit="saveInvest(event)">
                 <input type="hidden" id="ci_id" value="">
                 <div class="form-row">
@@ -1055,16 +1087,16 @@
                         <input type="text" id="ci_desc" class="auth-input" placeholder="Ex: Tesouro Direto, Ações PETR4, CDB..." required>
                     </div>
                 </div>
-                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-xs secondary" id="cadInvestBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-xs secondary" id="cadInvestCancelBtn" style="display:none;" onclick="cancelEditInvest()">
-                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm" id="cadInvestBtn"><i class="fa-solid fa-check"></i> Salvar Investimento</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadInvestCancelBtn" style="display:none;" onclick="cancelEditInvest()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
             </form>
         </div>
 
-        <h3>Investimentos Cadastrados</h3>
+        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-ol"></i> Investimentos Cadastrados</h3>
         <div class="table-container table-full">
             <table id="investimentosTable">
                 <thead><tr>
@@ -1075,26 +1107,30 @@
             </table>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
-            <div class="upload-area" id="ci_dropZone" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
-                <div class="upload-subtext">CSV, Excel</div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: stretch;">
+            <div class="upload-area" id="ci_dropZone" style="margin-bottom: 0;">
+                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
+                <div class="upload-text">Importar via Planilha</div>
+                <div class="upload-subtext">Arraste ou clique para sobrescrever tudo (CSV, Excel)</div>
                 <input type="file" id="ci_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadInvestimentosFile(this)">
                 <div id="ci_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_investimentos'">
-                <i class="fa-solid fa-file-excel"></i> Exportar Tabela
-            </button>
+            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
+                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
+                <div style="font-weight: 600;">Exportar Dados</div>
+                <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_investimentos'" style="width: 100%;">
+                    <i class="fa-solid fa-download"></i> Baixar XLSX
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Módulo Cadastro de Tipo de Imposto -->
     <div class="container module-container module-fullscreen" id="cadTipoImpostoModule">
-        <h1 style="text-align: center; margin-bottom: 2rem;">Cadastro de Tipos de Imposto</h1>
+        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-percent" style="margin-right: 15px;"></i>Cadastro de Tipos de Imposto</h1>
 
         <div class="form-panel">
-            <h3 id="cadTipoImpostoTitle">Novo Tipo de Imposto</h3>
+            <h3 id="cadTipoImpostoTitle"><i class="fa-solid fa-plus-circle"></i> Novo Tipo de Imposto</h3>
             <form id="cadTipoImpostoForm" onsubmit="saveTipoImposto(event)">
                 <input type="hidden" id="cti_id" value="">
                 <div class="form-row-3">
@@ -1117,16 +1153,16 @@
                         </select>
                     </div>
                 </div>
-                <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-xs secondary" id="cadTipoImpostoBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-xs secondary" id="cadTipoImpostoCancelBtn" style="display:none;" onclick="cancelEditTipoImposto()">
-                        <i class="fa-solid fa-xmark"></i> Cancelar Edição
+                <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm" id="cadTipoImpostoBtn"><i class="fa-solid fa-check"></i> Salvar Tipo de Imposto</button>
+                    <button type="button" class="btn btn-sm secondary" id="cadTipoImpostoCancelBtn" style="display:none;" onclick="cancelEditTipoImposto()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
             </form>
         </div>
 
-        <h3>Tipos de Imposto Cadastrados</h3>
+        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-ol"></i> Tipos de Imposto Cadastrados</h3>
         <div class="table-container table-full">
             <table id="tipoImpostoTable">
                 <thead><tr>
@@ -1139,17 +1175,21 @@
             </table>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 2rem;">
-            <div class="upload-area" id="cti_dropZone" style="flex: 1;">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
-                <div class="upload-subtext">CSV, Excel</div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: stretch;">
+            <div class="upload-area" id="cti_dropZone" style="margin-bottom: 0;">
+                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
+                <div class="upload-text">Importar via Planilha</div>
+                <div class="upload-subtext">Arraste ou clique para sobrescrever tudo (CSV, Excel)</div>
                 <input type="file" id="cti_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadTipoImpostoFile(this)">
                 <div id="cti_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_tipo_imposto'">
-                <i class="fa-solid fa-file-excel"></i> Exportar
-            </button>
+            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
+                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
+                <div style="font-weight: 600;">Exportar Dados</div>
+                <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_tipo_imposto'" style="width: 100%;">
+                    <i class="fa-solid fa-download"></i> Baixar XLSX
+                </button>
+            </div>
         </div>
     </div>
 
