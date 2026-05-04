@@ -6,3 +6,4 @@ requests
 pdfplumber
 beautifulsoup4
 python-dateutil
+xlrd

@@ -4411,6 +4411,20 @@
         checkAuthStatus();
         // =====================================================================
 
+        // ── Referências DOM do módulo de Upload de Extratos ──────────────────
+        const dropZone      = document.getElementById('dropZone');
+        const fileInput     = document.getElementById('fileInput');
+        const uploadBtn     = document.getElementById('uploadBtn');
+        const loader        = document.getElementById('loader');
+        const btnIcon       = document.getElementById('btnIcon');
+        const btnText       = document.getElementById('btnText');
+        const fileList      = document.getElementById('fileList');
+        const tableBody     = document.getElementById('tableBody');
+        const uploadSection = document.getElementById('uploadSection');
+        const reviewSection = document.getElementById('reviewSection');
+        const exportBtn     = document.getElementById('exportBtn');
+        // ─────────────────────────────────────────────────────────────────────
+
         const CATEGORIES = [
             "Não Categorizado",
             "Compras MVP", "Restaurante Diversão MVP", "Diversão MVP", "Assinaturas Serviços", 
@@ -4826,17 +4840,25 @@
             btnText.textContent = 'Aguarde... Processamento Automático e Câmbio...';
 
             fetch('/upload', { method: 'POST', body: formData })
-            .then(r => r.json())
-            .then(res => {
-                if (res.transactions) {
+            .then(async r => {
+                const res = await r.json();
+                if (r.ok && res.transactions && res.transactions.length > 0) {
                     parsedTransactions = res.transactions;
                     showReviewScreen();
                 } else {
-                    alert(res.error || 'Erro processando');
+                    alert(res.error || 'Nenhuma transação foi extraída. Verifique se o arquivo está no formato correto (CSV, Excel, etc.) e possui colunas de Data, Descrição e Valor.');
                     uploadBtn.disabled = false;
                     loader.style.display = 'none';
                     btnIcon.style.display = 'inline-block';
+                    btnText.textContent = 'Processar Base Documental';
                 }
+            })
+            .catch(err => {
+                alert('Erro de conexão com o servidor ao enviar o arquivo.');
+                uploadBtn.disabled = false;
+                loader.style.display = 'none';
+                btnIcon.style.display = 'inline-block';
+                btnText.textContent = 'Processar Base Documental';
             });
         });
 
