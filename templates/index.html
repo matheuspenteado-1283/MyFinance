@@ -181,10 +181,11 @@
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
-            width: 100%;
+            width: auto;
+            min-width: 100px;
             font-weight: 600;
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
@@ -197,18 +198,41 @@
 
         /* Tabela de Revisão */
         #reviewSection {
-            display: none; width: 100%; animation: fadeIn 0.8s ease-out; margin-top: 2rem;
+            display: none; width: 100%; background: #0f172a; padding: 2rem; box-sizing: border-box; animation: fadeIn 0.8s ease-out;
+            position: relative; z-index: 100;
         }
 
-        .table-container {
-            width: 100%; overflow-x: auto; background: rgba(15, 23, 42, 0.6);
-            border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 2rem;
+        #reviewSection.full-screen-mode {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 2rem;
         }
+
+        #reviewSection .table-container {
+            width: 100%; height: auto; max-height: none; overflow-x: auto; overflow-y: visible; background: transparent; margin: 0;
+        }
+        
+        #reviewSection h1 { position: sticky; top: 0; background: #0f172a; padding: 1rem 0; z-index: 30; margin: 0; }
+        #reviewSection p { display: none; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 1rem; border-bottom: 1px solid var(--glass-border); }
-        th { background: rgba(255, 255, 255, 0.05); font-weight: 600; color: var(--text-muted); white-space: nowrap; vertical-align: top; }
-        td { font-size: 0.95rem; color: var(--text-light); }
+        th, td { padding: 0.5rem; border-bottom: 1px solid var(--glass-border); }
+        th { 
+            background: rgba(30, 41, 59, 0.95); 
+            backdrop-filter: blur(8px);
+            font-weight: 600; 
+            color: var(--text-muted); 
+            white-space: nowrap; 
+            vertical-align: top; 
+            position: sticky;
+            top: 60px; /* Abaixo do H1 sticky */
+            z-index: 15;
+        }
         tr:hover td { background: rgba(255, 255, 255, 0.02); }
 
         .filter-input {
@@ -265,7 +289,7 @@
             border: 1px solid var(--glass-border) !important;
             border-radius: 8px !important;
             color: var(--text-light) !important;
-            min-width: 250px;
+            min-width: 150px; /* Reduzido de 250px para evitar quebra de tabela */
         }
         .ts-control input { color: var(--text-light) !important; }
         .ts-dropdown {
@@ -345,14 +369,27 @@
             font-weight: 500;
             border-radius: 8px;
         }
+        .btn-xs {
+            min-width: 80px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+        }
 
         /* Module Container Full Screen */
         .module-fullscreen {
             max-width: 1550px;
             width: 100%;
             min-height: calc(100vh - 100px);
-            overflow-x: auto;
-            overflow-y: auto;
+            /* overflow-x: auto; - Removido para permitir scroll natural se possível */
+            /* overflow-y: auto; - Removido para permitir scroll natural se possível */
+        }
+
+        .module-fullscreen.no-limits {
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
 
         /* Form Panel Padronizado */
@@ -603,7 +640,7 @@
         <form class="auth-form" id="authForm" onsubmit="handleAuth(event)">
             <input type="email" id="authEmail" class="auth-input" placeholder="Seu e-mail" required>
             <input type="password" id="authPassword" class="auth-input" placeholder="Sua senha" required>
-            <button type="submit" class="btn btn-sm secondary" id="authBtn">Entrar</button>
+            <button type="submit" class="btn btn-xs secondary" id="authBtn">Entrar</button>
             <div id="loginError"></div>
         </form>
         
@@ -631,6 +668,10 @@
             <div class="menu-card" onclick="openModule('relatorio_ano')">
                 <i class="fa-solid fa-calendar-check menu-icon"></i>
                 <div class="menu-title">Relatório Anual</div>
+            </div>
+            <div class="menu-card" onclick="openModule('relatorio_dinamico')">
+                <i class="fa-solid fa-table-columns menu-icon"></i>
+                <div class="menu-title">Relatório Dinâmico</div>
             </div>
             <div class="menu-card" onclick="openModule('dashboard')">
                 <i class="fa-solid fa-chart-pie menu-icon"></i>
@@ -706,6 +747,10 @@
                 <i class="fa-solid fa-percent menu-icon"></i>
                 <div class="menu-title">Cadastro de Tipos de Imposto</div>
             </div>
+            <div class="menu-card" onclick="openModule('avancado')">
+                <i class="fa-solid fa-gear menu-icon" style="color: var(--error);"></i>
+                <div class="menu-title">Avançado</div>
+            </div>
         </div>
     </div>
 
@@ -746,8 +791,8 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 12px; margin-top: 1.5rem; align-items: center;">
-                    <button type="submit" class="btn btn-sm secondary" id="cadDespesaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-sm secondary" id="cadDespesaCancelBtn" style="display:none;" onclick="cancelEditDespesa()">
+                    <button type="submit" class="btn btn-xs secondary" id="cadDespesaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-xs secondary" id="cadDespesaCancelBtn" style="display:none;" onclick="cancelEditDespesa()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                     <span id="cadDespesaEditLabel" style="display:none; color: var(--warning); font-size: 0.9rem;">
@@ -787,7 +832,7 @@
             </div>
 
             <!-- Export -->
-            <button class="btn btn-sm secondary" onclick="window.location.href='/api/cad_despesas/export'">
+            <button class="btn btn-xs secondary" onclick="window.location.href='/api/cad_despesas/export'">
                 <i class="fa-solid fa-file-excel"></i> Exportar Tabela
             </button>
         </div>
@@ -828,8 +873,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="cadContaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-sm secondary" id="cadContaCancelBtn" style="display:none;" onclick="cancelEditConta()">
+                    <button type="submit" class="btn btn-xs secondary" id="cadContaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-xs secondary" id="cadContaCancelBtn" style="display:none;" onclick="cancelEditConta()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -860,7 +905,7 @@
                 <input type="file" id="cc_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadContasFile(this)">
                 <div id="cc_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_contas'">
+            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_contas'">
                 <i class="fa-solid fa-file-excel"></i> Exportar Tabela
             </button>
         </div>
@@ -874,8 +919,8 @@
             <input type="password" id="modalAppPassword" class="auth-input" style="width:100%;margin-bottom:1rem;" placeholder="Sua senha do App" autofocus>
             <div id="modalSenhaError" style="color:var(--error);font-size:0.85rem;margin-bottom:0.8rem;display:none;"></div>
             <div style="display:flex;gap:12px;">
-                <button class="btn btn-sm secondary" id="modalConfirmBtn" onclick="confirmRevealSenha()"><i class="fa-solid fa-eye"></i> Visualizar</button>
-                <button class="btn btn-sm secondary" onclick="closeSenhaModal()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                <button class="btn btn-xs secondary" id="modalConfirmBtn" onclick="confirmRevealSenha()"><i class="fa-solid fa-eye"></i> Visualizar</button>
+                <button class="btn btn-xs secondary" onclick="closeSenhaModal()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
             </div>
         </div>
     </div>
@@ -912,8 +957,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="cadUsuarioBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-sm secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
+                    <button type="submit" class="btn btn-xs secondary" id="cadUsuarioBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-xs secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -942,7 +987,7 @@
                 <input type="file" id="cu_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadUsuariosFile(this)">
                 <div id="cu_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_usuarios'">
+            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_usuarios'">
                 <i class="fa-solid fa-file-excel"></i> Exportar Tabela
             </button>
         </div>
@@ -963,8 +1008,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="cadReceitaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-sm secondary" id="cadReceitaCancelBtn" style="display:none;" onclick="cancelEditReceita()">
+                    <button type="submit" class="btn btn-xs secondary" id="cadReceitaBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-xs secondary" id="cadReceitaCancelBtn" style="display:none;" onclick="cancelEditReceita()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -990,7 +1035,7 @@
                 <input type="file" id="cr_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadReceitasFile(this)">
                 <div id="cr_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_receitas'">
+            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_receitas'">
                 <i class="fa-solid fa-file-excel"></i> Exportar Tabela
             </button>
         </div>
@@ -1011,8 +1056,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="cadInvestBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-sm secondary" id="cadInvestCancelBtn" style="display:none;" onclick="cancelEditInvest()">
+                    <button type="submit" class="btn btn-xs secondary" id="cadInvestBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-xs secondary" id="cadInvestCancelBtn" style="display:none;" onclick="cancelEditInvest()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -1038,7 +1083,7 @@
                 <input type="file" id="ci_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadInvestimentosFile(this)">
                 <div id="ci_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_investimentos'">
+            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_investimentos'">
                 <i class="fa-solid fa-file-excel"></i> Exportar Tabela
             </button>
         </div>
@@ -1073,8 +1118,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.5rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="cadTipoImpostoBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-sm secondary" id="cadTipoImpostoCancelBtn" style="display:none;" onclick="cancelEditTipoImposto()">
+                    <button type="submit" class="btn btn-xs secondary" id="cadTipoImpostoBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-xs secondary" id="cadTipoImpostoCancelBtn" style="display:none;" onclick="cancelEditTipoImposto()">
                         <i class="fa-solid fa-xmark"></i> Cancelar Edição
                     </button>
                 </div>
@@ -1102,7 +1147,7 @@
                 <input type="file" id="cti_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadTipoImpostoFile(this)">
                 <div id="cti_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_tipo_imposto'">
+            <button class="btn btn-xs secondary" onclick="window.location.href='/api/export_tipo_imposto'">
                 <i class="fa-solid fa-file-excel"></i> Exportar
             </button>
         </div>
@@ -1132,7 +1177,7 @@
                 <div style="font-size:0.8rem; color:var(--text-muted);">Será aplicada a todas as linhas do extrato (editável após)</div>
             </div>
 
-            <button class="btn btn-sm secondary" id="uploadBtn" disabled>
+            <button class="btn btn-xs secondary" id="uploadBtn" disabled>
                 <div class="loader" id="loader"></div>
                 <i class="fa-solid fa-wand-magic-sparkles" id="btnIcon"></i>
                 <span id="btnText">Processar Base Documental</span>
@@ -1182,13 +1227,13 @@
             </div>
 
             <div class="btn-group action-bar" style="justify-content: center;">
-                <button class="btn btn-sm secondary" id="exportBtn">
+                <button class="btn btn-xs secondary" id="exportBtn">
                     <i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX
                 </button>
-                <button class="btn btn-sm secondary" style="background: linear-gradient(135deg, #10b981, #059669);" id="saveMensaisBtn" onclick="saveDespesasMensais()">
+                <button class="btn btn-xs secondary" style="background: linear-gradient(135deg, #10b981, #059669);" id="saveMensaisBtn" onclick="saveDespesasMensais()">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar Despesas Mensais
                 </button>
-                <button class="btn btn-sm secondary" onclick="location.reload()">
+                <button class="btn btn-xs secondary" onclick="location.reload()">
                     <i class="fa-solid fa-arrow-rotate-left"></i> Processar Novos Arquivos
                 </button>
             </div>
@@ -1221,14 +1266,14 @@
                     <input type="month" id="dmMesRef" class="auth-input" style="width:200px;" onchange="loadDespesasMensais()">
                 </div>
                 <div style="margin-top:20px;">
-                    <button class="btn btn-sm secondary" onclick="openDmForm(null)"><i class="fa-solid fa-plus"></i> Nova Linha Manual</button>
+                    <button class="btn btn-xs secondary" onclick="openDmForm(null)"><i class="fa-solid fa-plus"></i> Nova Linha Manual</button>
                 </div>
             </div>
             <div id="dmBotoesArea" class="action-bar-right">
-                <button class="btn btn-sm secondary" onclick="openDmDetalhes()" style="background:#8b5cf6;">
+                <button class="btn btn-xs secondary" onclick="openDmDetalhes()" style="background:#8b5cf6;">
                     <i class="fa-solid fa-list-check"></i> Detalhe de Lançamentos
                 </button>
-                <button class="btn btn-sm secondary" onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669);">
+                <button class="btn btn-xs secondary" onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669);">
                     <i class="fa-solid fa-calendar-check"></i> Salvar Dados Despesas Anuais
                 </button>
                 <div id="dmStatusMsg" style="font-size:14px; font-weight:bold;"></div>
@@ -1307,8 +1352,8 @@
                     <input type="text" id="dm_comments" class="auth-input" placeholder="Observações livres...">
                 </div>
 <div style="display:flex;gap:12px;margin-top:1.2rem;">
-                    <button type="submit" class="btn btn-sm secondary" id="dmSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
-                    <button type="button" class="btn btn-sm secondary" onclick="closeDmForm()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                    <button type="submit" class="btn btn-xs secondary" id="dmSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                    <button type="button" class="btn btn-xs secondary" onclick="closeDmForm()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
                 </div>
             </form>
         </div>
@@ -1340,10 +1385,10 @@
 
         <!-- Botões de Consolidação e Exportação -->
         <div style="margin-top:1.5rem; display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-sm secondary" onclick="openDmConsolidacao()" style="background:#f59e0b;">
+            <button class="btn btn-xs secondary" onclick="openDmConsolidacao()" style="background:#f59e0b;">
                 <i class="fa-solid fa-chart-bar"></i> Consolidação
             </button>
-            <button class="btn btn-sm secondary" onclick="exportDmConsolidacao()" style="background:#ef4444;">
+            <button class="btn btn-xs secondary" onclick="exportDmConsolidacao()" style="background:#ef4444;">
                 <i class="fa-solid fa-file-excel"></i> Exportar Consolidação
             </button>
         </div>
@@ -1378,14 +1423,14 @@
     <!-- Módulo Detalhe de Lançamentos -->
     <div class="container module-container module-fullscreen" id="dmDetalhesModule">
         <div style="display:flex; align-items:center; gap:15px; margin-bottom:1.5rem;">
-            <button class="btn btn-sm secondary" onclick="closeDmDetalhes()">
+            <button class="btn btn-xs secondary" onclick="closeDmDetalhes()">
                 <i class="fa-solid fa-arrow-left"></i> Voltar
             </button>
             <h1 style="margin:0; text-align:left;"><i class="fa-solid fa-list-check"></i> Detalhe de Lançamentos</h1>
         </div>
 
         <div style="display:flex; gap:12px; margin-bottom:1.5rem; flex-wrap:wrap;">
-            <button class="btn btn-sm secondary" onclick="exportDdTable()" style="background:#ef4444;">
+            <button class="btn btn-xs secondary" onclick="exportDdTable()" style="background:#ef4444;">
                 <i class="fa-solid fa-file-excel"></i> Exportar para Excel
             </button>
         </div>
@@ -1424,7 +1469,7 @@
         </div>
 
         <div style="margin-top:1.5rem; text-align: right;">
-            <button class="btn btn-sm secondary" onclick="exportDdTable()">
+            <button class="btn btn-xs secondary" onclick="exportDdTable()">
                 <i class="fa-solid fa-file-excel"></i> Exportar para Excel
             </button>
         </div>
@@ -1448,13 +1493,13 @@
                     <input type="month" id="rmMesRef" class="auth-input" style="width:200px;" onchange="loadReceitasMensais()">
                 </div>
                 <div style="margin-top:20px;">
-                    <button class="btn btn-sm secondary" onclick="syncReceitasFromDespesas()" style="background:#10b981;">
+                    <button class="btn btn-xs secondary" onclick="syncReceitasFromDespesas()" style="background:#10b981;">
                         <i class="fa-solid fa-sync"></i> Sincronizar de Despesas
                     </button>
                 </div>
             </div>
             <div style="margin-top:20px;">
-                <button class="btn btn-sm secondary" onclick="openRmForm(null)" style="background:#10b981;">
+                <button class="btn btn-xs secondary" onclick="openRmForm(null)" style="background:#10b981;">
                     <i class="fa-solid fa-plus"></i> Nova Receita Manual
                 </button>
             </div>
@@ -1526,8 +1571,8 @@
                     <input type="text" id="rm_comments" class="auth-input" placeholder="Observações...">
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.2rem;">
-                    <button type="submit" class="btn btn-sm secondary" id="rmSaveBtn" style="background:#10b981;"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
-                    <button type="button" class="btn btn-sm secondary" onclick="closeRmForm()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                    <button type="submit" class="btn btn-xs secondary" id="rmSaveBtn" style="background:#10b981;"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                    <button type="button" class="btn btn-xs secondary" onclick="closeRmForm()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
                 </div>
             </form>
         </div>
@@ -1550,7 +1595,7 @@
             </table>
         </div>
 
-            <button class="btn btn-sm secondary" onclick="exportRmTable()">
+            <button class="btn btn-xs secondary" onclick="exportRmTable()">
                 <i class="fa-solid fa-file-excel"></i> Exportar para Excel
             </button>
         </div>
@@ -1634,7 +1679,7 @@
                 <option value="2025">2025</option>
                 <option value="2023">2023</option>
             </select>
-            <button class="btn btn-sm secondary" onclick="loadRelatorioAnual()"><i class="fa-solid fa-sync"></i> Carregar</button>
+            <button class="btn btn-xs secondary" onclick="loadRelatorioAnual()"><i class="fa-solid fa-sync"></i> Carregar</button>
         </div>
 
         <div class="table-container table-full">
@@ -1652,6 +1697,161 @@
         </div>
     </div>
 
+    <!-- Módulo Relatório Dinâmico -->
+    <div class="container module-container module-fullscreen" id="relatorioDinamicoModule">
+        <h1 style="text-align:center;"><i class="fa-solid fa-table-columns"></i> Relatório Dinâmico</h1>
+        
+        <div style="display:flex; gap:1rem; justify-content:center; margin-bottom:2rem; flex-wrap:wrap;">
+            <button class="btn btn-xs secondary" id="relDinBtnCriar" onclick="showRelDinTab('criar')"><i class="fa-solid fa-plus"></i> Criar Novo</button>
+            <button class="btn btn-xs secondary" id="relDinBtnSalvos" onclick="showRelDinTab('salvos')"><i class="fa-solid fa-folder"></i> Relatórios Salvos</button>
+            <button class="btn btn-xs secondary" id="relDinBtnVisualizar" onclick="showRelDinTab('visualizar')"><i class="fa-solid fa-eye"></i> Visualizar</button>
+        </div>
+
+        <!-- Tab Criar -->
+        <div id="relDinTabCriar">
+            <div class="form-panel" style="margin-bottom:2rem;">
+                <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-sliders"></i> Configuração do Relatório</h3>
+                
+                <div class="form-row" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="form-field">
+                        <label>Nome do Relatório</label>
+                        <input type="text" id="relDinNome" class="auth-input" placeholder="Ex: Despesas por Categoria">
+                    </div>
+                    <div class="form-field">
+                        <label>Agrupador (Group By)</label>
+                        <select id="relDinAgrupador" class="auth-input">
+                            <option value="">Selecione...</option>
+                            <option value="categoria_final">Categoria Final</option>
+                            <option value="tp_investimento">Tipo Investimento</option>
+                            <option value="tp_imposto">Tipo Imposto</option>
+                            <option value="tipo_receita">Tipo Receita</option>
+                            <option value="banco">Banco</option>
+                            <option value="beneficiario">Beneficiário</option>
+                            <option value="despesa">Despesa (Cad.)</option>
+                            <option value="tipo_despesa">Tipo Despesa (Cad.)</option>
+                            <option value="descricao">Descrição (Contas/Receitas)</option>
+                            <option value="nome">Nome (Usuários)</option>
+                            <option value="tp_imposto">Tipo Imposto (Config)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="form-field">
+                        <label>Mês Início</label>
+                        <input type="month" id="relDinMesInicio" class="auth-input">
+                    </div>
+                    <div class="form-field">
+                        <label>Mês Fim</label>
+                        <input type="month" id="relDinMesFim" class="auth-input">
+                    </div>
+                </div>
+
+                <h4 style="margin:1.5rem 0 1rem; color:var(--primary);">Selecione as Tabelas</h4>
+                <div id="relDinTabelas" style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:1rem;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="despesas_mensais" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge">Despesas Mensais</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="receitas_mensais" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">Receitas Mensais</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="lcto_impostos" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(245,158,11,0.15);color:#fcd34d;">Impostos</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="lcto_emprestimos" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(139,92,246,0.15);color:#c4b5fd;">Empréstimos</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="lcto_investimentos" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(59,130,246,0.15);color:#93c5fd;">Investimentos</span>
+                    </label>
+                </div>
+
+                <h4 style="margin:1.5rem 0 1rem; color:var(--warning);">Tabelas de Configuração</h4>
+                <div id="relDinTabelasConfig" style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:1rem;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="cad_despesas" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(236,72,153,0.15);color:#f472b6;">Cad. Despesas</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="cad_contas" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(34,211,238,0.15);color:#22d3ee;">Cad. Contas</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="cad_receitas" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(134,239,172,0.15);color:#86efac;">Cad. Receitas</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="cad_investimentos" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(167,139,250,0.15);color:#a78bfa;">Cad. Invest.</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="cad_usuarios" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;">Cad. Usuários</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-tabela" value="tb_tipo_imposto" onchange="updateRelDinCampos()"> 
+                        <span class="val-badge" style="background:rgba(252,165,165,0.15);color:#fca5a5;">Tipo Imposto</span>
+                    </label>
+                </div>
+
+                <h4 style="margin:1.5rem 0 1rem; color:var(--primary);">Campos Selecionados</h4>
+                <div id="relDinCampos" style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:center; min-height:40px;">
+                    <span style="color:var(--text-muted); font-style:italic;">Selecione as tabelas acima para ver os campos disponíveis</span>
+                </div>
+
+                <h4 style="margin:1.5rem 0 1rem; color:var(--primary);">Moedas de Exibição</h4>
+                <div style="display:flex; gap:1rem; justify-content:center; margin-bottom:2rem;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-moeda" value="EUR" checked> <span style="color:#fcd34d;">€ EUR</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-moeda" value="BRL"> <span style="color:#86efac;">R$ BRL</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-moeda" value="USD"> <span style="color:#93c5fd;">$ USD</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="checkbox" class="rel-din-moeda" value="GBP"> <span style="color:#fca5a5;">£ GBP</span>
+                    </label>
+                </div>
+
+                <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+                    <button class="btn btn-xs" onclick="salvarRelatorioDinamico()"><i class="fa-solid fa-save"></i> Salvar</button>
+                    <button class="btn btn-xs" onclick="gerarRelatorioDinamico()"><i class="fa-solid fa-play"></i> Gerar Relatório</button>
+                    <button class="btn btn-xs" style="background:var(--success);" onclick="exportarRelatorioExcel()"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Salvos -->
+        <div id="relDinTabSalvos" style="display:none;">
+            <div class="table-container">
+                <table id="relDinSalvosTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tabelas</th>
+                            <th>Agrupador</th>
+                            <th>Período</th>
+                            <th style="width:150px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="relDinSalvosTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab Visualizar -->
+        <div id="relDinTabVisualizar" style="display:none;">
+            <div id="relDinResultado" style="display:grid; gap:1.5rem;"></div>
+        </div>
+    </div>
+
     <!-- Módulo Impostos -->
     <div class="container module-container module-fullscreen" id="impostosModule" style="display:none;">
         <h1 style="text-align:center; margin-bottom:0.5rem;"><i class="fa-solid fa-building-columns"></i> Lançamento de Impostos</h1>
@@ -1664,8 +1864,8 @@
 
         <!-- Abas -->
         <div style="display:flex; gap:10px; margin-bottom:1.5rem; justify-content:center; flex-wrap:wrap;">
-            <button class="btn btn-sm secondary" id="impBtnLancamentos" onclick="showImpTab('lancamentos')">Lançamentos</button>
-            <button class="btn btn-sm secondary" id="impBtnDashboard" onclick="showImpTab('dashboard')">Dashboard</button>
+            <button class="btn btn-xs secondary" id="impBtnLancamentos" onclick="showImpTab('lancamentos')">Lançamentos</button>
+            <button class="btn btn-xs secondary" id="impBtnDashboard" onclick="showImpTab('dashboard')">Dashboard</button>
         </div>
 
         <!-- Tab Lançamentos -->
@@ -1731,8 +1931,8 @@
                             <input type="month" id="imp_pagamento_mes_ano" class="auth-input">
                         </div>
                         <div style="display:flex; align-items:flex-end; gap:10px;">
-                            <button type="submit" class="btn btn-sm secondary" id="impBtnSubmit"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                            <button type="button" class="btn btn-sm secondary" id="impBtnCancel" style="display:none;" onclick="cancelEditImposto()">
+                            <button type="submit" class="btn btn-xs secondary" id="impBtnSubmit"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                            <button type="button" class="btn btn-xs secondary" id="impBtnCancel" style="display:none;" onclick="cancelEditImposto()">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
@@ -1763,7 +1963,7 @@
 
             <!-- Export -->
             <div style="display:flex; justify-content:flex-end;">
-                <button class="btn btn-sm secondary" onclick="exportImpostos()">
+                <button class="btn btn-xs secondary" onclick="exportImpostos()">
                     <i class="fa-solid fa-file-excel"></i> Exportar Excel
                 </button>
             </div>
@@ -1837,8 +2037,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="empSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-sm secondary" id="empCancelBtn" style="display:none;" onclick="cancelEditEmprestimo()">
+                    <button type="submit" class="btn btn-xs secondary" id="empSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-xs secondary" id="empCancelBtn" style="display:none;" onclick="cancelEditEmprestimo()">
                         <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
@@ -1941,8 +2141,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="liSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
-                    <button type="button" class="btn btn-sm secondary" id="liCancelBtn" style="display:none;" onclick="cancelEditLctoInvest()">
+                    <button type="submit" class="btn btn-xs secondary" id="liSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    <button type="button" class="btn btn-xs secondary" id="liCancelBtn" style="display:none;" onclick="cancelEditLctoInvest()">
                         <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
@@ -1986,9 +2186,64 @@
                 <input type="file" id="li_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadLctoInvestFile(this)">
                 <div id="li_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-sm secondary" onclick="exportLctoInvestimentos()">
+            <button class="btn btn-xs secondary" onclick="exportLctoInvestimentos()">
                 <i class="fa-solid fa-file-excel"></i> Exportar Excel
             </button>
+        </div>
+    </div>
+
+    <!-- Módulo Avançado -->
+    <div class="container module-container module-fullscreen" id="avancadoModule" style="display:none;">
+        <h1 style="text-align:center; margin-bottom:0.5rem;"><i class="fa-solid fa-gear"></i> Avançado</h1>
+        
+        <!-- Limpar Dados de Lançamentos -->
+        <div class="form-panel">
+            <h3 style="margin-bottom:1rem;">Limpar Dados de Lançamentos</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div>
+                    <div style="font-weight: 600; color: var(--text-light);">Limpar Dados de Lançamentos</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">Remove despesas mensais, receitas, investimentos, impostos e empréstimos. Mantém cadastros.</div>
+                </div>
+                <button class="btn btn-xs secondary" style="background: var(--error);" onclick="limparDadosLancamentos()">
+                    <i class="fa-solid fa-trash"></i> Limpar Dados
+                </button>
+                <div id="limparDadosStatus" style="font-size: 0.9rem; color: var(--warning);"></div>
+            </div>
+        </div>
+
+        <!-- Limpar Dados de Configurações -->
+        <div class="form-panel">
+            <h3 style="margin-bottom:1rem;">Limpar Dados de Configurações</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="cfg_despesas" style="width: 18px; height: 18px;"> 
+                    <span>Cadastro de Despesas</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="cfg_contas" style="width: 18px; height: 18px;"> 
+                    <span>Cadastro de Contas Bancárias</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="cfg_receitas" style="width: 18px; height: 18px;"> 
+                    <span>Cadastro de Receitas</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="cfg_investimentos" style="width: 18px; height: 18px;"> 
+                    <span>Cadastro de Investimentos</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="cfg_usuarios" style="width: 18px; height: 18px;"> 
+                    <span>Cadastro de Usuários</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="cfg_tipo_imposto" style="width: 18px; height: 18px;"> 
+                    <span>Cadastro de Tipos de Imposto</span>
+                </label>
+            </div>
+            <button class="btn btn-xs secondary" style="background: var(--error);" onclick="limparDadosConfiguracoes()">
+                <i class="fa-solid fa-trash"></i> Limpar Configurações
+            </button>
+            <div id="limparCfgStatus" style="font-size: 0.9rem; color: var(--warning); margin-top: 0.5rem;"></div>
         </div>
     </div>
 
@@ -2050,6 +2305,7 @@
             'lcto_investimentos': 'Lançamentos de Investimentos',
             'relatorio_mes': 'Relatório Mensal',
             'relatorio_ano': 'Relatório Anual',
+            'relatorio_dinamico': 'Relatório Dinâmico',
             'dashboard': 'Dashboard',
             'controles': 'Controles',
             'despesas_flex': 'Despesas Flex',
@@ -2063,6 +2319,7 @@
             'cad_receitas': 'Cadastro de Receitas',
             'cad_investimentos': 'Cadastro de Investimentos',
             'cad_tipo_imposto': 'Cadastro de Tipos de Imposto',
+            'avancado': 'Avançado',
         };
 
         async function checkAuthStatus() {
@@ -2105,10 +2362,12 @@
                 'dashboard':         () => { document.getElementById('dashboardModule').style.display = 'block'; nav.style.maxWidth = '1400px'; loadDashboard(); },
                 'relatorio_ano':     () => { document.getElementById('relatorioAnoModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadRelatorioAnual(); },
                 'relatorio_mes':     () => { document.getElementById('relatorioMesModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadRelatorioMensal(); },
+                'relatorio_dinamico': () => { document.getElementById('relatorioDinamicoModule').style.display = 'block'; nav.style.maxWidth = '1400px'; initRelatorioDinamico(); },
                 'impostos':          () => { document.getElementById('impostosModule').style.display = 'block'; nav.style.maxWidth = '1200px'; initImpostos(); },
                 'emprestimos':       () => { document.getElementById('emprestimosModule').style.display = 'block'; nav.style.maxWidth = '1200px'; initEmprestimos(); loadEmprestimos(); },
                 'trader':            () => { document.getElementById('traderModule').style.display = 'block'; nav.style.maxWidth = '1200px'; },
                 'lcto_investimentos': () => { document.getElementById('lctoInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadLctoInvestimentos(); },
+                'avancado':          () => { document.getElementById('avancadoModule').style.display = 'block'; nav.style.maxWidth = '800px'; },
             };
 
             if (moduleMap[moduleKey]) {
@@ -2904,6 +3163,13 @@
             nav.style.display = 'flex';
             nav.style.maxWidth = '1200px'; 
             document.getElementById('backMenuBtn').style.display = 'none';
+
+            // Reset layout limits
+            document.getElementById('extratosModule').classList.remove('no-limits');
+            const reviewSection = document.getElementById('reviewSection');
+            reviewSection.classList.remove('full-screen-mode');
+            reviewSection.style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'block';
         }
 
         function showLoginUI() {
@@ -4135,6 +4401,67 @@
             return parseFloat(num) || 0;
         }
 
+        async function limparDadosLancamentos() {
+            if(!confirm('Tem certeza que deseja limpar TODOS os dados de lançamentos?\n\nIsso remove: Despesas Mensais, Receitas Mensais, Lançamentos de Investimentos, Impostos e Empréstimos.\n\nOs cadastros (despesas, contas, receitas, etc) serão mantidos.')) return;
+            
+            const status = document.getElementById('limparDadosStatus');
+            status.innerText = 'Limpando dados...';
+            try {
+                const res = await fetch('/api/limpar_dados', { method: 'POST' });
+                if(res.ok) {
+                    status.innerText = 'Dados limpos com sucesso!';
+                    setTimeout(() => status.innerText = '', 3000);
+                } else {
+                    status.innerText = 'Erro ao limpar dados';
+                }
+            } catch(e) {
+                status.innerText = 'Erro: ' + e.message;
+            }
+        }
+
+        async function limparDadosConfiguracoes() {
+            const cfgDespesas = document.getElementById('cfg_despesas').checked;
+            const cfgContas = document.getElementById('cfg_contas').checked;
+            const cfgReceitas = document.getElementById('cfg_receitas').checked;
+            const cfgInvestimentos = document.getElementById('cfg_investimentos').checked;
+            const cfgUsuarios = document.getElementById('cfg_usuarios').checked;
+            const cfgTipoImposto = document.getElementById('cfg_tipo_imposto').checked;
+            
+            if(!cfgDespesas && !cfgContas && !cfgReceitas && !cfgInvestimentos && !cfgUsuarios && !cfgTipoImposto) {
+                alert('Selecione pelo menos uma opção para limpar.');
+                return;
+            }
+            
+            if(!confirm('Tem certeza que deseja limpar os dados de configuração selecionados?')) return;
+            
+            const status = document.getElementById('limparCfgStatus');
+            status.innerText = 'Limpando dados...';
+            try {
+                const data = {
+                    despesas: cfgDespesas,
+                    contas: cfgContas,
+                    receitas: cfgReceitas,
+                    investimentos: cfgInvestimentos,
+                    usuarios: cfgUsuarios,
+                    tipo_imposto: cfgTipoImposto
+                };
+                const res = await fetch('/api/limpar_configuracoes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if(res.ok) {
+                    status.innerText = 'Configurações limpas com sucesso!';
+                    setTimeout(() => status.innerText = '', 3000);
+                    document.querySelectorAll('#configuracoesModule input[type="checkbox"]').forEach(c => c.checked = false);
+                } else {
+                    status.innerText = 'Erro ao limpar dados';
+                }
+            } catch(e) {
+                status.innerText = 'Erro: ' + e.message;
+            }
+        }
+
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
             dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }, false);
             document.body.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }, false);
@@ -4345,9 +4672,16 @@
         async function showReviewScreen() {
             uploadSection.style.display = 'none';
             reviewSection.style.display = 'block';
-            document.getElementById('extratosModule').classList.add('expanded');
-            let nav = document.getElementById('userNav');
-            if (nav) nav.style.maxWidth = '1550px';
+            
+            // Ativar modo Full Screen Real
+            const extratosMod = document.getElementById('extratosModule');
+            extratosMod.classList.add('no-limits');
+            reviewSection.classList.add('full-screen-mode');
+            
+            // Esconder navegação superior para ganhar espaço
+            document.getElementById('userNav').style.display = 'none';
+            
+            window.scrollTo(0, 0);
 
             const defaultConta = document.getElementById('uploadContaBancaria').value;
 
@@ -4775,6 +5109,290 @@
 
         function exportLctoInvestimentos() {
             window.location.href = '/api/export_lcto_investimentos';
+        }
+
+        // ── Relatório Dinâmico ─────────────────────────────────────────────────
+        let relDinCamposPorTabela = {};
+
+        async function initRelatorioDinamico() {
+            try {
+                const meRes = await fetch('/api/me');
+                const meData = await meRes.json();
+                if(!meData.logged_in) {
+                    alert('Você precisa fazer login para usar o Relatório Dinâmico');
+                    showLoginUI();
+                    return;
+                }
+                
+                const res = await fetch('/api/relatorio_dinamico/tabelas');
+                if(!res.ok) { throw new Error('Erro ao carregar tabelas'); }
+                relDinCamposPorTabela = await res.json();
+                
+                const mesesRes = await fetch('/api/relatorio_dinamico/meses');
+                if(mesesRes.ok) {
+                    const meses = await mesesRes.json();
+                    if(meses.length > 0) {
+                        document.getElementById('relDinMesInicio').value = meses[meses.length-1];
+                        document.getElementById('relDinMesFim').value = meses[0];
+                    }
+                }
+                showRelDinTab('criar');
+            } catch(e) { 
+                console.error("Erro init relatorio dinamico:", e);
+                alert('Erro ao inicializar: ' + e.message);
+            }
+        }
+
+        function showRelDinTab(tab) {
+            document.getElementById('relDinTabCriar').style.display = 'none';
+            document.getElementById('relDinTabSalvos').style.display = 'none';
+            document.getElementById('relDinTabVisualizar').style.display = 'none';
+            document.getElementById('relDinBtnCriar').classList.remove('secondary');
+            document.getElementById('relDinBtnSalvos').classList.remove('secondary');
+            document.getElementById('relDinBtnVisualizar').classList.remove('secondary');
+            
+            document.getElementById('relDinTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+            document.getElementById('relDinBtn' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('secondary');
+            
+            if(tab === 'salvos') loadRelatoriosSalvos();
+        }
+
+        function updateRelDinCampos() {
+            const checkboxes = document.querySelectorAll('.rel-din-tabela:checked');
+            const container = document.getElementById('relDinCampos');
+            container.innerHTML = '';
+            
+            if(checkboxes.length === 0) {
+                container.innerHTML = '<span style="color:var(--text-muted); font-style:italic;">Selecione as tabelas acima para ver os campos disponíveis</span>';
+                return;
+            }
+            
+            checkboxes.forEach(cb => {
+                const tabela = cb.value;
+                const campos = relDinCamposPorTabela[tabela] || [];
+                container.innerHTML += `<div style="margin:0.5rem;">
+                    <span style="color:var(--primary); font-size:0.9rem;">${tabela}:</span>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
+                        ${campos.map(c => `<label style="font-size:0.85rem;"><input type="checkbox" class="rel-din-campo" value="${c}" checked> ${c}</label>`).join('')}
+                    </div>
+                </div>`;
+            });
+        }
+
+        async function salvarRelatorioDinamico() {
+            const nome = document.getElementById('relDinNome').value;
+            if(!nome) { alert('Informe o nome do relatório'); return; }
+            
+            const tabelas = Array.from(document.querySelectorAll('.rel-din-tabela:checked')).map(cb => cb.value);
+            if(tabelas.length === 0) { alert('Selecione pelo menos uma tabela'); return; }
+            
+            const campos = Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value);
+            const agrupador = document.getElementById('relDinAgrupador').value;
+            const mes_inicio = document.getElementById('relDinMesInicio').value;
+            const mes_fim = document.getElementById('relDinMesFim').value;
+            const moedas = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
+            
+            try {
+                const res = await fetch('/api/relatorio_dinamico', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ nome, tabelas, campos, agrupador, mes_inicio, mes_fim, moedas })
+                });
+                if(res.ok) {
+                    alert('Relatório salvo com sucesso!');
+                    showRelDinTab('salvos');
+                }
+            } catch(e) { console.error(e); alert('Erro ao salvar'); }
+        }
+
+        async function gerarRelatorioDinamico() {
+            const tabelas = Array.from(document.querySelectorAll('.rel-din-tabela:checked')).map(cb => cb.value);
+            if(tabelas.length === 0) { alert('Selecione pelo menos uma tabela'); return; }
+            
+            const campos = Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value);
+            const agrupador = document.getElementById('relDinAgrupador').value || 'categoria_final';
+            const mes_inicio = document.getElementById('relDinMesInicio').value;
+            const mes_fim = document.getElementById('relDinMesFim').value;
+            const moedas = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
+            
+            try {
+                const res = await fetch('/api/relatorio_dinamico/gerar', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ tabelas, campos, agrupador, mes_inicio, mes_fim, moedas })
+                });
+                if(!res.ok) {
+                    const err = await res.json();
+                    alert('Erro: ' + (err.error || 'Erro desconhecido'));
+                    return;
+                }
+                const data = await res.json();
+                renderRelatorioDinamico(data, moedas);
+                showRelDinTab('visualizar');
+            } catch(e) { console.error(e); alert('Erro ao gerar relatório: ' + e.message); }
+        }
+
+        function renderRelatorioDinamico(data, moedas) {
+            const container = document.getElementById('relDinResultado');
+            container.innerHTML = '';
+            
+            if(!data.agrupadores || data.agrupadores.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:2rem;">Nenhum dado encontrado para os filtros selecionados.</div>';
+                return;
+            }
+            
+            const meses = data.meses || [];
+            const hasMeses = meses.length > 0;
+            
+            if(hasMeses) {
+                let totaisHtml = '<div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">';
+                totaisHtml += '<h3 style="margin-bottom:1rem; color:var(--primary);">Totais por Mês</h3>';
+                totaisHtml += '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:1rem;">';
+                
+                meses.forEach(mes => {
+                    let total = 0;
+                    data.agrupadores.forEach(agr => {
+                        if(agr.valores && agr.valores[mes]) {
+                            const vals = agr.valores[mes];
+                            if(vals.EUR) total += vals.EUR;
+                        }
+                    });
+                    totaisHtml += `<div style="text-align:center;">
+                        <div style="font-size:0.8rem; color:var(--text-muted);">${mes}</div>
+                        <div style="font-size:1.2rem; font-weight:bold;">€ ${total.toFixed(2)}</div>
+                    </div>`;
+                });
+                totaisHtml += '</div></div>';
+                container.innerHTML += totaisHtml;
+            }
+            
+            data.agrupadores.forEach(agr => {
+                let cardHtml = `<div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:12px; padding:1.5rem; margin-bottom:1rem;">
+                    <h4 style="margin-bottom:1rem; color:var(--secondary);">${agr.nome || 'Sem Categoria'}</h4>`;
+                
+                if(agr.dados && Object.keys(agr.dados).length > 0) {
+                    cardHtml += '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">';
+                    Object.entries(agr.dados).forEach(([k, v]) => {
+                        cardHtml += `<div style="background:rgba(255,255,255,0.05); padding:0.75rem; border-radius:8px;">
+                            <span style="color:var(--text-muted); font-size:0.85rem;">${k}:</span>
+                            <span style="color:var(--text-light); font-weight:500;">${v || '-'}</span>
+                        </div>`;
+                    });
+                    cardHtml += '</div>';
+                }
+                
+                if(hasMeses) {
+                    cardHtml += '<table style="width:100%; border-collapse:collapse;">';
+                    cardHtml += '<thead><tr>';
+                    cardHtml += '<th style="text-align:left; padding:0.5rem; border-bottom:1px solid var(--glass-border);">Mês</th>';
+                    moedas.forEach(m => {
+                        const cor = m === 'EUR' ? '#fcd34d' : m === 'BRL' ? '#86efac' : m === 'USD' ? '#93c5fd' : '#fca5a5';
+                        cardHtml += `<th style="text-align:right; padding:0.5rem; border-bottom:1px solid var(--glass-border); color:${cor};">${m}</th>`;
+                    });
+                    cardHtml += '</tr></thead><tbody>';
+                    
+                    meses.forEach(mes => {
+                        const vals = agr.valores && agr.valores[mes] ? agr.valores[mes] : {};
+                        cardHtml += '<tr>';
+                        cardHtml += `<td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">${mes}</td>`;
+                        moedas.forEach(m => {
+                            const val = vals[m] || 0;
+                            const cor = m === 'EUR' ? '#fcd34d' : m === 'BRL' ? '#86efac' : m === 'USD' ? '#93c5fd' : '#fca5a5';
+                            cardHtml += `<td style="text-align:right; padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05); color:${cor};">${val.toFixed(2)}</td>`;
+                        });
+                        cardHtml += '</tr>';
+                    });
+                    
+                    cardHtml += '</tbody></table>';
+                }
+                
+                cardHtml += '</div>';
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        async function loadRelatoriosSalvos() {
+            try {
+                const res = await fetch('/api/relatorio_dinamico');
+                const rels = await res.json();
+                const tbody = document.getElementById('relDinSalvosTableBody');
+                tbody.innerHTML = '';
+                
+                rels.forEach(r => {
+                    tbody.innerHTML += `<tr>
+                        <td><b>${r.nome_relatorio}</b></td>
+                        <td>${r.tabelas.join(', ')}</td>
+                        <td>${r.agrupador || '-'}</td>
+                        <td>${r.mes_inicio} até ${r.mes_fim}</td>
+                        <td style="display:flex; gap:0.5rem;">
+                            <button class="btn btn-xs" onclick='carregarRelatorioSalvo(${JSON.stringify(r)})'><i class="fa-solid fa-eye"></i></button>
+                            <button class="btn btn-xs" style="background:var(--error);" onclick="excluirRelatorioSalvo(${r.id})"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        function carregarRelatorioSalvo(r) {
+            document.getElementById('relDinNome').value = r.nome_relatorio;
+            document.getElementById('relDinAgrupador').value = r.agrupador;
+            document.getElementById('relDinMesInicio').value = r.mes_inicio;
+            document.getElementById('relDinMesFim').value = r.mes_fim;
+            
+            document.querySelectorAll('.rel-din-tabela').forEach(cb => {
+                cb.checked = r.tabelas.includes(cb.value);
+            });
+            updateRelDinCampos();
+            
+            setTimeout(() => {
+                document.querySelectorAll('.rel-din-campo').forEach(cb => {
+                    cb.checked = r.campos.includes(cb.value);
+                });
+                document.querySelectorAll('.rel-din-moeda').forEach(cb => {
+                    cb.checked = r.moedas.includes(cb.value);
+                });
+            }, 100);
+            
+            showRelDinTab('criar');
+        }
+
+        async function excluirRelatorioSalvo(id) {
+            if(!confirm('Confirmar exclusão?')) return;
+            await fetch(`/api/relatorio_dinamico/${id}`, { method: 'DELETE' });
+            loadRelatoriosSalvos();
+        }
+
+        async function exportarRelatorioExcel() {
+            const tabelas = Array.from(document.querySelectorAll('.rel-din-tabela:checked')).map(cb => cb.value);
+            if(tabelas.length === 0) { alert('Selecione pelo menos uma tabela'); return; }
+            
+            const campos = Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value);
+            const agrupador = document.getElementById('relDinAgrupador').value || 'categoria_final';
+            const mes_inicio = document.getElementById('relDinMesInicio').value;
+            const mes_fim = document.getElementById('relDinMesFim').value;
+            const moedas = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
+            const nome = document.getElementById('relDinNome').value || 'Relatorio_Dinamico';
+            
+            try {
+                const res = await fetch('/api/relatorio_dinamico/exportar', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ tabelas, campos, agrupador, mes_inicio, mes_fim, moedas, nome })
+                });
+                if(res.ok) {
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = nome.replace(/[^a-z0-9]/gi, '_') + '.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    alert('Erro ao exportar');
+                }
+            } catch(e) { console.error(e); alert('Erro ao exportar para Excel'); }
         }
     </script>
 </body>

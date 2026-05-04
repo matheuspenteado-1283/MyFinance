@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from parser_utils import process_file, process_despesas_file
 from database import (
     save_category_rule, register_user, verify_user, get_user_by_email,
-    get_all_despesas, add_despesa, overwrite_despesas, update_despesa, delete_despesa,
+    get_all_despesas, add_despesa, overwrite_despesas, update_despesa, delete_despesa, clear_despesas,
     get_all_contas, add_conta, update_conta, delete_conta, get_senha_conta, clear_contas,
     get_all_receitas, add_receita, update_receita, delete_receita, clear_receitas,
     get_all_investimentos, add_investimento, update_investimento, delete_investimento, clear_investimentos,
@@ -21,7 +21,8 @@ from database import (
     get_dashboard_impostos,
     get_all_lcto_emprestimos, add_lcto_emprestimo, update_lcto_emprestimo, delete_lcto_emprestimo,
     get_saldo_emprestimos, limpar_dados_usuario,
-    get_all_lcto_investimentos, add_lcto_investimento, update_lcto_investimento, delete_lcto_investimento, clear_lcto_investimentos
+    get_all_lcto_investimentos, add_lcto_investimento, update_lcto_investimento, delete_lcto_investimento, clear_lcto_investimentos,
+    save_relatorio_dinamico, get_all_relatorios_dinamicos, delete_relatorio_dinamico, get_dados_relatorio_dinamico, get_tabelas_campos
 )
 from exchange_api import get_exchange_rate
 
@@ -732,6 +733,18 @@ def api_limpar_dados():
     limpar_dados_usuario(session['user_email'])
     return jsonify({'status': 'ok'})
 
+@app.route('/api/limpar_configuracoes', methods=['POST'])
+def api_limpar_configuracoes():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    data = request.json or {}
+    if data.get('despesas'): clear_despesas()
+    if data.get('contas'): clear_contas()
+    if data.get('receitas'): clear_receitas()
+    if data.get('investimentos'): clear_investimentos()
+    if data.get('usuarios'): clear_usuarios()
+    if data.get('tipo_imposto'): clear_tipo_imposto()
+    return jsonify({'status': 'ok'})
+
 @app.route('/api/upload_receitas', methods=['POST'])
 def api_upload_receitas():
     if 'file' not in request.files: return jsonify({'error': 'Nenhum arquivo'}), 400
@@ -944,6 +957,120 @@ def api_export_lcto_impostos():
         df.to_excel(writer, index=False, sheet_name='Impostos')
     output.seek(0)
     return send_file(output, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name="Lancamentos_Impostos.xlsx")
+
+# ── Relatórios Dinâmicos ───────────────────────────────────────────────────────
+@app.route('/api/relatorio_dinamico/tabelas', methods=['GET'])
+def api_relatorio_dinamico_tabelas():
+    return jsonify(get_tabelas_campos())
+
+@app.route('/api/relatorio_dinamico', methods=['GET'])
+def api_get_relatorios_dinamicos():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_all_relatorios_dinamicos(session['user_email']))
+
+@app.route('/api/relatorio_dinamico', methods=['POST'])
+def api_create_relatorio_dinamico():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    data = request.json or {}
+    save_relatorio_dinamico(
+        session['user_email'],
+        data.get('nome', 'Relatório Sem Nome'),
+        data.get('tabelas', []),
+        data.get('campos', []),
+        data.get('agrupador', ''),
+        data.get('mes_inicio', ''),
+        data.get('mes_fim', ''),
+        data.get('moedas', [])
+    )
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/relatorio_dinamico/<int:r_id>', methods=['DELETE'])
+def api_delete_relatorio_dinamico(r_id):
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    delete_relatorio_dinamico(r_id)
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/relatorio_dinamico/gerar', methods=['POST'])
+def api_gerar_relatorio_dinamico():
+    if 'user_email' not in session: 
+        return jsonify({'error': 'Não logado'}), 401
+    try:
+        data = request.json or {}
+        tabelas = data.get('tabelas', [])
+        if not tabelas:
+            return jsonify({'agrupadores': [], 'meses': []})
+        
+        resultado = get_dados_relatorio_dinamico(
+            session['user_email'],
+            tabelas,
+            data.get('campos', []),
+            data.get('agrupador', ''),
+            data.get('mes_inicio', ''),
+            data.get('mes_fim', ''),
+            data.get('moedas', [])
+        )
+        return jsonify(resultado)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+@app.route('/api/relatorio_dinamico/meses', methods=['GET'])
+def api_meses_disponiveis_relatorio():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    try:
+        from database import get_connection
+        conn = get_connection()
+        rows = conn.execute(
+            "SELECT DISTINCT mes_referencia FROM despesas_mensais WHERE user_email=? ORDER BY mes_referencia DESC",
+            (session['user_email'],)).fetchall()
+        conn.close()
+        meses = [r['mes_referencia'] for r in rows]
+        return jsonify(meses)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify([])
+
+@app.route('/api/relatorio_dinamico/exportar', methods=['POST'])
+def api_export_relatorio_dinamico():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    data = request.json or {}
+    resultado = get_dados_relatorio_dinamico(
+        session['user_email'],
+        data.get('tabelas', []),
+        data.get('campos', []),
+        data.get('agrupador', ''),
+        data.get('mes_inicio', ''),
+        data.get('mes_fim', ''),
+        data.get('moedas', [])
+    )
+    
+    linhas = []
+    meses = resultado.get('meses', [])
+    moedas = data.get('moedas', ['EUR'])
+    
+    for agr in resultado.get('agrupadores', []):
+        nome = agr.get('nome', '')
+        dados = agr.get('dados', {})
+        valores = agr.get('valores', {})
+        
+        for mes in meses:
+            vals_mes = valores.get(mes, {})
+            linha = {'Agrupador': nome, 'Mês': mes}
+            linha.update(dados)
+            for moeda in moedas:
+                linha[f'{moeda}'] = vals_mes.get(moeda, 0)
+            linhas.append(linha)
+    
+    df = pd.DataFrame(linhas)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Relatorio')
+    output.seek(0)
+    
+    nomeArquivo = data.get('nome', 'Relatorio_Dinamico').replace(' ', '_') + '.xlsx'
+    return send_file(output, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name=nomeArquivo)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
