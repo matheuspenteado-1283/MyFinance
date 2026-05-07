@@ -400,12 +400,10 @@ def get_despesas_mensais(user_email, mes=None):
 
 def save_despesas_mensais_batch(user_email, rows_list):
     """Salva um lote de transações do extrato como despesas mensais.
-    Sobrescreve apenas o mês_referencia fornecido."""
+    Adiciona ao invés de sobrescrever os dados existentes."""
     if not rows_list: return 0
     mes = rows_list[0].get('mes_referencia', '')
     conn = get_connection()
-    # Remove apenas as do mês
-    conn.execute('DELETE FROM despesas_mensais WHERE user_email=? AND mes_referencia=?', (user_email, mes))
     for r in rows_list:
         conn.execute('''
             INSERT INTO despesas_mensais 
@@ -472,6 +470,23 @@ def delete_despesa_mensal(d_id):
     conn.commit()
     conn.close()
 
+def delete_despesas_mensais_batch(ids):
+    if not ids: return
+    conn = get_connection()
+    conn.execute('DELETE FROM despesas_mensais WHERE id IN ({})'.format(','.join('?' * len(ids))), ids)
+    conn.commit()
+    conn.close()
+
+def clear_despesas_mensais(user_email, mes=None):
+    """Remove todas as despesas mensais do usuário, opcionalmente apenas um mês específico."""
+    conn = get_connection()
+    if mes:
+        conn.execute('DELETE FROM despesas_mensais WHERE user_email=? AND mes_referencia=?', (user_email, mes))
+    else:
+        conn.execute('DELETE FROM despesas_mensais WHERE user_email=?', (user_email,))
+    conn.commit()
+    conn.close()
+
 def consolidar_despesas_anuais(user_email, ano):
     """Consolida despesas mensais do ano em despesas_anuais (substitui se já existir)."""
     conn = get_connection()
@@ -493,6 +508,25 @@ def consolidar_despesas_anuais(user_email, ano):
     conn.commit()
     conn.close()
     return len(rows)
+
+def get_consolidacao_tipo_despesa(user_email, mes_referencia):
+    """Retorna consolidação por tipo_despesa e moeda para um mês específico."""
+    conn = get_connection()
+    rows = conn.execute('''
+        SELECT 
+            COALESCE(cd.tipo_despesa, 'Sem Tipo') as tipo_despesa,
+            dm.moeda,
+            SUM(dm.usr1) as total_usr1,
+            SUM(dm.usr2) as total_usr2,
+            SUM(dm.usr1) + SUM(dm.usr2) as total_geral
+        FROM despesas_mensais dm
+        LEFT JOIN cad_despesas cd ON cd.despesa = dm.categoria_final
+        WHERE dm.user_email = ? AND dm.mes_referencia = ? AND dm.receita = 0
+        GROUP BY cd.tipo_despesa, dm.moeda
+        ORDER BY cd.tipo_despesa, dm.moeda
+    ''', (user_email, mes_referencia)).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 # ── Receitas Mensais ───────────────────────────────────────────────────────────────
 def get_receitas_mensais(user_email, mes=None):
@@ -907,6 +941,37 @@ def init_lcto_investimentos():
 
 init_lcto_investimentos()
 
+def init_trader():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS trader_positions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT,
+            periodo TEXT,
+            conta_bancaria TEXT,
+            symbol TEXT,
+            type TEXT,
+            volume REAL,
+            open_time TEXT,
+            open_price REAL,
+            close_time TEXT,
+            close_price REAL,
+            sl REAL,
+            tp REAL,
+            margin REAL,
+            commission REAL,
+            swap REAL,
+            rollover REAL,
+            gross_pl REAL,
+            criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_trader()
+
 def get_all_lcto_investimentos(user_email: str):
     conn = get_connection()
     c = conn.cursor()
@@ -1207,3 +1272,64 @@ def get_tabelas_campos():
         'cad_usuarios': ['id', 'chave_usr1', 'chave_usr2', 'nome', 'fator_pagamento'],
         'tb_tipo_imposto': ['id', 'tp_imposto', 'alq_imposto', 'pagamento']
     }
+
+def get_all_trader_positions(user_email: str, periodo: str = None):
+    conn = get_connection()
+    c = conn.cursor()
+    if periodo:
+        c.execute('SELECT * FROM trader_positions WHERE user_email=? AND periodo=? ORDER BY open_time DESC, id DESC', (user_email, periodo))
+    else:
+        c.execute('SELECT * FROM trader_positions WHERE user_email=? ORDER BY periodo DESC, open_time DESC, id DESC', (user_email,))
+    rows = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return rows
+
+def add_trader_position(user_email: str, periodo: str, conta_bancaria: str, symbol: str, type: str, volume: float, open_time: str, open_price: float, close_time: str, close_price: float, sl: float, tp: float, margin: float, commission: float, swap: float, rollover: float, gross_pl: float):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''INSERT INTO trader_positions 
+        (user_email, periodo, conta_bancaria, symbol, type, volume, open_time, open_price, close_time, close_price, sl, tp, margin, commission, swap, rollover, gross_pl)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (user_email, periodo, conta_bancaria, symbol, type, volume, open_time, open_price, close_time, close_price, sl, tp, margin, commission, swap, rollover, gross_pl))
+    conn.commit()
+    conn.close()
+
+def update_trader_position(id: int, periodo: str, conta_bancaria: str, symbol: str, type: str, volume: float, open_time: str, open_price: float, close_time: str, close_price: float, sl: float, tp: float, margin: float, commission: float, swap: float, rollover: float, gross_pl: float):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''UPDATE trader_positions SET 
+        periodo=?, conta_bancaria=?, symbol=?, type=?, volume=?, open_time=?, open_price=?, close_time=?, close_price=?, sl=?, tp=?, margin=?, commission=?, swap=?, rollover=?, gross_pl=?
+        WHERE id=?''',
+        (periodo, conta_bancaria, symbol, type, volume, open_time, open_price, close_time, close_price, sl, tp, margin, commission, swap, rollover, gross_pl, id))
+    conn.commit()
+    conn.close()
+
+def delete_trader_position(id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM trader_positions WHERE id=?', (id,))
+    conn.commit()
+    conn.close()
+
+def clear_trader_positions():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM trader_positions')
+    conn.commit()
+    conn.close()
+
+def get_trader_periodos(user_email: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT DISTINCT periodo FROM trader_positions WHERE user_email=? ORDER BY periodo DESC', (user_email,))
+    rows = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return [r['periodo'] for r in rows]
+
+def get_trader_contas(user_email: str):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT DISTINCT conta_bancaria FROM trader_positions WHERE user_email=? ORDER BY conta_bancaria', (user_email,))
+    rows = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return [r['conta_bancaria'] for r in rows]

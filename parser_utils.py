@@ -28,8 +28,12 @@ def _parse_date(date_string):
     if isinstance(date_string, (date, datetime)):
         return date_string.strftime("%Y-%m-%d")
     
+    date_str = str(date_string).strip()
     try:
-        dt = dateutil.parser.parse(str(date_string), dayfirst=True, fuzzy=True)
+        if re.match(r'^\d{4}', date_str):
+            dt = dateutil.parser.parse(date_str, dayfirst=False, fuzzy=True)
+        else:
+            dt = dateutil.parser.parse(date_str, dayfirst=True, fuzzy=True)
         return dt.strftime("%Y-%m-%d")
     except:
         return "2023-01-01"

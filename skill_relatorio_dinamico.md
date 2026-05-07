@@ -20,6 +20,9 @@
 
 - [ ] **Definir Agrupadores (GROUP BY):** Por qual campo os dados serão agrupados?
   - Exemplos: categoria_final, tp_investimento, tp_imposto, tipo_receita, banco, beneficiario, mês/ano
+  - Os agrupadores devem ser exibidos na primeira coluna e os valores por periodo permitindo a soma por agrupador por total (Total do Ano)
+  - Agrupadores deverão ter colunas separadas por moeda registrada e com label da moeda.
+  
 
 - [ ] **Definir Período:** Quais meses devem ser incluídos?
   - Range: mês inicial até mês final (ex: 2025-01 até 2025-12)

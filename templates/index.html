@@ -246,7 +246,7 @@
 
         .filter-input {
             width: 100%;
-            margin-top: 8px;
+            margin: 4px 0; /* added vertical spacing */
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--glass-border);
             color: var(--text-light);
@@ -255,7 +255,16 @@
             font-size: 0.85rem;
             font-family: inherit;
             box-sizing: border-box;
+            height: 2rem; /* larger touch target */
+            transition: border-color 0.2s, background 0.2s;
         }
+        .filter-input:focus { border-color: var(--primary); outline: none; }
+        .filter-icon {
+            margin-left: 4px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .filter-icon:hover { color: var(--primary); }
         .filter-input:focus { border-color: var(--primary); outline: none; }
 
         tfoot th {
@@ -531,6 +540,12 @@
         .auth-input:focus {
             outline: none;
             border-color: var(--primary);
+        }
+        input[type="month"] {
+            color-scheme: dark;
+        }
+        input[type="month"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
         }
         .auth-links {
             margin-top: 15px;
@@ -883,10 +898,11 @@
             <table id="despesasTable">
                 <thead>
                     <tr>
-                        <th onclick="sortTableGeneric('despesasTable', 0)">Despesa <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                        <th onclick="sortTableGeneric('despesasTable', 1)">Tipo <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                        <th style="text-align:center;" onclick="sortTableGeneric('despesasTable', 2)">Fator de Divisão <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                        <th onclick="sortTableGeneric('despesasTable', 3)">Prioridade <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                        <th style="width:40px;"><input type="checkbox" onclick="toggleAllDm(this)"></th>
+                        <th onclick="sortTableGeneric('despesasTable', 1)">Despesa <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                        <th onclick="sortTableGeneric('despesasTable', 2)">Tipo <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                        <th style="text-align:center;" onclick="sortTableGeneric('despesasTable', 3)">Fator de Divisão <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                        <th onclick="sortTableGeneric('despesasTable', 4)">Prioridade <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
                         <th style="width: 110px; text-align: center;">Ações</th>
                     </tr>
                 </thead>
@@ -1369,14 +1385,65 @@
                 </div>
             </div>
             <div id="dmBotoesArea" class="action-bar-right">
-                <button class="btn btn-xs secondary" onclick="openDmDetalhes()" style="background:#8b5cf6;">
+                <button class="btn btn-xs secondary" id="dmExpandBtn" onclick="toggleDmExpanded()" style="background:#0ea5e9; width: 140px;">
+                    <i class="fa-solid fa-expand"></i> Expandir
+                </button>
+                <button class="btn btn-xs secondary" onclick="toggleDmLayoutMenu()" style="background:#6366f1; width: 120px;">
+                    <i class="fa-solid fa-table-columns"></i> Layout
+                </button>
+                <button class="btn btn-xs secondary" onclick="openDmDetalhes()" style="background:#8b5cf6; width: 240px;">
                     <i class="fa-solid fa-list-check"></i> Detalhe de Lançamentos
                 </button>
-                <button class="btn btn-xs secondary" onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669);">
+                <button class="btn btn-xs secondary" onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669); width: 240px;">
                     <i class="fa-solid fa-calendar-check"></i> Salvar Dados Despesas Anuais
+                </button>
+                <button class="btn btn-xs" onclick="clearDmRegistros()" style="background:linear-gradient(135deg,#ef4444,#dc2626); width: 240px;">
+                    <i class="fa-solid fa-trash"></i> Limpar Registros
                 </button>
                 <div id="dmStatusMsg" style="font-size:14px; font-weight:bold;"></div>
             </div>
+
+            <div id="dmLayoutMenu" style="display:none; position:absolute; right:20px; top:220px; background:#1e293b; border:1px solid #475569; border-radius:12px; padding:1rem; z-index:1000; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+                <div style="font-weight:600; margin-bottom:0.75rem; color:#f8fafc;">Colunas a Exibir</div>
+                <div style="display:flex; flex-direction:column; gap:0.5rem; max-height:300px; overflow-y:auto;" id="dmLayoutCheckboxes"></div>
+                <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+                    <button class="btn btn-xs" onclick="applyDmLayout()" style="background:#10b981; padding:6px 12px;">Aplicar</button>
+                    <button class="btn btn-xs" onclick="document.getElementById('dmLayoutMenu').style.display='none'" style="background:#64748b; padding:6px 12px;">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards de Valores -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem; margin-top:0.5rem;">
+            <div style="background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.3); border-radius:12px; padding:1rem; text-align:center;">
+                <span style="font-size:0.75rem; color:#fca5a5; text-transform:uppercase; display:block;">Total BRL</span>
+                <h3 id="dmTotalBrl" style="margin:0.5rem 0 0; color:#fca5a5; font-size:1.25rem;">R$ 0,00</h3>
+            </div>
+            <div style="background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.3); border-radius:12px; padding:1rem; text-align:center;">
+                <span style="font-size:0.75rem; color:#93c5fd; text-transform:uppercase; display:block;">Total EUR</span>
+                <h3 id="dmTotalEur" style="margin:0.5rem 0 0; color:#93c5fd; font-size:1.25rem;">€ 0,00</h3>
+            </div>
+            <div style="background:rgba(139, 92, 246, 0.15); border:1px solid rgba(139, 92, 246, 0.3); border-radius:12px; padding:1rem; text-align:center;">
+                <span style="font-size:0.75rem; color:#c4b5fd; text-transform:uppercase; display:block;">Total Convertido</span>
+                <h3 id="dmTotalConvertido" style="margin:0.5rem 0 0; color:#c4b5fd; font-size:1.25rem;">€ 0,00</h3>
+            </div>
+            <div style="background:rgba(245, 158, 11, 0.15); border:1px solid rgba(245, 158, 11, 0.3); border-radius:12px; padding:1rem; text-align:center;">
+                <span style="font-size:0.75rem; color:#fcd34d; text-transform:uppercase; display:block;">Conversão BRL x EUR</span>
+                <h3 id="dmCambio" style="margin:0.5rem 0 0; color:#fcd34d; font-size:1.25rem;">1,00</h3>
+            </div>
+</div>
+
+        <!-- Total por Pagador e por Moeda -->
+        <div id="dmSummaryContainer" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:0.75rem; margin-bottom:1rem;">
+        </div>
+
+        <!-- Seletor de Moeda para conversao total -->
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:1rem; align-items:center;">
+            <label style="font-size:0.85rem; color:var(--text-muted);">Moeda de Conversão:</label>
+            <select id="dmMoedaConversao" class="auth-input" style="width:100px;" onchange="updateDmCards()">
+                <option value="EUR" selected>EUR</option>
+                <option value="BRL">BRL</option>
+            </select>
         </div>
 
         <!-- Formulário de Adição/Edição -->
@@ -1412,16 +1479,12 @@
                         <input type="number" step="0.01" id="dm_valor_eur" class="auth-input" style="opacity:0.7;" readonly>
                     </div>
                     <div class="form-field">
-                        <label>Usr1</label>
-                        <select id="dm_usr1" class="auth-input">
-                            <option value="">— Selecione —</option>
-                        </select>
+                        <label id="dmLabelUsr1">Valor Pagador 1</label>
+                        <input type="number" id="dm_usr1" class="auth-input" step="0.01" placeholder="0,00">
                     </div>
                     <div class="form-field">
-                        <label>Usr2</label>
-                        <select id="dm_usr2" class="auth-input">
-                            <option value="">— Selecione —</option>
-                        </select>
+                        <label id="dmLabelUsr2">Valor Pagador 2</label>
+                        <input type="number" id="dm_usr2" class="auth-input" step="0.01" placeholder="0,00">
                     </div>
                 </div>
                 <div class="form-row">
@@ -1459,23 +1522,44 @@
 
         <!-- Tabela Principal conforme Especificação -->
 
+        <div id="dmFilterBar" style="display:none; background:rgba(15,23,42,0.6); border:1px solid var(--glass-border); border-radius:10px; padding:0.75rem; margin-bottom:0.75rem;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <input type="text" id="dmFilter0" class="filter-input" placeholder="Data" onkeyup="filterDmTable()" style="width:80px;">
+                <input type="text" id="dmFilter1" class="filter-input" placeholder="Descrição" onkeyup="filterDmTable()" style="width:120px;">
+                <input type="text" id="dmFilter2" class="filter-input" placeholder="Valor" onkeyup="filterDmTable()" style="width:70px;">
+                <input type="text" id="dmFilter3" class="filter-input" placeholder="Moeda" onkeyup="filterDmTable()" style="width:60px;">
+                <input type="text" id="dmFilter8" class="filter-input" placeholder="Diff" onkeyup="filterDmTable()" style="width:60px;">
+                <input type="text" id="dmFilter9" class="filter-input" placeholder="Status" onkeyup="filterDmTable()" style="width:70px;">
+                <input type="text" id="dmFilter10" class="filter-input" placeholder="Categoria" onkeyup="filterDmTable()" style="width:90px;">
+                <input type="text" id="dmFilter11" class="filter-input" placeholder="Receita" onkeyup="filterDmTable()" style="width:60px;">
+                <input type="text" id="dmFilter12" class="filter-input" placeholder="Comentário" onkeyup="filterDmTable()" style="width:90px;">
+                <input type="text" id="dmFilter13" class="filter-input" placeholder="Conta" onkeyup="filterDmTable()" style="width:80px;">
+                <button class="btn btn-xs" onclick="clearDmFilters()" style="padding:4px 10px;font-size:0.7rem;background:#64748b;height:28px;"><i class="fa-solid fa-times"></i></button>
+            </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <button class="btn btn-xs" onclick="toggleDmFilters()" style="padding:4px 12px;font-size:0.75rem;background:#334155;"><i class="fa-solid fa-filter"></i> Filtros</button>
+            <span id="dmFilterCount" style="font-size:0.75rem;color:var(--text-muted);"></span>
+        </div>
+
         <div class="table-container table-full">
             <table id="dmTable">
                 <thead><tr>
-                    <th onclick="sortDmTable(0)">Data <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                    <th onclick="sortDmTable(1)">Descrição <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                    <th style="text-align:right;" onclick="sortDmTable(2)">Valor Original <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                    <th style="text-align:center;" onclick="sortDmTable(3)">Moeda Original <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
-                    <th style="text-align:center;" onclick="sortDmTable(4)">Câmbio EUR <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
-                    <th style="text-align:right;" onclick="sortDmTable(5)">Valor Final (EUR) <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
-                    <th style="text-align:right;" onclick="sortDmTable(6)">USR1 <i class="sort-icon fa-solid fa-sort" data-col="6"></i></th>
-                    <th style="text-align:right;" onclick="sortDmTable(7)">USR2 <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
-                    <th style="text-align:center;" onclick="sortDmTable(8)">Diferença Original <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
-                    <th style="text-align:center;" onclick="sortDmTable(9)">Status Pago <i class="sort-icon fa-solid fa-sort" data-col="9"></i></th>
-                    <th onclick="sortDmTable(10)">Categoria Final <i class="sort-icon fa-solid fa-sort" data-col="10"></i></th>
-                    <th style="text-align:center;" onclick="sortDmTable(11)">Receita <i class="sort-icon fa-solid fa-sort" data-col="11"></i></th>
-                    <th onclick="sortDmTable(12)">Comentários <i class="sort-icon fa-solid fa-sort" data-col="12"></i></th>
-                    <th onclick="sortDmTable(13)">Conta Bancária <i class="sort-icon fa-solid fa-sort" data-col="13"></i></th>
+                    <th style="width:40px;text-align:center;"><input type="checkbox" id="dmSelectAll" onclick="toggleAllDm(this)"></th>
+                    <th onclick="sortDmTable(0)">Data <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(0)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortDmTable(1)">Descrição <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(1)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th style="text-align:right;" onclick="sortDmTable(2)">Valor Original <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(2)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(3)">Moeda Original <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(3)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(4)">Câmbio EUR <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(4)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
+                    <th style="text-align:right;" onclick="sortDmTable(5)">Valor Final (EUR) <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(5)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
+                    <th style="text-align:right;" onclick="sortDmTable(6)" id="dmColUsr1">USR1 <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(6)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="6"></i></th>
+                    <th style="text-align:right;" onclick="sortDmTable(7)" id="dmColUsr2">USR2 <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(7)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(8)">Diferença Original <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(8)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(9)">Status Pago <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(9)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="9"></i></th>
+                    <th onclick="sortDmTable(10)">Categoria Final <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(10)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="10"></i></th>
+                    <th style="text-align:center;" onclick="sortDmTable(11)">Receita <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(11)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="11"></i></th>
+                    <th onclick="sortDmTable(12)">Comentários <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(12)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="12"></i></th>
+                    <th onclick="sortDmTable(13)">Conta Bancária <i class="filter-icon fa-solid fa-filter" onclick="focusDmFilter(13)" title="Filtrar"></i> <i class="sort-icon fa-sort" data-col="13"></i></th>
                     <th style="width:100px;text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="dmTableBody"></tbody>
@@ -1491,6 +1575,77 @@
                 <i class="fa-solid fa-file-excel"></i> Exportar Consolidação
             </button>
         </div>
+
+        <!-- Upload de Despesas Mensais -->
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem; margin-top:1.5rem; align-items:stretch;">
+            <div class="upload-area" id="dm_dropZone" style="margin-bottom: 0;">
+                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
+                <div class="upload-text">Importar Despesas Mensais</div>
+                <div class="upload-subtext">Arraste ou clique para importar (CSV, Excel)</div>
+                <input type="file" id="dm_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadDmFile(this)">
+                <div id="dm_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
+                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
+                <div style="font-weight: 600;">Exportar Dados</div>
+                <button class="btn btn-xs secondary" onclick="exportDmTable()" style="width: 100%;">
+                    <i class="fa-solid fa-download"></i> Baixar XLSX
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Seleção Moeda -->
+    <div id="dmMoedaModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#1e293b; border:1px solid #475569; border-radius:16px; padding:2rem; max-width:400px; text-align:center;">
+            <div style="font-size:2rem; color:#f59e0b; margin-bottom:1rem;"><i class="fa-solid fa-coins"></i></div>
+            <h3 style="margin:0 0 0.5rem; color:#f8fafc;">Selecione a Moeda</h3>
+            <p style="color:#94a3b8; margin-bottom:1.5rem;">O arquivo <span id="dmMoedaFileName" style="font-weight:600; color:#fcd34d;"></span> não tem coluna de moeda identificada.</p>
+            <select id="dmMoedaSelect" class="auth-input" style="width:100%; margin-bottom:1.5rem;">
+                <option value="EUR">EUR - Euro</option>
+                <option value="BRL">BRL - Real Brasileiro</option>
+            </select>
+            <div style="display:flex; gap:1rem; justify-content:center;">
+                <button class="btn" onclick="confirmDmMoeda()" style="background:#10b981;"><i class="fa-solid fa-check"></i> Confirmar</button>
+                <button class="btn" onclick="document.getElementById('dmMoedaModal').style.display='none'; document.getElementById('dm_upload_status').innerHTML='';" style="background:#64748b;"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview Upload -->
+    <div id="dmPreviewModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; overflow-y:auto;">
+        <div style="background:#1e293b; border:1px solid #475569; border-radius:16px; padding:1.5rem; max-width:900px; max-height:90vh; width:95%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="margin:0; color:#f8fafc;"><i class="fa-solid fa-list-check"></i> Preview - Selecione as linhas</h3>
+                <button onclick="document.getElementById('dmPreviewModal').style.display='none'" style="background:#334155; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">✕ Fechar</button>
+            </div>
+            <div style="margin-bottom:1rem; display:flex; gap:1rem; align-items:center;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" checked onchange="selectAllDmPreview(this.checked)"> Selecionar Todas
+                </label>
+                <span id="dmPreviewCount" style="color:#94a3b8; font-size:0.9rem;">0 de 0</span>
+            </div>
+            <div style="max-height:400px; overflow-y:auto; border:1px solid #334155; border-radius:8px;">
+                <table style="width:100%; border-collapse:collapse; color:#f8fafc; font-size:0.85rem;">
+                    <thead style="position:sticky; top:0; background:#334155;">
+                        <tr>
+                            <th style="padding:10px; text-align:center;">✓</th>
+                            <th style="padding:10px;">Data</th>
+                            <th style="padding:10px;">Descrição</th>
+                            <th style="padding:10px; text-align:right;">Valor</th>
+                            <th style="padding:10px; text-align:center;">Moeda</th>
+                            <th style="padding:10px; text-align:right;">EUR</th>
+                            <th style="padding:10px;">Categoria</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dmPreviewBody"></tbody>
+                </table>
+            </div>
+            <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center;">
+                <button class="btn" onclick="confirmDmPreview()" style="background:#10b981;"><i class="fa-solid fa-check"></i> Importar Selecionadas</button>
+                <button class="btn" onclick="document.getElementById('dmPreviewModal').style.display='none'" style="background:#64748b;"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Consolidação -->
@@ -1505,8 +1660,8 @@
                     <thead>
                         <tr style="background:#334155;">
                             <th style="padding:12px; text-align:left;">Categoria</th>
-                            <th style="padding:12px; text-align:right;">Total Usr1</th>
-                            <th style="padding:12px; text-align:right;">Total Usr2</th>
+                            <th style="padding:12px; text-align:right;" id="dmConsColUsr1">Total Usr1</th>
+                            <th style="padding:12px; text-align:right;" id="dmConsColUsr2">Total Usr2</th>
                             <th style="padding:12px; text-align:right;">Total Geral</th>
                         </tr>
                     </thead>
@@ -1554,8 +1709,8 @@
                     <th style="text-align:center;">Moeda</th>
                     <th style="text-align:center;">Câmbio</th>
                     <th style="text-align:right;">EUR</th>
-                    <th style="text-align:right;">USR1</th>
-                    <th style="text-align:right;">USR2</th>
+                    <th style="text-align:right;" id="ddColUsr1">USR1</th>
+                    <th style="text-align:right;" id="ddColUsr2">USR2</th>
                     <th style="text-align:center;">Diferença</th>
                     <th style="text-align:center;">Status</th>
                     <th>Categoria</th>
@@ -2226,8 +2381,181 @@
 
     <!-- Módulo Trader -->
     <div class="container module-container module-fullscreen" id="traderModule" style="display:none;">
-        <h1 style="text-align:center;"><i class="fa-solid fa-arrow-trend-up"></i> Trader</h1>
-        <p>Módulo de operações de trading.</p>
+        <h1 style="text-align:center; margin-bottom:2rem;"><i class="fa-solid fa-arrow-trend-up" style="margin-right:15px; color:var(--primary);"></i>Trader</h1>
+        
+        <!-- Filtro de Período -->
+        <div class="form-panel" style="margin-bottom: 2rem;">
+            <div class="action-bar">
+                <div class="form-field" style="min-width: 200px;">
+                    <label><i class="fa-solid fa-calendar-range"></i> Período</label>
+                    <select id="traderPeriodoFilter" class="auth-input" onchange="loadTraderPositions()">
+                        <option value="">Todos os Períodos</option>
+                    </select>
+                </div>
+                <div class="form-field" style="min-width: 200px;">
+                    <label><i class="fa-solid fa-building-columns"></i> Conta Bancária</label>
+                    <select id="traderContaFilter" class="auth-input" onchange="loadTraderPositions()">
+                        <option value="">Todas as Contas</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:10px; align-items:flex-end;">
+                    <button type="button" class="btn btn-sm secondary" onclick="showTraderForm()">
+                        <i class="fa-solid fa-plus"></i> Adicionar
+                    </button>
+                    <button type="button" class="btn btn-sm" onclick="document.getElementById('traderUploadArea').style.display='block'">
+                        <i class="fa-solid fa-upload"></i> Importar Excel
+                    </button>
+                    <button type="button" class="btn btn-sm" style="background:var(--success);" onclick="exportTraderPositions()">
+                        <i class="fa-solid fa-download"></i> Exportar
+                    </button>
+                    <button type="button" class="btn btn-sm" style="background:var(--error);" onclick="clearAllTraderPositions()">
+                        <i class="fa-solid fa-trash-can"></i> Limpar Tudo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Adição (escondido por padrão) -->
+        <div class="form-panel" id="traderFormPanel" style="display:none; margin-bottom: 2rem;">
+            <h3><i class="fa-solid fa-pen-to-square"></i> Nova Posição</h3>
+            <form id="traderForm" onsubmit="saveTraderPosition(event)">
+                <input type="hidden" id="trader_id" value="">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Período</label>
+                        <input type="text" id="trader_periodo" class="auth-input" placeholder="YYYY-MM" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Conta Bancária</label>
+                        <input type="text" id="trader_conta" class="auth-input" placeholder="XTB, Binomo..." required>
+                    </div>
+                    <div class="form-field">
+                        <label>Symbol</label>
+                        <input type="text" id="trader_symbol" class="auth-input" placeholder="EURUSD, GBPJPY..." required>
+                    </div>
+                    <div class="form-field">
+                        <label>Type</label>
+                        <select id="trader_type" class="auth-input">
+                            <option value="Buy">Buy</option>
+                            <option value="Sell">Sell</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Volume</label>
+                        <input type="number" step="0.01" id="trader_volume" class="auth-input" placeholder="0.00">
+                    </div>
+                    <div class="form-field">
+                        <label>Open Time</label>
+                        <input type="datetime-local" id="trader_open_time" class="auth-input">
+                    </div>
+                    <div class="form-field">
+                        <label>Open Price</label>
+                        <input type="number" step="0.00001" id="trader_open_price" class="auth-input" placeholder="0.00000">
+                    </div>
+                    <div class="form-field">
+                        <label>Close Time</label>
+                        <input type="datetime-local" id="trader_close_time" class="auth-input">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Close Price</label>
+                        <input type="number" step="0.00001" id="trader_close_price" class="auth-input" placeholder="0.00000">
+                    </div>
+                    <div class="form-field">
+                        <label>SL</label>
+                        <input type="number" step="0.00001" id="trader_sl" class="auth-input" placeholder="0.00000">
+                    </div>
+                    <div class="form-field">
+                        <label>TP</label>
+                        <input type="number" step="0.00001" id="trader_tp" class="auth-input" placeholder="0.00000">
+                    </div>
+                    <div class="form-field">
+                        <label>Margin</label>
+                        <input type="number" step="0.01" id="trader_margin" class="auth-input" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Commission</label>
+                        <input type="number" step="0.01" id="trader_commission" class="auth-input" placeholder="0.00">
+                    </div>
+                    <div class="form-field">
+                        <label>Swap</label>
+                        <input type="number" step="0.01" id="trader_swap" class="auth-input" placeholder="0.00">
+                    </div>
+                    <div class="form-field">
+                        <label>Rollover</label>
+                        <input type="number" step="0.01" id="trader_rollover" class="auth-input" placeholder="0.00">
+                    </div>
+                    <div class="form-field">
+                        <label>Gross P/L</label>
+                        <input type="number" step="0.01" id="trader_gross_pl" class="auth-input" placeholder="0.00">
+                    </div>
+                </div>
+                <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm" id="traderSaveBtn"><i class="fa-solid fa-check"></i> Salvar</button>
+                    <button type="button" class="btn btn-sm secondary" onclick="hideTraderForm()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Área de Upload -->
+        <div class="form-panel" id="traderUploadArea" style="display:none; margin-bottom: 2rem;">
+            <h3><i class="fa-solid fa-file-import"></i> Importar de Excel</h3>
+            <div class="form-row-2" style="margin-bottom: 1.5rem;">
+                <div class="form-field">
+                    <label>Conta Bancária</label>
+                    <select id="trader_upload_conta" class="auth-input" required>
+                        <option value="">Selecionar...</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Período</label>
+                    <input type="month" id="trader_upload_periodo" class="auth-input" required>
+                </div>
+            </div>
+            <div class="upload-area" id="trader_dropZone" style="margin-bottom: 0;">
+                <i class="fa-solid fa-file-excel upload-icon" style="font-size: 2.5rem; color: var(--success);"></i>
+                <div class="upload-text">Importar Positions do XTB</div>
+                <div class="upload-subtext">Arraste ou clique (CSV, Excel)</div>
+                <input type="file" id="trader_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadTraderFile(this)">
+                <div id="trader_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+        </div>
+
+        <!-- Tabela de Positions -->
+        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list"></i>Posições</h3>
+        <div class="table-container table-full">
+            <table id="traderTable">
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Conta</th>
+                        <th>Symbol</th>
+                        <th>Type</th>
+                        <th>Volume</th>
+                        <th>Open Time</th>
+                        <th>Open Price</th>
+                        <th>Close Time</th>
+                        <th>Close Price</th>
+                        <th>SL</th>
+                        <th>TP</th>
+                        <th>Margin</th>
+                        <th>Comm.</th>
+                        <th>Swap</th>
+                        <th>Rollover</th>
+                        <th>Gross P/L</th>
+                        <th style="width:100px;text-align:center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="traderTableBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Módulo Lançamento Investimentos -->
@@ -2560,7 +2888,7 @@
                 'relatorio_dinamico': () => { document.getElementById('relatorioDinamicoModule').style.display = 'block'; nav.style.maxWidth = '1400px'; initRelatorioDinamico(); },
                 'impostos':          () => { document.getElementById('impostosModule').style.display = 'block'; nav.style.maxWidth = '1200px'; initImpostos(); },
                 'emprestimos':       () => { document.getElementById('emprestimosModule').style.display = 'block'; nav.style.maxWidth = '1200px'; initEmprestimos(); loadEmprestimos(); },
-                'trader':            () => { document.getElementById('traderModule').style.display = 'block'; nav.style.maxWidth = '1200px'; },
+                'trader':            () => { document.getElementById('traderModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initTrader(); },
                 'lcto_investimentos': () => { document.getElementById('lctoInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadLctoInvestimentos(); },
                 'avancado':          () => { document.getElementById('avancadoModule').style.display = 'block'; nav.style.maxWidth = '800px'; },
             };
@@ -2587,7 +2915,7 @@
             const tbody = document.getElementById('despesasTableBody');
             tbody.innerHTML = '';
             window.despesasTableData.forEach(d => {
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td>${d.despesa}</td>
                     <td>${d.tipo_despesa}</td>
                     <td style="text-align: center;">${d.fator_divisao}</td>
@@ -2716,7 +3044,7 @@
             tbody.innerHTML = '';
             window.contasTableData.forEach(c => {
                 const temSenha = !!(c.senha);
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td>${c.descricao||''}</td>
                     <td>${c.agencia||'—'}</td>
                     <td>${c.conta||'—'}</td>
@@ -2856,7 +3184,7 @@
             const tbody = document.getElementById('receitasTableBody');
             tbody.innerHTML = '';
             window.receitasTableData.forEach(r => {
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td>${r.descricao}</td>
                     <td style="text-align:center;">
                         <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
@@ -2945,7 +3273,7 @@
             const tbody=document.getElementById('investimentosTableBody');
             tbody.innerHTML = '';
             window.investimentosTableData.forEach(i => {
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td>${i.descricao}</td>
                     <td style="text-align:center;">
                         <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
@@ -3124,6 +3452,7 @@
         function sortTableGeneric(tableId, colIndex) {
             const key = tableId + 'Data';
             const stateKey = tableId + 'SortState';
+            
             if (!window[key]) return;
             
             const state = window[stateKey] = window[stateKey] || { col: -1, asc: true };
@@ -3135,9 +3464,18 @@
                 state.asc = true;
             }
             
+            const colKeys = {
+                'despesasTable': ['id', 'despesa', 'tipo_despesa', 'fator_divisao', 'prioridade'],
+                'contasTable': ['id', 'descricao', 'agencia', 'conta', 'dados_acesso', 'senha', 'comentarios'],
+                'receitasTable': ['id', 'descricao', 'tipo_receita', 'fator_divisao', 'prioridade'],
+                'usuariosTable': ['id', 'nome', 'email', 'chave_usr1', 'chave_usr2'],
+                'investimentosTable': ['id', 'descricao', 'tipo', 'valor', 'data_inv', 'conta_bancaria']
+            };
+            const keys = colKeys[tableId] || Object.keys(a);
             window[key].sort((a, b) => {
-                let valA = Object.values(a)[colIndex];
-                let valB = Object.values(b)[colIndex];
+                const keyName = keys[dataColIndex];
+                let valA = a[keyName];
+                let valB = b[keyName];
                 
                 if (typeof valA === 'number') {
                     return state.asc ? valA - valB : valB - valA;
@@ -3205,7 +3543,7 @@
             headers.forEach((th, i) => {
                 const icon = th.querySelector('.sort-icon');
                 if (icon) {
-                    if (i === colIndex) {
+                    if (i === colIndex + 1) {
                         icon.className = 'sort-icon fa-solid ' + (asc ? 'fa-sort-up' : 'fa-sort-down');
                         icon.style.color = 'var(--primary)';
                     } else {
@@ -3281,7 +3619,7 @@
             const tbody = document.getElementById('usuariosTableBody');
             tbody.innerHTML = '';
             window.usuariosTableData.forEach(u => {
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td>${u.nome}</td>
                     <td>${u.chave_usr1||'—'}</td>
                     <td>${u.chave_usr2||'—'}</td>
@@ -3680,6 +4018,8 @@
         let dmReceitasCats = [];
         let dmUsr1Keys = [];
         let dmUsr2Keys = [];
+        let dmUsr1Default = '';
+        let dmUsr2Default = '';
 
         async function initDespesasMensais() {
             // Define mês atual se não houver
@@ -3696,6 +4036,8 @@
                 const receitas = await rRes.json();
                 const usuarios = await uRes.json();
                 
+                console.log('Contas carregadas:', contas);
+                
                 console.log('Usuarios carregados:', usuarios);
                 
                 dmDespesasCats = despesas.map(d => d.despesa);
@@ -3707,15 +4049,27 @@
                 dmUsr1Keys = [...new Set(allUsr1)];
                 dmUsr2Keys = [...new Set(allUsr2)];
                 
-                console.log('USR1 Keys:', dmUsr1Keys, 'USR2 Keys:', dmUsr2Keys);
+                // Armazena o primeiro valor não vazio como padrão
+                dmUsr1Default = dmUsr1Keys[0] || '';
+                document.getElementById('dmColUsr1').innerHTML = (dmUsr1Default || 'USR1') + ' <i class="sort-icon fa-solid fa-sort" data-col="5"></i>';
+                document.getElementById('dmConsColUsr1').innerText = dmUsr1Default || 'Total Usr1';
+                document.getElementById('ddColUsr1').innerText = dmUsr1Default || 'USR1';
+                dmUsr2Default = dmUsr2Keys[0] || '';
+                document.getElementById('dmColUsr2').innerHTML = (dmUsr2Default || 'USR2') + ' <i class="sort-icon fa-solid fa-sort" data-col="6"></i>';
+                document.getElementById('dmConsColUsr2').innerText = dmUsr2Default || 'Total Usr2';
+                document.getElementById('ddColUsr2').innerText = dmUsr2Default || 'USR2';
+                
+                console.log('USR1 Keys:', dmUsr1Keys, 'USR2 Keys:', dmUsr2Keys, 'Defaults:', dmUsr1Default, dmUsr2Default);
                 
                 const cSel = document.getElementById('dm_conta');
                 cSel.innerHTML = '<option value="">—</option>' + contas.map(c => `<option value="${c.descricao}">${c.descricao}</option>`).join('');
                 
-                const usr1Select = document.getElementById('dm_usr1');
-                usr1Select.innerHTML = '<option value="">— Selecione —</option>' + dmUsr1Keys.map(k => `<option value="${k}">${k}</option>`).join('') + '<option value="__outro__">+ Outro...</option>';
-                const usr2Select = document.getElementById('dm_usr2');
-                usr2Select.innerHTML = '<option value="">— Selecione —</option>' + dmUsr2Keys.map(k => `<option value="${k}">${k}</option>`).join('') + '<option value="__outro__">+ Outro...</option>';
+                const usr1Input = document.getElementById('dm_usr1');
+                document.getElementById('dmLabelUsr1').innerText = dmUsr1Default || 'Valor Pagador 1';
+                usr1Input.placeholder = '0,00';
+                const usr2Input = document.getElementById('dm_usr2');
+                document.getElementById('dmLabelUsr2').innerText = dmUsr2Default || 'Valor Pagador 2';
+                usr2Input.placeholder = '0,00';
                 
                 updateDmCategorySelect(false);
             } catch(e) {
@@ -3762,9 +4116,11 @@
             const res = await fetch(`/api/despesas_mensais?mes=${mesValue}`);
             const data = await res.json();
             
+            window.dmDataOriginal = [...data];
             window.dmData = data;
-            renderDmTable(data);
+            clearDmFilters();
             updateDmSumTable(data);
+            updateDmCards();
         }
 
         function renderDmTable(data) {
@@ -3777,16 +4133,19 @@
                 const diff = Math.abs(d.valor_original - (usr1Val + usr2Val));
                 const diffBadge = diff < 0.01 ? '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">OK</span>' : `<span class="val-badge" style="background:rgba(239,68,68,0.15);color:var(--error);">${formatCurrency(diff)}</span>`;
                 const stColor = d.status_pago === 'Pago' ? 'var(--success)' : 'var(--warning)';
+                const cambioDisplay = d.cambio_eur ? String(d.cambio_eur).replace('.', ',') : '—';
+                const usr1Display = d.usr1 ? String(d.usr1).replace(/\./g, ',') : '—';
+                const usr2Display = d.usr2 ? String(d.usr2).replace(/\./g, ',') : '—';
                 
-                tbody.innerHTML += `<tr>
-                    <td>${d.data}</td>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
+                    <td>${formatDateBR(d.data)}</td>
                     <td title="${d.descricao}">${d.descricao}</td>
                     <td style="text-align:right;">${formatCurrency(d.valor_original)}</td>
                     <td style="text-align:center;">${d.moeda}</td>
-                    <td style="text-align:center;">${d.cambio_eur}</td>
+                    <td style="text-align:center;">${cambioDisplay}</td>
                     <td style="text-align:right;">€ ${formatCurrency(d.valor_eur)}</td>
-                    <td style="text-align:right;">${d.usr1 || '—'}</td>
-                    <td style="text-align:right;">${d.usr2 || '—'}</td>
+                    <td style="text-align:right;">${usr1Display}</td>
+                    <td style="text-align:right;">${usr2Display}</td>
                     <td style="text-align:center;">${diffBadge}</td>
                     <td style="text-align:center;"><span class="val-badge" style="color:${stColor};border:1px solid ${stColor};">${d.status_pago}</span></td>
                     <td>${d.categoria_final||'—'}</td>
@@ -3799,6 +4158,40 @@
                     </td>
                 </tr>`;
             });
+            
+            let totalOriginal = 0, totalEur = 0, totalUsr1 = 0, totalUsr2 = 0, totalDiff = 0;
+            data.forEach(d => {
+                if(d.receita === 1 || d.receita === true) return;
+                totalOriginal += parseFloat(d.valor_original) || 0;
+                totalEur += parseFloat(d.valor_eur) || 0;
+                totalUsr1 += parseFloat(d.usr1) || 0;
+                totalUsr2 += parseFloat(d.usr2) || 0;
+                totalDiff += Math.abs((parseFloat(d.usr1)||0) + (parseFloat(d.usr2)||0) - (parseFloat(d.valor_original)||0));
+            });
+            
+            const tr = document.createElement('tr');
+            tr.style.background = 'rgba(30, 41, 59, 0.8)';
+            tr.style.fontWeight = 'bold';
+            tr.style.borderTop = '2px solid var(--primary)';
+            tr.innerHTML = `
+                <td colspan="3" style="text-align:right;">SUBTOTAL:</td>
+                <td style="text-align:right;">${formatCurrency(totalOriginal)}</td>
+                <td></td>
+                <td></td>
+                <td style="text-align:right;">€ ${formatCurrency(totalEur)}</td>
+                <td style="text-align:right;">${formatCurrency(totalUsr1)}</td>
+                <td style="text-align:right;">${formatCurrency(totalUsr2)}</td>
+                <td style="text-align:center;">${formatCurrency(totalDiff)}</td>
+                <td colspan="5"></td>
+            `;
+            tbody.appendChild(tr);
+            
+            applyDmLayoutWithoutRender();
+        }
+
+                function toggleAllDm(source) {
+            const checkboxes = document.querySelectorAll('.dm-row-cb');
+            checkboxes.forEach(cb => cb.checked = source.checked);
         }
 
         function sortDmTable(colIndex) {
@@ -3814,18 +4207,17 @@
             
             const colMap = {
                 0: 'data', 1: 'descricao', 2: 'valor_original', 3: 'moeda',
-                4: 'cambio_eur', 5: 'valor_eur', 6: 'usr1', 7: 'usr2',
-                8: 'diferenca_original', 9: 'status_pago', 10: 'categoria_final',
-                11: 'receita', 12: 'comentarios', 13: 'conta_bancaria'
+                4: 'diferenca_original', 5: 'status_pago', 6: 'categoria_final',
+                7: 'receita', 8: 'comentarios', 9: 'conta_bancaria'
             };
             const key = colMap[colIndex];
-            const isNumeric = [2,4,5,6,7,8,11].includes(colIndex);
+            const isNumeric = [2,4,5,6,7,8].includes(colIndex);
             
             window.dmData.sort((a, b) => {
-                let valA = colIndex === 8 ? Math.abs((parseFloat(a.usr1)||0)+(parseFloat(a.usr2)||0)-a.valor_original) : (key ? a[key] : a[colIndex]);
-                let valB = colIndex === 8 ? Math.abs((parseFloat(b.usr1)||0)+(parseFloat(b.usr2)||0)-b.valor_original) : (key ? b[key] : b[colIndex]);
+                let valA = colIndex === 4 ? Math.abs((parseFloat(a.usr1)||0)+(parseFloat(a.usr2)||0)-a.valor_original) : (key ? a[key] : a[colIndex]);
+                let valB = colIndex === 4 ? Math.abs((parseFloat(b.usr1)||0)+(parseFloat(b.usr2)||0)-b.valor_original) : (key ? b[key] : b[colIndex]);
                 
-                if (colIndex === 11) { valA = a.receita ? 1 : 0; valB = b.receita ? 1 : 0; }
+                if (colIndex === 7) { valA = a.receita ? 1 : 0; valB = b.receita ? 1 : 0; }
                 
                 if (isNumeric || typeof valA === 'number') {
                     return state.asc ? (parseFloat(valA)||0) - (parseFloat(valB)||0) : (parseFloat(valB)||0) - (parseFloat(valA)||0);
@@ -3840,6 +4232,175 @@
             renderDmTable(window.dmData);
         }
 
+        function filterDmTable() {
+            if(!window.dmData) return;
+            applyDmFilters();
+        }
+
+        function focusDmFilter(colIdx) {
+            const colToFilter = {0:0, 1:1, 2:2, 3:3, 8:4, 9:5, 10:6, 11:7, 12:8, 13:9};
+            const filterIdx = colToFilter[colIdx];
+            if(filterIdx === undefined) return;
+            const bar = document.getElementById('dmFilterBar');
+            if(bar.style.display === 'none') bar.style.display = 'flex';
+            const input = document.getElementById('dmFilter' + filterIdx);
+            if(input) input.focus();
+        }
+
+        function applyDmFilters() {
+            const filterIds = [0, 1, 2, 3, 8, 9, 10, 11, 12, 13];
+            const filters = filterIds.map(id => {
+                const input = document.getElementById('dmFilter' + id);
+                return input ? input.value.trim().toLowerCase() : '';
+            });
+            
+            const filtered = window.dmDataOriginal ? window.dmDataOriginal.filter(d => {
+                const row = [
+                    (d.data || ''),
+                    (d.descricao || ''),
+                    String(d.valor_original || ''),
+                    (d.moeda || ''),
+                    String(Math.abs((parseFloat(d.usr1)||0)+(parseFloat(d.usr2)||0)-d.valor_original).toFixed(2)),
+                    (d.status_pago || ''),
+                    (d.categoria_final || ''),
+                    d.receita ? 'sim' : 'não',
+                    (d.comentarios || ''),
+                    (d.conta_bancaria || '')
+                ];
+                const rowLC = row.map(v => (v || '').toString().toLowerCase());
+                return filters.every((f, idx) => !f || rowLC[idx].includes(f));
+            }) : [];
+            
+            window.dmData = filtered;
+            renderDmTable(filtered);
+            updateDmCards();
+        }
+
+        function clearDmFilters() {
+            const filterIds = [0, 1, 2, 3, 8, 9, 10, 11, 12, 13];
+            filterIds.forEach(i => {
+                const input = document.getElementById('dmFilter'+i);
+                if(input) input.value = '';
+            });
+            window.dmData = window.dmDataOriginal ? [...window.dmDataOriginal] : [];
+            renderDmTable(window.dmData);
+            updateDmCards();
+        }
+
+        let dmExpanded = false;
+        function toggleDmExpanded() {
+            const module = document.getElementById('despesasMensaisModule');
+            const btn = document.getElementById('dmExpandBtn');
+            dmExpanded = !dmExpanded;
+            if(dmExpanded) {
+                module.classList.add('expanded');
+                btn.innerHTML = '<i class="fa-solid fa-compress"></i> Recolher';
+                btn.style.background = '#64748b';
+            } else {
+                module.classList.remove('expanded');
+                btn.innerHTML = '<i class="fa-solid fa-expand"></i> Expandir';
+                btn.style.background = '#0ea5e9';
+            }
+        }
+
+        function toggleDmFilters() {
+            const bar = document.getElementById('dmFilterBar');
+            bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+        }
+
+        const dmColumnDefs = [
+            {key: 'sel', label: 'Sel', show: true},
+            {key: 'data', label: 'Data', show: true},
+            {key: 'descricao', label: 'Descrição', show: true},
+            {key: 'valor_original', label: 'Valor Original', show: true},
+            {key: 'moeda', label: 'Moeda', show: true},
+            {key: 'cambio_eur', label: 'Câmbio EUR', show: true},
+            {key: 'valor_eur', label: 'Valor EUR', show: true},
+            {key: 'usr1', label: 'Usr1', show: true},
+            {key: 'usr2', label: 'Usr2', show: true},
+            {key: 'diferenca', label: 'Diferença', show: true},
+            {key: 'status_pago', label: 'Status', show: true},
+            {key: 'categoria_final', label: 'Categoria', show: true},
+            {key: 'receita', label: 'Receita', show: true},
+            {key: 'comentarios', label: 'Comentários', show: true},
+            {key: 'conta_bancaria', label: 'Conta', show: true},
+            {key: 'acoes', label: 'Ações', show: true}
+        ];
+
+        function toggleDmLayoutMenu() {
+            const menu = document.getElementById('dmLayoutMenu');
+            const container = document.getElementById('dmLayoutCheckboxes');
+            if(menu.style.display === 'none') {
+                const colsHtml = dmColumnDefs.map((c, i) => 
+                    `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;color:#cbd5e1;">
+                        <input type="checkbox" ${c.show ? 'checked' : ''} onchange="dmColumnDefs[${i}].show = this.checked"> ${c.label}
+                    </label>`
+                ).join('');
+                
+                container.innerHTML = colsHtml + 
+                    `<div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid #475569;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;color:#fcd34d;font-weight:600;">
+                            <input type="checkbox" id="dmLargeCols" onchange="toggleDmLargeCols(this.checked)"> Colunas Grandes
+                        </label>
+                        <div style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">Aumenta descrição, categoria e comentários</div>
+                    </div>`;
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
+        }
+
+        function toggleDmLargeCols(enable) {
+            const cols = ['descricao', 'categoria_final', 'comentarios', 'conta_bancaria'];
+            cols.forEach(key => {
+                const th = document.querySelector(`#dmTable th:nth-child(${dmColumnDefs.findIndex(c => c.key === key) + 1})`);
+                if(th && th.style.display !== 'none') {
+                    th.style.whiteSpace = enable ? 'normal' : 'nowrap';
+                    th.style.minWidth = enable ? '200px' : '';
+                }
+            });
+            const rows = document.querySelectorAll('#dmTableBody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const cellIdx = {descricao: 2, categoria_final: 11, comentarios: 13, conta_bancaria: 14};
+                Object.keys(cellIdx).forEach(key => {
+                    const idx = cellIdx[key];
+                    const colDef = dmColumnDefs.find(c => c.key === key);
+                    if(colDef && colDef.show && cells[idx]) {
+                        cells[idx].style.whiteSpace = enable ? 'normal' : 'nowrap';
+                        cells[idx].style.maxWidth = enable ? '300px' : '';
+                    }
+                });
+            });
+        }
+
+        function applyDmLayout() {
+            applyDmLayoutWithoutRender();
+            document.getElementById('dmLayoutMenu').style.display = 'none';
+        }
+
+        function applyDmLayoutWithoutRender() {
+            const thead = document.querySelector('#dmTable thead tr');
+            const cells = thead.querySelectorAll('th');
+            const idxMap = {0:'sel',1:'data',2:'descricao',3:'valor_original',4:'moeda',5:'cambio_eur',6:'valor_eur',7:'usr1',8:'usr2',9:'diferenca',10:'status_pago',11:'categoria_final',12:'receita',13:'comentarios',14:'conta_bancaria',15:'acoes'};
+            
+            cells.forEach((cell, i) => {
+                const key = idxMap[i];
+                const colDef = dmColumnDefs.find(c => c.key === key);
+                cell.style.display = colDef && colDef.show ? '' : 'none';
+            });
+            
+            const rows = document.querySelectorAll('#dmTableBody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                cells.forEach((cell, i) => {
+                    const key = idxMap[i];
+                    const colDef = dmColumnDefs.find(c => c.key === key);
+                    cell.style.display = colDef && colDef.show ? '' : 'none';
+                });
+            });
+        }
+
         function updateDmSumTable(data) {
             const sumMap = {};
             data.forEach(d => {
@@ -3851,10 +4412,11 @@
             });
             
             const tbody = document.getElementById('dmSumTableBody');
+            if(!tbody) return;
             tbody.innerHTML = '';
             Object.keys(sumMap).sort().forEach(cat => {
                 const s = sumMap[cat];
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td><b>${cat}</b></td>
                     <td style="text-align:center;">${formatCurrency(s.usr1)}</td>
                     <td style="text-align:center;">${formatCurrency(s.usr2)}</td>
@@ -3890,6 +4452,8 @@
                 document.getElementById('dmFormTitle').innerText = 'Nova Despesa';
                 document.getElementById('dm_id').value = '';
                 document.getElementById('dm_data').value = `${mesValue}-01`;
+                document.getElementById('dm_usr1').value = '';
+                document.getElementById('dm_usr2').value = '';
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
             }
             document.getElementById('dmFormPanel').scrollIntoView({behavior:'smooth'});
@@ -3916,6 +4480,8 @@
             
             const usr1Val = document.getElementById('dm_usr1').value;
             const usr2Val = document.getElementById('dm_usr2').value;
+            const usr1Num = parseFloat(usr1Val) || 0;
+            const usr2Num = parseFloat(usr2Val) || 0;
             const payload = {
                 data: document.getElementById('dm_data').value.split('-').reverse().join('/'),
                 descricao: document.getElementById('dm_desc').value,
@@ -3923,8 +4489,8 @@
                 moeda: document.getElementById('dm_moeda').value,
                 cambio_eur: parseFloat(document.getElementById('dm_cambio').value) || 1,
                 valor_eur: parseFloat(document.getElementById('dm_valor_eur').value) || 0,
-                usr1: usr1Val || '',
-                usr2: usr2Val || '',
+                usr1: usr1Num,
+                usr2: usr2Num,
                 diferenca_original: 0, 
                 status_pago: document.getElementById('dm_status').value,
                 categoria_final: document.getElementById('dm_cat').value,
@@ -3933,8 +4499,6 @@
                 conta_bancaria: document.getElementById('dm_conta').value,
                 mes_referencia: mesRef
             };
-            const usr1Num = parseFloat(usr1Val) || 0;
-            const usr2Num = parseFloat(usr2Val) || 0;
             payload.diferenca_original = Math.abs(payload.valor_original - (usr1Num + usr2Num));
             
             const url = id ? `/api/despesas_mensais/${id}` : '/api/despesas_mensais';
@@ -3956,6 +4520,332 @@
             if(!confirm('Excluir esta linha permanentemente?')) return;
             const res = await fetch(`/api/despesas_mensais/${id}`, { method: 'DELETE' });
             if(res.ok) loadDespesasMensais();
+        }
+
+        async function clearDmRegistros() {
+            const mesValue = document.getElementById('dmMesRef').value;
+            if(!mesValue) {
+                alert('Selecione um mês primeiro.');
+                return;
+            }
+            const checkedBoxes = document.querySelectorAll('.dm-row-cb:checked');
+            if(checkedBoxes.length > 0) {
+                if(!confirm(`Tem certeza que deseja excluir ${checkedBoxes.length} registro(s) selecionado(s)?`)) return;
+                const ids = Array.from(checkedBoxes).map(cb => cb.value);
+                const res = await fetch('/api/despesas_mensais/batch_delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ ids: ids })
+                });
+                if(res.ok) {
+                    alert('Registros removidos com sucesso!');
+                    loadDespesasMensais();
+                } else {
+                    alert('Erro ao excluir registros selecionados.');
+                }
+                return;
+            }
+            if(!confirm(`Tem certeza que deseja limpar TODOS os registros de ${mesValue}? Esta ação não pode ser desfeita.`)) return;
+            const res = await fetch('/api/despesas_mensais/clear', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mes: mesValue })
+            });
+            if(res.ok) {
+                alert('Registros removidos com sucesso!');
+                loadDespesasMensais();
+            } else {
+                const data = await res.json();
+                alert('Erro ao limpar: ' + (data.error || 'Erro desconhecido'));
+            }
+        }
+
+        let dmUploadFile = null;
+        let dmUploadMes = null;
+
+        async function uploadDmFile(input) {
+            const file = input.files[0];
+            if(!file) return;
+            
+            const mesValue = document.getElementById('dmMesRef').value;
+            if(!mesValue) {
+                alert('Selecione um mês primeiro.');
+                return;
+            }
+            
+            dmUploadFile = file;
+            dmUploadMes = mesValue;
+            
+            const statusEl = document.getElementById('dm_upload_status');
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('mes', mesValue);
+            
+            try {
+                const res = await fetch('/api/despesas_mensais/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    if(data.needs_moeda) {
+                        document.getElementById('dmMoedaModal').style.display = 'flex';
+                        document.getElementById('dmMoedaFileName').innerText = data.filename || file.name;
+                    } else if(data.preview) {
+                        showDmPreviewModal(data.data, data.mes);
+                    } else {
+                        statusEl.innerHTML = '<i class="fa-solid fa-check" style="color:var(--success);"></i> ' + data.message;
+                        loadDespesasMensais();
+                        setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
+                    }
+                } else {
+                    statusEl.innerHTML = '<i class="fa-solid fa-exclamation-triangle" style="color:var(--error);"></i> ' + (data.error || 'Erro');
+                }
+            } catch(e) {
+                statusEl.innerHTML = '<i class="fa-solid fa-exclamation-triangle" style="color:var(--error);"></i> Erro: ' + e.message;
+            }
+        }
+
+        let dmPreviewData = [];
+
+        function showDmPreviewModal(data, mes) {
+            dmPreviewData = data.map(d => ({...d, selected: true}));
+            const tbody = document.getElementById('dmPreviewBody');
+            tbody.innerHTML = dmPreviewData.map((d, i) => `
+                <tr style="${d.selected ? '' : 'opacity:0.5;'}">
+                    <td style="text-align:center;"><input type="checkbox" ${d.selected ? 'checked' : ''} onchange="toggleDmPreviewRow(${i}, this.checked)"></td>
+                    <td>${d.data || ''}</td>
+                    <td>${d.descricao || ''}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_original)}</td>
+                    <td style="text-align:center;">${d.moeda}</td>
+                    <td style="text-align:right;">€ ${formatCurrency(d.valor_eur)}</td>
+                    <td>${d.categoria_final || '—'}</td>
+                </tr>
+            `).join('');
+            document.getElementById('dmPreviewCount').innerText = `${dmPreviewData.filter(d => d.selected).length} de ${dmPreviewData.length}`;
+            document.getElementById('dmPreviewModal').style.display = 'flex';
+        }
+
+        function toggleDmPreviewRow(idx, checked) {
+            dmPreviewData[idx].selected = checked;
+            document.getElementById('dmPreviewCount').innerText = `${dmPreviewData.filter(d => d.selected).length} de ${dmPreviewData.length}`;
+            const row = document.querySelectorAll('#dmPreviewBody tr')[idx];
+            row.style.opacity = checked ? '1' : '0.5';
+        }
+
+        function selectAllDmPreview(checked) {
+            dmPreviewData.forEach((d, i) => {
+                d.selected = checked;
+                const row = document.querySelectorAll('#dmPreviewBody tr')[i];
+                if(row) row.style.opacity = checked ? '1' : '0.5';
+                const cb = row.querySelector('input[type="checkbox"]');
+                if(cb) cb.checked = checked;
+            });
+            document.getElementById('dmPreviewCount').innerText = `${dmPreviewData.filter(d => d.selected).length} de ${dmPreviewData.length}`;
+        }
+
+        async function confirmDmPreview() {
+            const selectedRows = dmPreviewData.filter(d => d.selected);
+            if(selectedRows.length === 0) {
+                alert('Selecione pelo menos uma linha para importar.');
+                return;
+            }
+            
+            document.getElementById('dmPreviewModal').style.display = 'none';
+            const statusEl = document.getElementById('dm_upload_status');
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
+            
+            try {
+                const res = await fetch('/api/despesas_mensais/upload_confirm', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({rows: selectedRows})
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    statusEl.innerHTML = '<i class="fa-solid fa-check" style="color:var(--success);"></i> ' + data.message;
+                    loadDespesasMensais();
+                    setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
+                } else {
+                    statusEl.innerHTML = '<i class="fa-solid fa-exclamation-triangle" style="color:var(--error);"></i> ' + (data.error || 'Erro');
+                }
+            } catch(e) {
+                statusEl.innerHTML = '<i class="fa-solid fa-exclamation-triangle" style="color:var(--error);"></i> Erro: ' + e.message;
+            }
+        }
+
+        async function confirmDmMoeda() {
+            const moedaSel = document.getElementById('dmMoedaSelect').value;
+            const statusEl = document.getElementById('dm_upload_status');
+            
+            document.getElementById('dmMoedaModal').style.display = 'none';
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+            
+            const formData = new FormData();
+            formData.append('file', dmUploadFile);
+            formData.append('mes', dmUploadMes);
+            formData.append('moeda', moedaSel);
+            
+            try {
+                const res = await fetch('/api/despesas_mensais/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    if(data.preview) {
+                        showDmPreviewModal(data.data, data.mes);
+                    } else {
+                        statusEl.innerHTML = '<i class="fa-solid fa-check" style="color:var(--success);"></i> ' + data.message;
+                        loadDespesasMensais();
+                        setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
+                    }
+                } else {
+                    statusEl.innerHTML = '<i class="fa-solid fa-exclamation-triangle" style="color:var(--error);"></i> ' + (data.error || 'Erro');
+                }
+            } catch(e) {
+                statusEl.innerHTML = '<i class="fa-solid fa-exclamation-triangle" style="color:var(--error);"></i> Erro: ' + e.message;
+            }
+        }
+
+        async function exportDmTable() {
+            const mesValue = document.getElementById('dmMesRef').value;
+            if(!mesValue) {
+                alert('Selecione um mês primeiro.');
+                return;
+            }
+            const res = await fetch('/export/despesas_mensais', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mes: mesValue })
+            });
+            if(res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const filename = res.headers.get('Content-Disposition') || 'despesas_mensais.xlsx';
+                a.download = filename.replace('attachment; filename=', '').replace(/"/g, '') || 'despesas_mensais.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } else {
+                alert('Erro ao exportar');
+            }
+        }
+
+        function updateDmCards() {
+            if(!window.dmData || window.dmData.length === 0) {
+                document.getElementById('dmTotalBrl').innerText = 'R$ 0,00';
+                document.getElementById('dmTotalEur').innerText = '€ 0,00';
+                document.getElementById('dmTotalConvertido').innerText = '€ 0,00';
+                document.getElementById('dmCambio').innerText = '1,0000';
+                return;
+            }
+            
+            let totalBrl = 0;
+            let totalEur = 0;
+            let totalConvertidoEur = 0;
+            let sumCambio = 0;
+            let countCambio = 0;
+            
+            window.dmData.forEach(d => {
+                if(d.receita === 1 || d.receita === true) return;
+                
+                const moeda = (d.moeda || 'BRL').toUpperCase().trim();
+                const valorOriginal = parseFloat(d.valor_original) || 0;
+                const valorEur = parseFloat(d.valor_eur) || 0;
+                const cambio = parseFloat(d.cambio_eur) || 0;
+                
+                totalConvertidoEur += valorEur;
+                
+                if(moeda === 'BRL') {
+                    totalBrl += valorOriginal;
+                    if(cambio > 0) {
+                        sumCambio += cambio;
+                        countCambio++;
+                    }
+                } else if(moeda === 'EUR') {
+                    totalEur += valorOriginal;
+                }
+            });
+            
+            let cambioUsado = countCambio > 0 ? (sumCambio / countCambio) : 1;
+            
+            const moedaConv = document.getElementById('dmMoedaConversao').value;
+            let totalConvertido = 0;
+            if(moedaConv === 'EUR') {
+                totalConvertido = totalConvertidoEur;
+            } else {
+                totalConvertido = totalBrl + (totalEur * cambioUsado);
+            }
+            
+            document.getElementById('dmTotalBrl').innerText = formatCurrency(totalBrl, 'BRL');
+            document.getElementById('dmTotalEur').innerText = formatCurrency(totalEur, 'EUR');
+            document.getElementById('dmTotalConvertido').innerText = formatCurrency(totalConvertido, moedaConv);
+            document.getElementById('dmCambio').innerText = cambioUsado.toFixed(4);
+            renderDmSummary();
+        }
+
+        function renderDmSummary() {
+            const container = document.getElementById('dmSummaryContainer');
+            if(!container) return;
+            
+            const data = window.dmData || window.dmDataOriginal;
+            if(!data || data.length === 0) {
+                container.innerHTML = '<div style="color:#94a3b8;font-size:0.8rem;padding:0.5rem;">Nenhum dado disponível</div>';
+                return;
+            }
+            
+            const usr1Label = dmUsr1Default || 'USR1';
+            const usr2Label = dmUsr2Default || 'USR2';
+            
+            const summary = {
+                'USR1_BRL': { pagador: usr1Label, moeda: 'BRL', total: 0 },
+                'USR1_EUR': { pagador: usr1Label, moeda: 'EUR', total: 0 },
+                'USR2_BRL': { pagador: usr2Label, moeda: 'BRL', total: 0 },
+                'USR2_EUR': { pagador: usr2Label, moeda: 'EUR', total: 0 }
+            };
+            
+            data.forEach(d => {
+                if(d.receita === 1 || d.receita === true) return;
+                
+                const usr1 = parseFloat(d.usr1) || 0;
+                const usr2 = parseFloat(d.usr2) || 0;
+                const moeda = (d.moeda || 'BRL').toUpperCase().trim();
+                
+                if(usr1 > 0) {
+                    const key = 'USR1_' + moeda;
+                    if(summary[key]) summary[key].total += usr1;
+                }
+                if(usr2 > 0) {
+                    const key = 'USR2_' + moeda;
+                    if(summary[key]) summary[key].total += usr2;
+                }
+            });
+            
+            const colors = {
+                'USR1': { bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.3)', text: '#93c5fd' },
+                'USR2': { bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.3)', text: '#6ee7b7' }
+            };
+            
+            const moedaSym = { 'BRL': 'R$', 'EUR': '€' };
+            
+            let html = '';
+            Object.values(summary).forEach(s => {
+                if(s.total <= 0) return;
+                const c = colors[s.pagador === usr1Label ? 'USR1' : 'USR2'];
+                const sym = moedaSym[s.moeda] || 'R$';
+                html += `<div style="background:${c.bg}; border:1px solid ${c.border}; border-radius:10px; padding:0.75rem; text-align:center;">
+                    <span style="font-size:0.7rem; color:${c.text}; text-transform:uppercase; display:block;">${s.pagador} ${s.moeda}</span>
+                    <span style="font-size:1rem; color:${c.text}; font-weight:600;">${sym} ${s.total.toFixed(2).replace('.', ',')}</span>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
         }
 
         let ddData = [];
@@ -3987,8 +4877,8 @@
                 const diffBadge = diff < 0.01 ? '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">OK</span>' : `<span class="val-badge" style="background:rgba(239,68,68,0.15);color:var(--error);">${formatCurrency(diff)}</span>`;
                 const stColor = d.status_pago === 'Pago' ? 'var(--success)' : 'var(--warning)';
                 
-                tbody.innerHTML += `<tr>
-                    <td>${d.data}</td>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
+                    <td>${formatDateBR(d.data)}</td>
                     <td title="${d.descricao}">${d.descricao}</td>
                     <td style="text-align:right;">${formatCurrency(d.valor_original)}</td>
                     <td style="text-align:center;">${d.moeda}</td>
@@ -4019,34 +4909,54 @@
                 return;
             }
             
-            const res = await fetch(`/api/despesas_mensais?mes=${mesValue}`);
-            const data = await res.json();
-            
-            const sumMap = {};
-            data.forEach(d => {
-                const cat = d.categoria_final || 'Sem Categoria';
-                if(!sumMap[cat]) sumMap[cat] = {usr1:0, usr2:0, total:0};
-                sumMap[cat].usr1 += d.usr1 || 0;
-                sumMap[cat].usr2 += d.usr2 || 0;
-                sumMap[cat].total += (d.usr1 + d.usr2);
-            });
-            
-            let html = '';
-            let totalGeral = 0;
-            Object.keys(sumMap).sort().forEach(cat => {
-                const s = sumMap[cat];
-                totalGeral += s.total;
-                html += `<tr style="border-bottom:1px solid #334155;">
-                    <td style="padding:10px;">${cat}</td>
-                    <td style="padding:10px; text-align:right;">€ ${formatCurrency(s.usr1)}</td>
-                    <td style="padding:10px; text-align:right;">€ ${formatCurrency(s.usr2)}</td>
-                    <td style="padding:10px; text-align:right; font-weight:bold;">€ ${formatCurrency(s.total)}</td>
-                </tr>`;
-            });
-            
-            document.getElementById('dmConsolidacaoBody').innerHTML = html;
-            document.getElementById('dmConsolidacaoTotal').innerText = 'Total Geral: € ' + formatCurrency(totalGeral);
-            document.getElementById('dmConsolidacaoModal').style.display = 'block';
+            try {
+                const res = await fetch(`/api/despesas_mensais/consolidacao?mes=${mesValue}`);
+                const data = await res.json();
+                
+                const sumMap = {};
+                data.forEach(d => {
+                    const tipo = d.tipo_despesa || 'Sem Tipo';
+                    const moeda = d.moeda || 'BRL';
+                    const key = `${tipo}|${moeda}`;
+                    if(!sumMap[key]) sumMap[key] = {tipo: tipo, moeda: moeda, usr1:0, usr2:0, total:0};
+                    sumMap[key].usr1 += d.total_usr1 || 0;
+                    sumMap[key].usr2 += d.total_usr2 || 0;
+                    sumMap[key].total += d.total_geral || 0;
+                });
+                
+                let html = '';
+                let totalBrl = 0;
+                let totalEur = 0;
+                const sortedKeys = Object.keys(sumMap).sort((a,b) => {
+                    if(sumMap[a].tipo === 'Sem Tipo') return 1;
+                    if(sumMap[b].tipo === 'Sem Tipo') return -1;
+                    return sumMap[a].tipo.localeCompare(sumMap[b].tipo);
+                });
+                
+                sortedKeys.forEach(key => {
+                    const s = sumMap[key];
+                    if (s.moeda === 'EUR') totalEur += s.total;
+                    else totalBrl += s.total;
+                    const moedaSimbolo = s.moeda === 'EUR' ? '€' : 'R$';
+                    html += `<tr style="border-bottom:1px solid #334155;">
+                        <td style="padding:10px;">${s.tipo} <span style="color:#94a3b8; font-size:0.85em;">(${s.moeda})</span></td>
+                        <td style="padding:10px; text-align:right;">${moedaSimbolo} ${formatCurrency(s.usr1)}</td>
+                        <td style="padding:10px; text-align:right;">${moedaSimbolo} ${formatCurrency(s.usr2)}</td>
+                        <td style="padding:10px; text-align:right; font-weight:bold;">${moedaSimbolo} ${formatCurrency(s.total)}</td>
+                    </tr>`;
+                });
+                
+                if(html === '') {
+                    html = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#94a3b8;">Nenhum dado encontrado para o período.</td></tr>';
+                }
+                
+                document.getElementById('dmConsolidacaoBody').innerHTML = html;
+                document.getElementById('dmConsolidacaoTotal').innerHTML = `Total BRL: R$ ${formatCurrency(totalBrl)} &nbsp;|&nbsp; Total EUR: € ${formatCurrency(totalEur)}`;
+                document.getElementById('dmConsolidacaoModal').style.display = 'block';
+            } catch(e) {
+                console.error('Erro ao carregar consolidação:', e);
+                alert('Erro ao carregar consolidação.');
+            }
         }
 
         function closeDmConsolidacao() {
@@ -4114,7 +5024,7 @@
             const tbody = document.getElementById('rmTableBody');
             tbody.innerHTML = '';
             data.forEach(r => {
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td>${formatDateBR(r.data)}</td>
                     <td>${r.tipo_receita||'—'}</td>
                     <td style="text-align:right;">${formatCurrency(r.valor_original)}</td>
@@ -4475,7 +5385,7 @@
             const tbody = document.getElementById('relAnoTableBody');
             tbody.innerHTML = '';
             data.forEach(d => {
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td><b>${d.categoria}</b></td>
                     <td style="text-align:center;">${formatCurrency(d.usr1)}</td>
                     <td style="text-align:center;">${formatCurrency(d.usr2)}</td>
@@ -4581,7 +5491,7 @@
                     '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">Receita</span>' : 
                     '<span class="val-badge" style="background:rgba(59,130,246,0.15);color:var(--primary);">Despesa</span>';
                 
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td><b>${c.categoria}</b></td>
                     <td style="text-align:center;">${typeBadge}</td>
                     <td style="text-align:center;">${formatCurrency(c.usr1)}</td>
@@ -4659,8 +5569,12 @@
         let selectedFiles = [];
         let parsedTransactions = [];
 
-        function formatCurrency(val) {
-            return parseFloat(val).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        function formatCurrency(val, currency = null) {
+            const num = parseFloat(val) || 0;
+            const formatted = num.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if(currency === 'BRL') return 'R$ ' + formatted;
+            if(currency === 'EUR') return '€ ' + formatted;
+            return formatted;
         }
 
         function parseCurrencyBR(str) {
@@ -4968,12 +5882,29 @@
 
             const defaultConta = document.getElementById('uploadContaBancaria').value;
 
-            // Busca categorias e receitas
+            // Busca categorias, receitas e usuários para valores padrão de USR
+            let usr1Default = '';
+            let usr2Default = '';
             try {
-                const [dRes, rRes] = await Promise.all([fetch('/api/cad_despesas'), fetch('/api/cad_receitas')]);
+                const [dRes, rRes, uRes] = await Promise.all([fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/cad_usuarios')]);
                 window.DYNAMIC_CATEGORIES = (await dRes.json()).map(x => x.despesa);
                 window.DYNAMIC_RECEITAS = (await rRes.json()).map(x => x.descricao);
+                const usuarios = await uRes.json();
+                const allUsr1 = usuarios.map(u => u.chave_usr1).filter(k => k);
+                const allUsr2 = usuarios.map(u => u.chave_usr2).filter(k => k);
+                usr1Default = allUsr1[0] || '';
+                usr2Default = allUsr2[0] || '';
             } catch(e) {}
+            
+            // Pré-preencher pag1 e pag2 com valores padrão se ainda não definidos
+            parsedTransactions.forEach(trx => {
+                if(trx.pag1 === undefined || trx.pag1 === null || trx.pag1 === 0) {
+                    trx.pag1 = usr1Default ? trx.valor_original : trx.valor_original;
+                }
+                if(trx.pag2 === undefined || trx.pag2 === null || trx.pag2 === 0) {
+                    trx.pag2 = usr2Default ? 0 : 0;
+                }
+            });
             
             tableBody.innerHTML = '';
             parsedTransactions.forEach((trx, i) => {
@@ -5170,7 +6101,7 @@
             const tipoBadge = { 'Empréstimo': 'style="background:rgba(239,68,68,0.2);color:#fca5a5;"', 'Pagamento': 'style="background:rgba(16,185,129,0.2);color:#6ee7b7;"', 'Abatimento': 'style="background:rgba(245,158,11,0.2);color:#fcd34d;"' };
             empData.forEach(d => {
                 const statusBadge = d.status === 'Ativo' ? 'val-badge' : (d.status === 'Quitado' ? 'val-badge' : 'val-badge debit');
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td><span class="val-badge" ${tipoBadge[d.tipo] || ''}>${d.tipo || ''}</span></td>
                     <td>${d.beneficiario || ''}</td>
                     <td style="text-align:right;">${formatCurrency(d.valor_operacao)}</td>
@@ -5270,7 +6201,7 @@
                 const lucroMes = (d.valor_atual || 0) - (d.val_mes_ant || 0);
                 const pctRent = valTotInv > 0 ? (lucroOp / valTotInv * 100) : 0;
                 const badgeClass = pctRent >= 0 ? 'val-badge' : 'val-badge debit';
-                tbody.innerHTML += `<tr>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td>${d.banco || ''}</td>
                     <td>${d.tp_investimento || ''}</td>
                     <td>${d.data_inv || ''}</td>
@@ -5651,7 +6582,7 @@
                 tbody.innerHTML = '';
                 
                 rels.forEach(r => {
-                    tbody.innerHTML += `<tr>
+tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${c.id}"></td>
                         <td><b>${r.nome_relatorio}</b></td>
                         <td>${r.tabelas.join(', ')}</td>
                         <td>${r.agrupador || '-'}</td>
@@ -5752,6 +6683,230 @@
         
         function iniciarAutomacaoSimples() {
             alert("Aviso: O ambiente do robô (Antigravity) precisa ser acionado via prompt.\n\nPor favor, digite no chat do Antigravity:\n'Inicie a automação do Simples Nacional'\n\nO robô abrirá o e-CAC, aguardará seu login e depois processará a geração da sua guia de forma automatizada!");
+        }
+
+        // ── Trader Module ─────────────────────────────────────────────────────────
+        let traderData = [];
+
+        async function initTrader() {
+            loadTraderFilters();
+            loadTraderPositions();
+            loadContasIntoSelect('trader_upload_conta');
+        }
+
+        async function loadTraderFilters() {
+            try {
+                const [periodosRes, contasRes] = await Promise.all([
+                    fetch('/api/trader_periodos'),
+                    fetch('/api/trader_contas')
+                ]);
+                const periodos = await periodosRes.json();
+                const contas = await contasRes.json();
+                
+                const periodoFilter = document.getElementById('traderPeriodoFilter');
+                const contaFilter = document.getElementById('traderContaFilter');
+                
+                periodoFilter.innerHTML = '<option value="">Todos os Períodos</option>';
+                contas.forEach(p => {
+                    periodoFilter.innerHTML += `<option value="${p}">${p}</option>`;
+                });
+                
+                contaFilter.innerHTML = '<option value="">Todas as Contas</option>';
+                contas.forEach(c => {
+                    contaFilter.innerHTML += `<option value="${c}">${c}</option>`;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadTraderPositions() {
+            try {
+                const periodo = document.getElementById('traderPeriodoFilter').value;
+                const url = periodo ? `/api/trader_positions?periodo=${periodo}` : '/api/trader_positions';
+                const res = await fetch(url);
+                traderData = await res.json();
+                renderTraderTable();
+            } catch(e) { console.error(e); }
+        }
+
+        async function renderTraderTable() {
+            const tbody = document.getElementById('traderTableBody');
+            tbody.innerHTML = '';
+            traderData.forEach(d => {
+                const isBuy = d.type === 'Buy';
+                const plClass = (d.gross_pl || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
+                    <td>${d.periodo || ''}</td>
+                    <td>${d.conta_bancaria || ''}</td>
+                    <td><strong>${d.symbol || ''}</strong></td>
+                    <td><span class="currency-badge" style="background:${isBuy ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'};color:${isBuy ? '#6ee7b7' : '#fca5a5'}">${d.type || ''}</span></td>
+                    <td style="text-align:right;">${d.volume || 0}</td>
+                    <td>${formatDateTime(d.open_time)}</td>
+                    <td style="text-align:right;">${d.open_price || 0}</td>
+                    <td>${formatDateTime(d.close_time)}</td>
+                    <td style="text-align:right;">${d.close_price || 0}</td>
+                    <td style="text-align:right;">${d.sl || 0}</td>
+                    <td style="text-align:right;">${d.tp || 0}</td>
+                    <td style="text-align:right;">${formatCurrency(d.margin)}</td>
+                    <td style="text-align:right;">${formatCurrency(d.commission)}</td>
+                    <td style="text-align:right;">${formatCurrency(d.swap)}</td>
+                    <td style="text-align:right;">${formatCurrency(d.rollover)}</td>
+                    <td style="text-align:right;"><span class="${plClass}">${formatCurrency(d.gross_pl)}</span></td>
+                    <td style="text-align:center;">
+                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;" onclick="editTrader(${d.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);" onclick="deleteTrader(${d.id})" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function showTraderForm() {
+            document.getElementById('traderFormPanel').style.display = 'block';
+            document.getElementById('traderForm').reset();
+            document.getElementById('trader_id').value = '';
+            document.getElementById('traderSaveBtn').innerHTML = '<i class="fa-solid fa-check"></i> Salvar';
+            document.getElementById('traderFormPanel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideTraderForm() {
+            document.getElementById('traderFormPanel').style.display = 'none';
+            document.getElementById('traderForm').reset();
+        }
+
+        async function saveTraderPosition(e) {
+            e.preventDefault();
+            const id = document.getElementById('trader_id').value;
+            const data = {
+                periodo: document.getElementById('trader_periodo').value,
+                conta_bancaria: document.getElementById('trader_conta').value,
+                symbol: document.getElementById('trader_symbol').value,
+                type: document.getElementById('trader_type').value,
+                volume: document.getElementById('trader_volume').value,
+                open_time: document.getElementById('trader_open_time').value,
+                open_price: document.getElementById('trader_open_price').value,
+                close_time: document.getElementById('trader_close_time').value,
+                close_price: document.getElementById('trader_close_price').value,
+                sl: document.getElementById('trader_sl').value,
+                tp: document.getElementById('trader_tp').value,
+                margin: document.getElementById('trader_margin').value,
+                commission: document.getElementById('trader_commission').value,
+                swap: document.getElementById('trader_swap').value,
+                rollover: document.getElementById('trader_rollover').value,
+                gross_pl: document.getElementById('trader_gross_pl').value
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/trader_positions/${id}` : '/api/trader_positions';
+            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if(res.ok) {
+                hideTraderForm();
+                loadTraderPositions();
+                loadTraderFilters();
+            }
+        }
+
+        function editTrader(id) {
+            const d = traderData.find(x => x.id === id);
+            if(!d) return;
+            document.getElementById('trader_id').value = d.id;
+            document.getElementById('trader_periodo').value = d.periodo || '';
+            document.getElementById('trader_conta').value = d.conta_bancaria || '';
+            document.getElementById('trader_symbol').value = d.symbol || '';
+            document.getElementById('trader_type').value = d.type || 'Buy';
+            document.getElementById('trader_volume').value = d.volume || '';
+            document.getElementById('trader_open_time').value = d.open_time ? d.open_time.replace(' ', 'T') : '';
+            document.getElementById('trader_open_price').value = d.open_price || '';
+            document.getElementById('trader_close_time').value = d.close_time ? d.close_time.replace(' ', 'T') : '';
+            document.getElementById('trader_close_price').value = d.close_price || '';
+            document.getElementById('trader_sl').value = d.sl || '';
+            document.getElementById('trader_tp').value = d.tp || '';
+            document.getElementById('trader_margin').value = d.margin || '';
+            document.getElementById('trader_commission').value = d.commission || '';
+            document.getElementById('trader_swap').value = d.swap || '';
+            document.getElementById('trader_rollover').value = d.rollover || '';
+            document.getElementById('trader_gross_pl').value = d.gross_pl || '';
+            document.getElementById('traderSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Atualizar';
+            showTraderForm();
+        }
+
+        async function deleteTrader(id) {
+            if(!confirm('Confirmar exclusão?')) return;
+            await fetch(`/api/trader_positions/${id}`, { method: 'DELETE' });
+            loadTraderPositions();
+            loadTraderFilters();
+        }
+
+        async function uploadTraderFile(input) {
+            const file = input.files[0];
+            if(!file) return;
+            
+            const conta = document.getElementById('trader_upload_conta').value;
+            const periodo = document.getElementById('trader_upload_periodo').value;
+            
+            if(!conta) {
+                alert('Selecione a Conta Bancária antes de importar.');
+                document.getElementById('trader_upload_conta').focus();
+                return;
+            }
+            if(!periodo) {
+                alert('Selecione o Período antes de importar.');
+                document.getElementById('trader_upload_periodo').focus();
+                return;
+            }
+            
+            console.log('Upload Trader - Conta:', conta, 'Período:', periodo, 'Arquivo:', file.name);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('conta_bancaria', conta);
+            formData.append('periodo', periodo);
+            document.getElementById('trader_upload_status').innerText = 'Importando...';
+            try {
+                const res = await fetch('/api/upload_trader_positions', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(data.error) {
+                    document.getElementById('trader_upload_status').innerText = 'Erro: ' + data.error;
+                } else {
+                    document.getElementById('trader_upload_status').innerText = `Importado(s) ${data.count} registro(s)!`;
+                    document.getElementById('traderUploadArea').style.display = 'none';
+                    document.getElementById('trader_upload_conta').value = '';
+                    document.getElementById('trader_upload_periodo').value = '';
+                    loadTraderPositions();
+                    loadTraderFilters();
+                }
+            } catch(e) {
+                document.getElementById('trader_upload_status').innerText = 'Erro ao importar: ' + e.message;
+            }
+            input.value = '';
+        }
+
+        async function exportTraderPositions() {
+            const periodo = document.getElementById('traderPeriodoFilter').value;
+            const url = periodo ? `/api/export_trader_positions?periodo=${periodo}` : '/api/export_trader_positions';
+            window.location.href = url;
+        }
+
+        async function clearAllTraderPositions() {
+            const periodo = document.getElementById('traderPeriodoFilter').value;
+            const msg = periodo 
+                ? `Confirmar exclusão de todos os registros do período ${periodo}?` 
+                : 'Confirmar exclusão de TODOS os registros do Trader?';
+            if(!confirm(msg)) return;
+            try {
+                await fetch('/api/trader_positions/clear', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ periodo: periodo || null })
+                });
+                loadTraderPositions();
+                loadTraderFilters();
+            } catch(e) { console.error(e); }
+        }
+
+        function formatDateTime(dt) {
+            if(!dt) return '';
+            try {
+                const d = new Date(dt.replace(' ', 'T'));
+                return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch(e) { return dt; }
         }
 
         document.addEventListener('DOMContentLoaded', () => {

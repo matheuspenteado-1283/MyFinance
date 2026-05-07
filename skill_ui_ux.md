@@ -24,6 +24,27 @@
 - [ ] **Padronização de Componentes:** Definir o visual padrão para Botões (Principal, Secundário, Texto), Campos de Formulário (Inputs) e Cards.
 - [ ] **Respiro Visual (White Space):** Aplicar margens e espaçamentos (paddings) generosos e padronizados para evitar que a tela fique poluída e confusa.
 
+### Regras de Formatação (OBRIGATÓRIO)
+**SEMPRE aplicar as seguintes regras em qualquer desenvolvimento:**
+
+1. **Valores Decimais:**
+   - Usar vírgula (,) como separador decimal, não ponto (.).
+   - Exemplos: "1.234,56" (não "1234.56"), "100,00" (não "100.00")
+   - Aplicar em: todos os campos de valor, tabelas, cards, exports para Excel/CSV
+
+2. **Datas:**
+   - Todas as datas devem ser exibidas no formato DD/MM/YYYY
+   - Exemplos: "01/05/2024", "31/12/2023"
+   - Não usar: "2024-05-01", "May 1, 2024"
+   - Aplicar em: todas as exibições de data, tabelas, formulários, exports
+
+3. **Exportação Excel/CSV:**
+   - Valores numéricos devem ser exportados como NÚMEROS (não texto)
+   - Usar formato de células do Excel com separador de milhar e 2 casas decimais: `#,##0.00`
+   - Isso permite que o usuário faça cálculos (soma, média, etc.) diretamente no Excel
+   - Não converter para string com vírgula - manter como número e usar formatação de exibição
+   - Exemplo em Python (openpyxl): `cell.number_format = '#,##0.00'`
+
 - **Padrões de Botões:** Criar padrão de botões com a following características:
     - Botão de Ação Principal (Azul, com texto branco, arredondado)
     - Botão de Ação Secundária (Branco, com texto azul, arredondado)

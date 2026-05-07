@@ -12,8 +12,8 @@ from database import (
     get_all_investimentos, add_investimento, update_investimento, delete_investimento, clear_investimentos,
     get_all_usuarios, add_usuario, update_usuario, delete_usuario, clear_usuarios,
     get_despesas_mensais, save_despesas_mensais_batch, add_despesa_mensal,
-    update_despesa_mensal, delete_despesa_mensal, consolidar_despesas_anuais,
-    get_dashboard_data, get_annual_report,
+    update_despesa_mensal, delete_despesa_mensal, delete_despesas_mensais_batch, clear_despesas_mensais, consolidar_despesas_anuais,
+    get_consolidacao_tipo_despesa, get_dashboard_data, get_annual_report,
     get_receitas_mensais, add_receita_mensal, update_receita_mensal, delete_receita_mensal,
     sync_receitas_from_despesas_mensais, get_totais_receitas,
     get_all_tipo_imposto, add_tipo_imposto, update_tipo_imposto, delete_tipo_imposto, clear_tipo_imposto,
@@ -22,7 +22,9 @@ from database import (
     get_all_lcto_emprestimos, add_lcto_emprestimo, update_lcto_emprestimo, delete_lcto_emprestimo,
     get_saldo_emprestimos, limpar_dados_usuario,
     get_all_lcto_investimentos, add_lcto_investimento, update_lcto_investimento, delete_lcto_investimento, clear_lcto_investimentos,
-    save_relatorio_dinamico, get_all_relatorios_dinamicos, delete_relatorio_dinamico, get_dados_relatorio_dinamico, get_tabelas_campos
+    save_relatorio_dinamico, get_all_relatorios_dinamicos, delete_relatorio_dinamico, get_dados_relatorio_dinamico, get_tabelas_campos,
+    get_all_trader_positions, add_trader_position, update_trader_position, delete_trader_position, clear_trader_positions,
+    get_trader_periodos, get_trader_contas
 )
 from exchange_api import get_exchange_rate
 
@@ -232,6 +234,161 @@ def api_delete_despesa_mensal(d_id):
     delete_despesa_mensal(d_id)
     return jsonify({'status': 'ok'})
 
+@app.route('/api/despesas_mensais/batch_delete', methods=['POST'])
+def api_batch_delete_despesas_mensais():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    data = request.json or {}
+    ids = data.get('ids', [])
+    if ids:
+        delete_despesas_mensais_batch(ids)
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/despesas_mensais/clear', methods=['POST'])
+def api_clear_despesas_mensais():
+    """Limpa todas as despesas mensais do usuário, ou apenas um mês específico."""
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    mes = (request.json or {}).get('mes')  # Opcional: YYYY-MM
+    clear_despesas_mensais(session['user_email'], mes)
+    return jsonify({'status': 'ok', 'message': f'Registros {"do mês " + mes if mes else ""} removidos com sucesso!'})
+
+@app.route('/api/despesas_mensais/upload', methods=['POST'])
+def api_upload_despesas_mensais():
+    """Upload de despesas mensais via planilha Excel/CSV - modo preview."""
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    if 'file' not in request.files: return jsonify({'error': 'Nenhum arquivo'}), 400
+    file = request.files['file']
+    if not file.filename.endswith(('.csv', '.xls', '.xlsx')): return jsonify({'error': 'Arquivo inválido'}), 400
+    
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+    file.save(filepath)
+    preview_data = []
+    try:
+        filename = file.filename.lower()
+        df = pd.read_excel(filepath) if filename.endswith(('.xls', '.xlsx')) else pd.read_csv(filepath)
+        df.columns = df.columns.str.strip().str.lower()
+        
+        mes_ref = (request.form or {}).get('mes') or (request.json or {}).get('mes') if request.form or request.json else None
+        if not mes_ref:
+            return jsonify({'error': 'Mês de referência não informado'}), 400
+        
+        force_moeda = (request.form or {}).get('moeda') or (request.json or {}).get('moeda') if request.form or request.json else None
+        
+        is_revolut = any(c in df.columns for c in ['descrição', 'descricao', 'description']) or any(c in df.columns for c in ['tipo', 'type'])
+        
+        has_moeda_col = 'moeda' in df.columns
+        
+        if not has_moeda_col and not force_moeda:
+            if is_revolut:
+                force_moeda = 'EUR'
+            else:
+                return jsonify({'needs_moeda': True, 'message': 'Moeda não identificada no arquivo. Selecione a moeda manualmente.', 'filename': file.filename}), 200
+        
+        idx = 0
+        for _, row in df.iterrows():
+            try:
+                if is_revolut:
+                    data_raw = str(row.get('data de início', '') or row.get('data de conclusão', '') or row.get('data de conclusao', '') or row.get('started date', '') or row.get('completed date', ''))
+                    data = data_raw[:10] if data_raw and data_raw.lower() not in ['nan', 'none', 'nat'] else ''
+                    desc = str(row.get('descrição') or row.get('descricao') or row.get('description') or row.get('tipo') or row.get('type') or '').strip()
+                    val_orig = abs(float(row.get('montante') or row.get('amount') or 0))
+                    moeda = 'EUR'
+                    cambio = 1
+                    val_eur = val_orig
+                else:
+                    data = row.get('data') or row.get('Data') or ''
+                    desc = row.get('descricao') or row.get('descrição') or row.get('descricao') or ''
+                    val_orig = float(row.get('valor_original') or row.get('valor original') or row.get('valor') or 0) or 0
+                    
+                    if force_moeda:
+                        moeda = force_moeda.upper()
+                    else:
+                        moeda_raw = row.get('moeda') or row.get('Moeda')
+                        if moeda_raw and str(moeda_raw).strip():
+                            moeda = 'EUR' if str(moeda_raw).upper().strip() == 'EUR' else 'BRL'
+                    cambio = float(row.get('cambio_eur') or row.get('cambio eur') or row.get('câmbio') or 1) or 1
+                    val_eur = float(row.get('valor_eur') or row.get('valor eur') or val_orig * cambio) or (val_orig * cambio)
+                
+                if desc.lower() in ['nan', 'none', ''] or not desc: continue
+                if val_orig == 0: continue
+                
+                if is_revolut:
+                    if val_orig > 0 and ('carregamento' in desc.lower() or 'top-up' in desc.lower() or 'top up' in desc.lower()):
+                        continue
+                
+                desc = desc[:200]
+                usr1 = str(row.get('usr1') or row.get('Usr1') or '') or ''
+                usr2 = str(row.get('usr2') or row.get('Usr2') or '') or ''
+                status = str(row.get('status_pago') or row.get('status') or 'Pendente')
+                cat = str(row.get('categoria_final') or row.get('categoria') or '') or 'Não Categorizado'
+                receita = 1 if str(row.get('receita') or '').lower() in ['sim', 'yes', '1', 'true'] else 0
+                comentario = str(row.get('comentarios') or '') or ''
+                conta = str(row.get('conta_bancaria') or row.get('conta') or '') or ''
+                if is_revolut:
+                    conta = 'Revolut'
+                
+                if desc:
+                    preview_data.append({
+                        'idx': idx,
+                        'data': data,
+                        'descricao': desc,
+                        'valor_original': val_orig,
+                        'moeda': moeda,
+                        'cambio_eur': cambio,
+                        'valor_eur': val_eur,
+                        'usr1': usr1,
+                        'usr2': usr2,
+                        'status_pago': status,
+                        'categoria_final': cat,
+                        'receita': receita,
+                        'comentarios': comentario,
+                        'conta_bancaria': conta,
+                        'mes_referencia': mes_ref
+                    })
+                    idx += 1
+            except Exception as e:
+                continue
+        os.remove(filepath)
+        return jsonify({'preview': True, 'data': preview_data, 'mes': mes_ref})
+    except Exception as e:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/despesas_mensais/upload_confirm', methods=['POST'])
+def api_upload_despesas_mensais_confirm():
+    """Confirma a importação das linhas selecionadas."""
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    rows = request.json.get('rows', [])
+    if not rows:
+        return jsonify({'error': 'Nenhuma linha selecionada'}), 400
+    
+    count = 0
+    for row in rows:
+        if row.get('selected', True):
+            try:
+                add_despesa_mensal(session['user_email'], {
+                    'data': row.get('data', ''),
+                    'descricao': row.get('descricao', ''),
+                    'valor_original': row.get('valor_original', 0),
+                    'moeda': row.get('moeda', 'BRL'),
+                    'cambio_eur': row.get('cambio_eur', 1),
+                    'valor_eur': row.get('valor_eur', 0),
+                    'usr1': row.get('usr1', ''),
+                    'usr2': row.get('usr2', ''),
+                    'diferenca_original': abs(row.get('valor_original', 0) - (float(row.get('usr1') or 0) + float(row.get('usr2') or 0))),
+                    'status_pago': row.get('status_pago', 'Pendente'),
+                    'categoria_final': row.get('categoria_final') or 'Não Categorizado',
+                    'receita': row.get('receita', 0),
+                    'comentarios': row.get('comentarios', ''),
+                    'conta_bancaria': row.get('conta_bancaria', ''),
+                    'mes_referencia': row.get('mes_referencia', '')
+                })
+                count += 1
+            except Exception as e:
+                print(f"Erro ao salvar linha: {e}")
+                continue
+    return jsonify({'status': 'ok', 'count': count, 'message': f'{count} despesas importadas!'})
+
 @app.route('/api/despesas_anuais/consolidar', methods=['POST'])
 def api_consolidar_anuais():
     if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
@@ -239,6 +396,14 @@ def api_consolidar_anuais():
     ano = (request.json or {}).get('ano', datetime.date.today().year)
     count = consolidar_despesas_anuais(session['user_email'], ano)
     return jsonify({'status': 'ok', 'categorias': count})
+
+@app.route('/api/despesas_mensais/consolidacao', methods=['GET'])
+def api_consolidacao_tipo_despesa():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    mes = request.args.get('mes')
+    if not mes: return jsonify({'error': 'Mês não informado'}), 400
+    data = get_consolidacao_tipo_despesa(session['user_email'], mes)
+    return jsonify(data)
 
 @app.route('/api/dashboard_data', methods=['GET'])
 def api_get_dashboard_data():
@@ -275,10 +440,25 @@ def export_despesas_mensais():
             'receita': 'Receita', 'comentarios': 'Comentários', 'conta_bancaria': 'Conta Bancária'
         }, inplace=True)
         df['Receita'] = df['Receita'].map({1: 'Sim', 0: 'Não'})
+        
+        num_cols = ['Valor Original', 'Câmbio EUR', 'Valor Final (EUR)', 'USR1', 'USR2', 'Diferença Original']
+        for col in num_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', '.'), errors='coerce')
     
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Detalhes Lancamentos')
+        workbook = writer.book
+        worksheet = writer.sheets['Detalhes Lancamentos']
+        
+        from openpyxl.styles import numbers
+        for col in num_cols:
+            if col in df.columns:
+                col_idx = df.columns.get_loc(col) + 1
+                for row in range(2, len(df) + 2):
+                    cell = worksheet.cell(row=row, column=col_idx)
+                    cell.number_format = '#,##0.00'
     output.seek(0)
     
     ano, mes_num = mes.split('-')
@@ -311,9 +491,24 @@ def export_consolidacao():
             for cat in sorted(sumMap.keys())]
     
     df = pd.DataFrame(rows)
+    num_cols = ['Total Usr1', 'Total Usr2', 'Total Geral']
+    for col in num_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Consolidacao')
+        workbook = writer.book
+        worksheet = writer.sheets['Consolidacao']
+        
+        from openpyxl.styles import numbers
+        for col in num_cols:
+            if col in df.columns:
+                col_idx = df.columns.get_loc(col) + 1
+                for row in range(2, len(df) + 2):
+                    cell = worksheet.cell(row=row, column=col_idx)
+                    cell.number_format = '#,##0.00'
     output.seek(0)
     
     ano, mes_num = mes.split('-')
@@ -1071,6 +1266,177 @@ def api_export_relatorio_dinamico():
     
     nomeArquivo = data.get('nome', 'Relatorio_Dinamico').replace(' ', '_') + '.xlsx'
     return send_file(output, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name=nomeArquivo)
+
+@app.route('/api/trader_positions', methods=['GET'])
+def api_get_trader_positions():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    periodo = request.args.get('periodo')
+    return jsonify(get_all_trader_positions(session['user_email'], periodo))
+
+@app.route('/api/trader_positions', methods=['POST'])
+def api_post_trader_position():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    d = request.json
+    add_trader_position(session['user_email'], d.get('periodo'), d.get('conta_bancaria'), d.get('symbol'), d.get('type'), float(d.get('volume', 0) or 0), d.get('open_time'), float(d.get('open_price', 0) or 0), d.get('close_time'), float(d.get('close_price', 0) or 0), float(d.get('sl', 0) or 0), float(d.get('tp', 0) or 0), float(d.get('margin', 0) or 0), float(d.get('commission', 0) or 0), float(d.get('swap', 0) or 0), float(d.get('rollover', 0) or 0), float(d.get('gross_pl', 0) or 0))
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/trader_positions/<int:t_id>', methods=['PUT'])
+def api_put_trader_position(t_id):
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    d = request.json
+    update_trader_position(t_id, d.get('periodo'), d.get('conta_bancaria'), d.get('symbol'), d.get('type'), float(d.get('volume', 0) or 0), d.get('open_time'), float(d.get('open_price', 0) or 0), d.get('close_time'), float(d.get('close_price', 0) or 0), float(d.get('sl', 0) or 0), float(d.get('tp', 0) or 0), float(d.get('margin', 0) or 0), float(d.get('commission', 0) or 0), float(d.get('swap', 0) or 0), float(d.get('rollover', 0) or 0), float(d.get('gross_pl', 0) or 0))
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/trader_positions/<int:t_id>', methods=['DELETE'])
+def api_delete_trader_position(t_id):
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    delete_trader_position(t_id)
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/trader_periodos', methods=['GET'])
+def api_get_trader_periodos():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_trader_periodos(session['user_email']))
+
+@app.route('/api/trader_contas', methods=['GET'])
+def api_get_trader_contas():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_trader_contas(session['user_email']))
+
+@app.route('/api/trader_positions/clear', methods=['POST'])
+def api_clear_trader_positions():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    periodo = (request.json or {}).get('periodo')
+    if periodo:
+        from database import get_connection
+        conn = get_connection()
+        conn.execute('DELETE FROM trader_positions WHERE user_email=? AND periodo=?', (session['user_email'], periodo))
+        conn.commit()
+        conn.close()
+    else:
+        clear_trader_positions()
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/upload_trader_positions', methods=['POST'])
+def api_upload_trader_positions():
+    if 'file' not in request.files: return jsonify({'error': 'Nenhum arquivo'}), 400
+    file = request.files['file']
+    conta_bancaria_input = request.form.get('conta_bancaria', '')
+    periodo_input = request.form.get('periodo', '')
+    if not conta_bancaria_input or not periodo_input:
+        return jsonify({'error': 'Conta Bancária e Período são obrigatórios'}), 400
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+    file.save(filepath)
+    try:
+        filename = file.filename.lower()
+        df = pd.read_excel(filepath) if filename.endswith(('.xls','.xlsx')) else pd.read_csv(filepath)
+        
+        header_row_index = -1
+        col_str = ' '.join(str(c).lower() for c in df.columns)
+        if 'symbol' not in col_str or 'type' not in col_str:
+            for i, row in df.iterrows():
+                row_str = ' '.join(str(val).lower() for val in row.values)
+                if 'symbol' in row_str and 'type' in row_str and 'volume' in row_str:
+                    header_row_index = i
+                    break
+                    
+            if header_row_index != -1:
+                new_header = df.iloc[header_row_index]
+                df = df[header_row_index + 1:]
+                df.columns = new_header
+                df.reset_index(drop=True, inplace=True)
+
+        count = 0
+        
+        # Normalizar nomes das colunas para lowercase e sem espaços
+        df.columns = df.columns.astype(str).str.strip().str.lower().str.replace(' ', '_').str.replace('/', '_')
+        
+        # Debug: mostrar as colunas encontradas
+        print("Colunas encontradas:", df.columns.tolist())
+        
+        for _, row in df.iterrows():
+            symbol = str(row.get('symbol', '')).strip() if pd.notna(row.get('symbol')) else ''
+            type_ = str(row.get('type', '')).strip().title() if pd.notna(row.get('type')) else 'Buy'
+            
+            # Normalizar type
+            if type_.lower() in ['buy', 'long', 'b']:
+                type_ = 'Buy'
+            elif type_.lower() in ['sell', 'short', 's']:
+                type_ = 'Sell'
+            
+            def safe_float(val, default=0):
+                if pd.isna(val) or val == '' or val is None:
+                    return default
+                try:
+                    # Converter para string primeiro, depois para float
+                    s = str(val).strip().replace(',', '').replace(' ', '').replace('\xa0', '')
+                    if s == '' or s.lower() == 'nan' or s.lower() == 'none':
+                        return default
+                    return float(s)
+                except:
+                    return default
+            
+            def safe_str(val):
+                if pd.isna(val) or val is None:
+                    return ''
+                return str(val).strip()
+            
+            def get_any(keys, default=None):
+                for k in keys:
+                    if k in row and pd.notna(row[k]):
+                        return row[k]
+                return default
+            
+            add_trader_position(
+                session['user_email'],
+                periodo_input,
+                conta_bancaria_input,
+                symbol,
+                type_,
+                safe_float(get_any(['volume'])),
+                safe_str(get_any(['open_time', 'time'])),
+                safe_float(get_any(['open_price', 'price'])),
+                safe_str(get_any(['close_time'])),
+                safe_float(get_any(['close_price'])),
+                safe_float(get_any(['sl', 's___l', 's__l', 's_l'])),
+                safe_float(get_any(['tp', 't___p', 't__p', 't_p'])),
+                safe_float(get_any(['margin'])),
+                safe_float(get_any(['commission', 'comm.', 'comm'])),
+                safe_float(get_any(['swap'])),
+                safe_float(get_any(['rollover'])),
+                safe_float(get_any(['gross_pl', 'gross_p_l']))
+            )
+            count += 1
+        os.remove(filepath)
+        return jsonify({'status': 'ok', 'count': count})
+    except Exception as e:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/export_trader_positions', methods=['GET'])
+def api_export_trader_positions():
+    if 'user_email' not in session: return jsonify({'error': 'Não logado'}), 401
+    periodo = request.args.get('periodo')
+    data = get_all_trader_positions(session['user_email'], periodo)
+    df = pd.DataFrame(data)
+    if not df.empty:
+        df = df.drop(columns=['id', 'user_email', 'criado_em'], errors='ignore')
+        df.rename(columns={
+            'periodo': 'Período', 'conta_bancaria': 'Conta Bancária', 'symbol': 'Symbol',
+            'type': 'Type', 'volume': 'Volume', 'open_time': 'Open Time', 'open_price': 'Open Price',
+            'close_time': 'Close Time', 'close_price': 'Close Price', 'sl': 'SL', 'tp': 'TP',
+            'margin': 'Margin', 'commission': 'Commission', 'swap': 'Swap', 'rollover': 'Rollover',
+            'gross_pl': 'Gross P/L'
+        }, inplace=True)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Trader Positions')
+    output.seek(0)
+    return send_file(output, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name="Trader_Positions.xlsx")
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
