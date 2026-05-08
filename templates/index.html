@@ -5023,13 +5023,17 @@
         function renderRmTable(data) {
             const tbody = document.getElementById('rmTableBody');
             tbody.innerHTML = '';
+            if(!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma receita encontrada para este período</td></tr>';
+                return;
+            }
             data.forEach(r => {
-                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
+                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${r.id}"></td>
                     <td>${formatDateBR(r.data)}</td>
                     <td>${r.tipo_receita||'—'}</td>
                     <td style="text-align:right;">${formatCurrency(r.valor_original)}</td>
                     <td style="text-align:center;">${r.moeda_original||'—'}</td>
-                    <td style="text-align:center;">${r.cotacao}</td>
+                    <td style="text-align:center;">${String(r.cotacao || '').replace('.', ',')}</td>
                     <td style="text-align:right;">€ ${formatCurrency(r.valor_eur)}</td>
                     <td style="text-align:right;">R$ ${formatCurrency(r.valor_brl)}</td>
                     <td>${r.conta_bancaria||'—'}</td>
