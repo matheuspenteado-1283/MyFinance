@@ -1597,6 +1597,24 @@ body.is-authenticated #loginContainer {
     scrollbar-gutter: stable;
 }
 
+.sidebar-ii-footer {
+    flex: 0 0 auto;
+    margin-top: 12px;
+    padding: 12px 10px 4px;
+    border-top: 1px solid var(--bank-border);
+}
+
+.sidebar-ii-footer img {
+    display: block;
+    width: min(100%, 138px);
+    max-height: 58px;
+    margin: 0 auto;
+    object-fit: contain;
+    opacity: 0.72;
+    mix-blend-mode: screen;
+    filter: saturate(0.86) drop-shadow(0 0 10px rgba(45, 212, 191, 0.1));
+}
+
 .side-section {
     margin: 18px 10px 8px;
     color: rgba(148, 163, 184, 0.72);
@@ -1711,6 +1729,32 @@ body.is-authenticated #menuContainer {
     display: block;
 }
 
+body.is-authenticated #menuContainer {
+    isolation: isolate;
+}
+
+body.is-authenticated .overview-brand {
+    display: none !important;
+}
+
+body.is-authenticated #menuContainer::before {
+    content: "";
+    position: fixed;
+    left: calc(var(--bank-sidebar-width) + (100vw - var(--bank-sidebar-width)) / 2);
+    top: calc(var(--bank-topbar-height) + (100vh - var(--bank-topbar-height)) / 2);
+    width: min(42vw, 560px);
+    height: min(42vw, 560px);
+    pointer-events: none;
+    z-index: -1;
+    background: url("../img/logo_iconsultant_dark.png") center / contain no-repeat;
+    opacity: 0.2;
+    transform: translate(-50%, -44%);
+    mix-blend-mode: screen;
+    filter: saturate(0.72) contrast(1.08) drop-shadow(0 0 30px rgba(45, 212, 191, 0.08));
+    -webkit-mask-image: radial-gradient(circle at center, black 0 54%, rgba(0, 0, 0, 0.52) 67%, transparent 82%);
+    mask-image: radial-gradient(circle at center, black 0 54%, rgba(0, 0, 0, 0.52) 67%, transparent 82%);
+}
+
 body.is-authenticated #menuContainer h1 {
     margin: 0 0 10px !important;
     text-align: left !important;
@@ -1820,7 +1864,8 @@ body.is-authenticated .ts-control {
 
     .sidebar-brand div,
     .side-section,
-    .side-link span {
+    .side-link span,
+    .sidebar-ii-footer {
         display: none;
     }
 

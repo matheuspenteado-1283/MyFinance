@@ -707,7 +707,7 @@
         }
 
     </style>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=dm-toolbar-2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=trader-filters-1">
 </head>
 <body>
 
@@ -795,6 +795,10 @@
                 <i class="fa-solid fa-sliders"></i><span>Avançado</span>
             </button>
         </nav>
+
+        <div class="sidebar-ii-footer">
+            <img src="{{ url_for('static', filename='img/logo_iconsultant_dark.png') }}" alt="Iconsultant Inteligence">
+        </div>
     </aside>
 
     <div class="user-nav" id="userNav" style="display: none;">
@@ -2413,6 +2417,14 @@
                         <input type="number" step="0.01" id="emp_valor_operacao" class="auth-input" required>
                     </div>
                     <div class="form-field">
+                        <label>Moeda</label>
+                        <select id="emp_moeda_emp" class="auth-input">
+                            <option value="BRL">BRL</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
                         <label>Data de Empréstimo</label>
                         <input type="date" id="emp_data_emprestimo" class="auth-input">
                     </div>
@@ -2510,11 +2522,13 @@
                 <div class="form-row">
                     <div class="form-field">
                         <label>Período</label>
-                        <input type="text" id="trader_periodo" class="auth-input" placeholder="YYYY-MM" required>
+                        <input type="month" id="trader_periodo" class="auth-input" required>
                     </div>
                     <div class="form-field">
                         <label>Conta Bancária</label>
-                        <input type="text" id="trader_conta" class="auth-input" placeholder="XTB, Binomo..." required>
+                        <select id="trader_conta" class="auth-input" required>
+                            <option value="">Selecionar...</option>
+                        </select>
                     </div>
                     <div class="form-field">
                         <label>Symbol</label>
@@ -6228,7 +6242,7 @@
             const tipoBadge = { 'Empréstimo': 'style="background:rgba(239,68,68,0.2);color:#fca5a5;"', 'Pagamento': 'style="background:rgba(16,185,129,0.2);color:#6ee7b7;"', 'Abatimento': 'style="background:rgba(245,158,11,0.2);color:#fcd34d;"' };
             empData.forEach(d => {
                 const statusBadge = d.status === 'Ativo' ? 'val-badge' : (d.status === 'Quitado' ? 'val-badge' : 'val-badge debit');
-                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
+                tbody.innerHTML += `<tr>
                     <td><span class="val-badge" ${tipoBadge[d.tipo] || ''}>${d.tipo || ''}</span></td>
                     <td>${d.beneficiario || ''}</td>
                     <td style="text-align:right;">${formatCurrency(d.valor_operacao)}</td>
@@ -6271,6 +6285,9 @@
                 document.getElementById('empSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
                 document.getElementById('empCancelBtn').style.display = 'none';
                 loadEmprestimos();
+            } else {
+                const errorData = await res.json().catch(() => ({}));
+                alert(errorData.error || 'Não foi possível salvar o registro de empréstimo.');
             }
         }
 
@@ -6819,13 +6836,14 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
             loadTraderFilters();
             loadTraderPositions();
             loadContasIntoSelect('trader_upload_conta');
+            loadContasIntoSelect('trader_conta');
         }
 
         async function loadTraderFilters() {
             try {
                 const [periodosRes, contasRes] = await Promise.all([
                     fetch('/api/trader_periodos'),
-                    fetch('/api/trader_contas')
+                    fetch('/api/cad_contas')
                 ]);
                 const periodos = await periodosRes.json();
                 const contas = await contasRes.json();
@@ -6834,13 +6852,14 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
                 const contaFilter = document.getElementById('traderContaFilter');
                 
                 periodoFilter.innerHTML = '<option value="">Todos os Períodos</option>';
-                contas.forEach(p => {
-                    periodoFilter.innerHTML += `<option value="${p}">${p}</option>`;
+                periodos.forEach(p => {
+                    periodoFilter.innerHTML += `<option value="${p}">${formatPeriodoTrader(p)}</option>`;
                 });
                 
                 contaFilter.innerHTML = '<option value="">Todas as Contas</option>';
                 contas.forEach(c => {
-                    contaFilter.innerHTML += `<option value="${c}">${c}</option>`;
+                    const desc = c.descricao || c.conta || '';
+                    if (desc) contaFilter.innerHTML += `<option value="${esc(desc)}">${desc}</option>`;
                 });
             } catch(e) { console.error(e); }
         }
@@ -6848,11 +6867,21 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
         async function loadTraderPositions() {
             try {
                 const periodo = document.getElementById('traderPeriodoFilter').value;
-                const url = periodo ? `/api/trader_positions?periodo=${periodo}` : '/api/trader_positions';
+                const conta = document.getElementById('traderContaFilter').value;
+                const params = new URLSearchParams();
+                if (periodo) params.set('periodo', periodo);
+                const url = params.toString() ? `/api/trader_positions?${params.toString()}` : '/api/trader_positions';
                 const res = await fetch(url);
                 traderData = await res.json();
+                if (conta) traderData = traderData.filter(d => d.conta_bancaria === conta);
                 renderTraderTable();
             } catch(e) { console.error(e); }
+        }
+
+        function formatPeriodoTrader(periodo) {
+            if (!periodo) return '';
+            const match = String(periodo).match(/^(\d{4})-(\d{2})$/);
+            return match ? `${match[2]}/${match[1]}` : periodo;
         }
 
         async function renderTraderTable() {
@@ -6862,7 +6891,7 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
                 const isBuy = d.type === 'Buy';
                 const plClass = (d.gross_pl || 0) >= 0 ? 'val-badge' : 'val-badge debit';
                 tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
-                    <td>${d.periodo || ''}</td>
+                    <td>${formatPeriodoTrader(d.periodo) || ''}</td>
                     <td>${d.conta_bancaria || ''}</td>
                     <td><strong>${d.symbol || ''}</strong></td>
                     <td><span class="currency-badge" style="background:${isBuy ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'};color:${isBuy ? '#6ee7b7' : '#fca5a5'}">${d.type || ''}</span></td>
@@ -6930,9 +6959,10 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
             }
         }
 
-        function editTrader(id) {
+        async function editTrader(id) {
             const d = traderData.find(x => x.id === id);
             if(!d) return;
+            await loadContasIntoSelect('trader_conta', d.conta_bancaria || '');
             document.getElementById('trader_id').value = d.id;
             document.getElementById('trader_periodo').value = d.periodo || '';
             document.getElementById('trader_conta').value = d.conta_bancaria || '';
