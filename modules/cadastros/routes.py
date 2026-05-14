@@ -32,26 +32,34 @@ from config import allowed_file
 
 @bp.route('/api/cad_despesas', methods=['GET'])
 def api_get_despesas():
-    return jsonify(get_all_despesas())
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_all_despesas(session['user_email']))
 
 
 @bp.route('/api/cad_despesas', methods=['POST'])
 def api_post_despesa():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     data = request.json
-    add_despesa(data.get('despesa'), data.get('tipo_despesa'), data.get('fator_divisao'), data.get('prioridade'))
+    add_despesa(session['user_email'], data.get('despesa'), data.get('tipo_despesa'), data.get('fator_divisao'), data.get('prioridade'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_despesas/<int:d_id>', methods=['PUT'])
 def api_put_despesa(d_id):
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     data = request.json
-    update_despesa(d_id, data.get('despesa'), data.get('tipo_despesa'), data.get('fator_divisao'), data.get('prioridade'))
+    update_despesa(session['user_email'], d_id, data.get('despesa'), data.get('tipo_despesa'), data.get('fator_divisao'), data.get('prioridade'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_despesas/<int:d_id>', methods=['DELETE'])
 def api_delete_despesa(d_id):
-    delete_despesa(d_id)
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    delete_despesa(session['user_email'], d_id)
     return jsonify({'status': 'ok'})
 
 
@@ -72,7 +80,7 @@ def api_upload_despesas():
     if len(despesas_processadas) == 0:
         return jsonify({'error': 'Nenhuma despesa válida encontrada. Confira as colunas.'}), 400
 
-    overwrite_despesas(despesas_processadas)
+    overwrite_despesas(session['user_email'], despesas_processadas)
     return jsonify({'status': 'ok', 'message': f'{len(despesas_processadas)} despesas cadastradas!'})
 
 
@@ -80,10 +88,10 @@ def api_upload_despesas():
 def api_export_despesas():
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    despesas = get_all_despesas()
+    despesas = get_all_despesas(session['user_email'])
     df = pd.DataFrame(despesas)
     if not df.empty:
-        df.drop(columns=['id'], errors='ignore', inplace=True)
+        df.drop(columns=['id', 'user_email'], errors='ignore', inplace=True)
         df.rename(columns={
             'despesa': 'Despesa', 'tipo_despesa': 'Tipo de Despesa',
             'fator_divisao': 'Fator de Divisão', 'prioridade': 'Prioridade',
@@ -102,28 +110,36 @@ def api_export_despesas():
 
 @bp.route('/api/cad_contas', methods=['GET'])
 def api_get_contas():
-    return jsonify(get_all_contas())
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_all_contas(session['user_email']))
 
 
 @bp.route('/api/cad_contas', methods=['POST'])
 def api_post_conta():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    add_conta(d.get('descricao'), d.get('agencia'), d.get('conta'),
+    add_conta(session['user_email'], d.get('descricao'), d.get('agencia'), d.get('conta'),
               d.get('dados_acesso'), d.get('senha'), d.get('comentarios'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_contas/<int:c_id>', methods=['PUT'])
 def api_put_conta(c_id):
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    update_conta(c_id, d.get('descricao'), d.get('agencia'), d.get('conta'),
+    update_conta(session['user_email'], c_id, d.get('descricao'), d.get('agencia'), d.get('conta'),
                  d.get('dados_acesso'), d.get('senha'), d.get('comentarios'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_contas/<int:c_id>', methods=['DELETE'])
 def api_delete_conta(c_id):
-    delete_conta(c_id)
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    delete_conta(session['user_email'], c_id)
     return jsonify({'status': 'ok'})
 
 
@@ -134,12 +150,14 @@ def api_reveal_senha(c_id):
     app_password = (request.json or {}).get('app_password', '')
     if not verify_user(session['user_email'], app_password):
         return jsonify({'error': 'Senha do App incorreta'}), 403
-    senha = get_senha_conta(c_id)
+    senha = get_senha_conta(session['user_email'], c_id)
     return jsonify({'senha': senha})
 
 
 @bp.route('/api/upload_contas', methods=['POST'])
 def api_upload_contas():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     if 'file' not in request.files:
         return jsonify({'error': 'Nenhum arquivo'}), 400
     file = request.files['file']
@@ -149,7 +167,7 @@ def api_upload_contas():
         filename = file.filename.lower()
         df = pd.read_excel(filepath) if filename.endswith(('.xls', '.xlsx')) else pd.read_csv(filepath)
         count = 0
-        clear_contas()
+        clear_contas(session['user_email'])
         df.columns = df.columns.str.strip().str.lower()
         col_desc = next((c for c in df.columns if 'descri' in c), 'descricao')
         col_age = next((c for c in df.columns if 'ag' in c), 'agencia')
@@ -161,7 +179,7 @@ def api_upload_contas():
             def g(c):
                 v = row.get(c)
                 return '' if pd.isna(v) else str(v).strip()
-            add_conta(g(col_desc), g(col_age), g(col_conta), g(col_acesso), g(col_senha), g(col_obs))
+            add_conta(session['user_email'], g(col_desc), g(col_age), g(col_conta), g(col_acesso), g(col_senha), g(col_obs))
             count += 1
         os.remove(filepath)
         return jsonify({'status': 'ok', 'count': count})
@@ -173,10 +191,12 @@ def api_upload_contas():
 
 @bp.route('/api/export_contas', methods=['GET'])
 def api_export_contas():
-    contas = get_all_contas()
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    contas = get_all_contas(session['user_email'])
     df = pd.DataFrame(contas)
     if not df.empty:
-        df.drop(columns=['id'], errors='ignore', inplace=True)
+        df.drop(columns=['id', 'user_email'], errors='ignore', inplace=True)
         df.rename(columns={
             'descricao': 'Descrição', 'agencia': 'Agência', 'conta': 'Conta',
             'dados_acesso': 'Dados Acesso', 'senha': 'Senha', 'comentarios': 'Comentários',
@@ -193,31 +213,41 @@ def api_export_contas():
 
 @bp.route('/api/cad_receitas', methods=['GET'])
 def api_get_receitas():
-    return jsonify(get_all_receitas())
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_all_receitas(session['user_email']))
 
 
 @bp.route('/api/cad_receitas', methods=['POST'])
 def api_post_receita():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    add_receita(d.get('descricao'))
+    add_receita(session['user_email'], d.get('descricao'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_receitas/<int:r_id>', methods=['PUT'])
 def api_put_receita(r_id):
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    update_receita(r_id, d.get('descricao'))
+    update_receita(session['user_email'], r_id, d.get('descricao'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_receitas/<int:r_id>', methods=['DELETE'])
 def api_delete_receita(r_id):
-    delete_receita(r_id)
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    delete_receita(session['user_email'], r_id)
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/upload_receitas', methods=['POST'])
 def api_upload_receitas():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     if 'file' not in request.files:
         return jsonify({'error': 'Nenhum arquivo'}), 400
     file = request.files['file']
@@ -229,13 +259,13 @@ def api_upload_receitas():
         filename = file.filename.lower()
         df = pd.read_excel(filepath) if filename.endswith(('.xls', '.xlsx')) else pd.read_csv(filepath)
         count = 0
-        clear_receitas()
+        clear_receitas(session['user_email'])
         df.columns = df.columns.str.strip().str.lower()
         col_desc = next((c for c in df.columns if 'descri' in c), 'descricao')
         for _, row in df.iterrows():
             val = row.get(col_desc)
             if pd.notna(val) and str(val).strip():
-                add_receita(str(val).strip())
+                add_receita(session['user_email'], str(val).strip())
                 count += 1
         os.remove(filepath)
         return jsonify({'status': 'ok', 'count': count})
@@ -247,10 +277,12 @@ def api_upload_receitas():
 
 @bp.route('/api/export_receitas', methods=['GET'])
 def api_export_receitas():
-    receitas = get_all_receitas()
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    receitas = get_all_receitas(session['user_email'])
     df = pd.DataFrame(receitas)
     if not df.empty:
-        df.drop(columns=['id'], inplace=True)
+        df.drop(columns=['id', 'user_email'], errors='ignore', inplace=True)
     df.rename(columns={'descricao': 'Descrição'}, inplace=True)
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -264,31 +296,41 @@ def api_export_receitas():
 
 @bp.route('/api/cad_investimentos', methods=['GET'])
 def api_get_investimentos():
-    return jsonify(get_all_investimentos())
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_all_investimentos(session['user_email']))
 
 
 @bp.route('/api/cad_investimentos', methods=['POST'])
 def api_post_investimento():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    add_investimento(d.get('descricao'))
+    add_investimento(session['user_email'], d.get('descricao'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_investimentos/<int:i_id>', methods=['PUT'])
 def api_put_investimento(i_id):
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    update_investimento(i_id, d.get('descricao'))
+    update_investimento(session['user_email'], i_id, d.get('descricao'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_investimentos/<int:i_id>', methods=['DELETE'])
 def api_delete_investimento(i_id):
-    delete_investimento(i_id)
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    delete_investimento(session['user_email'], i_id)
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/upload_investimentos', methods=['POST'])
 def api_upload_investimentos():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     if 'file' not in request.files:
         return jsonify({'error': 'Nenhum arquivo'}), 400
     file = request.files['file']
@@ -298,13 +340,13 @@ def api_upload_investimentos():
         filename = file.filename.lower()
         df = pd.read_excel(filepath) if filename.endswith(('.xls', '.xlsx')) else pd.read_csv(filepath)
         count = 0
-        clear_investimentos()
+        clear_investimentos(session['user_email'])
         df.columns = df.columns.str.strip().str.lower()
         col_desc = next((c for c in df.columns if 'descri' in c), 'descricao')
         for _, row in df.iterrows():
             val = row.get(col_desc)
             if pd.notna(val) and str(val).strip():
-                add_investimento(str(val).strip())
+                add_investimento(session['user_email'], str(val).strip())
                 count += 1
         os.remove(filepath)
         return jsonify({'status': 'ok', 'count': count})
@@ -316,10 +358,12 @@ def api_upload_investimentos():
 
 @bp.route('/api/export_investimentos', methods=['GET'])
 def api_export_investimentos():
-    investimentos = get_all_investimentos()
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    investimentos = get_all_investimentos(session['user_email'])
     df = pd.DataFrame(investimentos)
     if not df.empty:
-        df.drop(columns=['id'], inplace=True)
+        df.drop(columns=['id', 'user_email'], errors='ignore', inplace=True)
     df.rename(columns={'descricao': 'Descrição'}, inplace=True)
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -333,31 +377,41 @@ def api_export_investimentos():
 
 @bp.route('/api/cad_usuarios', methods=['GET'])
 def api_get_usuarios():
-    return jsonify(get_all_usuarios())
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_all_usuarios(session['user_email']))
 
 
 @bp.route('/api/cad_usuarios', methods=['POST'])
 def api_post_usuario():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    add_usuario(d.get('chave_usr1'), d.get('chave_usr2'), d.get('nome'), d.get('fator_pagamento', 1))
+    add_usuario(session['user_email'], d.get('chave_usr1'), d.get('chave_usr2'), d.get('nome'), d.get('fator_pagamento', 1))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_usuarios/<int:u_id>', methods=['PUT'])
 def api_put_usuario(u_id):
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    update_usuario(u_id, d.get('chave_usr1'), d.get('chave_usr2'), d.get('nome'), d.get('fator_pagamento', 1))
+    update_usuario(session['user_email'], u_id, d.get('chave_usr1'), d.get('chave_usr2'), d.get('nome'), d.get('fator_pagamento', 1))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_usuarios/<int:u_id>', methods=['DELETE'])
 def api_delete_usuario(u_id):
-    delete_usuario(u_id)
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    delete_usuario(session['user_email'], u_id)
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/upload_usuarios', methods=['POST'])
 def api_upload_usuarios():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     if 'file' not in request.files:
         return jsonify({'error': 'Nenhum arquivo'}), 400
     file = request.files['file']
@@ -367,9 +421,10 @@ def api_upload_usuarios():
         filename = file.filename.lower()
         df = pd.read_excel(filepath) if filename.endswith(('.xls', '.xlsx')) else pd.read_csv(filepath)
         count = 0
-        clear_usuarios()
+        clear_usuarios(session['user_email'])
         for _, row in df.iterrows():
             add_usuario(
+                session['user_email'],
                 str(row.get('chave_usr1', row.get('Chave Usr1', ''))),
                 str(row.get('chave_usr2', row.get('Chave Usr2', ''))),
                 str(row.get('nome', row.get('Nome', ''))),
@@ -384,10 +439,12 @@ def api_upload_usuarios():
 
 @bp.route('/api/export_usuarios', methods=['GET'])
 def api_export_usuarios():
-    usuarios = get_all_usuarios()
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    usuarios = get_all_usuarios(session['user_email'])
     df = pd.DataFrame(usuarios)
     if not df.empty:
-        df.drop(columns=['id'], inplace=True)
+        df.drop(columns=['id', 'user_email'], errors='ignore', inplace=True)
     df.rename(columns={
         'nome': 'Nome', 'chave_usr1': 'Chave Usr1', 'chave_usr2': 'Chave Usr2',
         'fator_pagamento': 'Fator Pagamento',
@@ -404,31 +461,41 @@ def api_export_usuarios():
 
 @bp.route('/api/cad_tipo_imposto', methods=['GET'])
 def api_get_tipo_imposto():
-    return jsonify(get_all_tipo_imposto())
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    return jsonify(get_all_tipo_imposto(session['user_email']))
 
 
 @bp.route('/api/cad_tipo_imposto', methods=['POST'])
 def api_post_tipo_imposto():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    add_tipo_imposto(d.get('tp_imposto'), d.get('alq_imposto'), d.get('pagamento'))
+    add_tipo_imposto(session['user_email'], d.get('tp_imposto'), d.get('alq_imposto'), d.get('pagamento'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_tipo_imposto/<int:ti_id>', methods=['PUT'])
 def api_put_tipo_imposto(ti_id):
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     d = request.json
-    update_tipo_imposto(ti_id, d.get('tp_imposto'), d.get('alq_imposto'), d.get('pagamento'))
+    update_tipo_imposto(session['user_email'], ti_id, d.get('tp_imposto'), d.get('alq_imposto'), d.get('pagamento'))
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/cad_tipo_imposto/<int:ti_id>', methods=['DELETE'])
 def api_delete_tipo_imposto(ti_id):
-    delete_tipo_imposto(ti_id)
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    delete_tipo_imposto(session['user_email'], ti_id)
     return jsonify({'status': 'ok'})
 
 
 @bp.route('/api/upload_tipo_imposto', methods=['POST'])
 def api_upload_tipo_imposto():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
     if 'file' not in request.files:
         return jsonify({'error': 'Nenhum arquivo'}), 400
     file = request.files['file']
@@ -437,13 +504,13 @@ def api_upload_tipo_imposto():
     try:
         df = pd.read_excel(filepath) if filepath.endswith(('.xls', '.xlsx')) else pd.read_csv(filepath)
         count = 0
-        clear_tipo_imposto()
+        clear_tipo_imposto(session['user_email'])
         for _, row in df.iterrows():
             tp = row.get('tp_imposto') if pd.notna(row.get('tp_imposto')) else row.get('Tipo Imposto')
             alq = row.get('alq_imposto') if pd.notna(row.get('alq_imposto')) else row.get('Alíquota (%)')
             pag = row.get('pagamento') if pd.notna(row.get('pagamento')) else row.get('Pagamento')
             if pd.notna(tp):
-                add_tipo_imposto(str(tp), float(alq) if pd.notna(alq) else None, str(pag if pd.notna(pag) else ''))
+                add_tipo_imposto(session['user_email'], str(tp), float(alq) if pd.notna(alq) else None, str(pag if pd.notna(pag) else ''))
                 count += 1
         os.remove(filepath)
         return jsonify({'status': 'ok', 'count': count})
@@ -453,10 +520,12 @@ def api_upload_tipo_imposto():
 
 @bp.route('/api/export_tipo_imposto', methods=['GET'])
 def api_export_tipo_imposto():
-    tipos = get_all_tipo_imposto()
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    tipos = get_all_tipo_imposto(session['user_email'])
     df = pd.DataFrame(tipos)
     if not df.empty:
-        df.drop(columns=['id'], inplace=True)
+        df.drop(columns=['id', 'user_email'], errors='ignore', inplace=True)
     df.rename(columns={
         'tp_imposto': 'Tipo Imposto', 'alq_imposto': 'Alíquota (%)', 'pagamento': 'Pagamento',
     }, inplace=True)

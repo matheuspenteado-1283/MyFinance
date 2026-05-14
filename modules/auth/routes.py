@@ -64,16 +64,17 @@ def api_limpar_configuracoes():
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
     data = request.json or {}
+    email = session['user_email']
     if data.get('despesas'):
-        clear_despesas()
+        clear_despesas(email)
     if data.get('contas'):
-        clear_contas()
+        clear_contas(email)
     if data.get('receitas'):
-        clear_receitas()
+        clear_receitas(email)
     if data.get('investimentos'):
-        clear_investimentos()
+        clear_investimentos(email)
     if data.get('usuarios'):
-        clear_usuarios()
+        clear_usuarios(email)
     if data.get('tipo_imposto'):
-        clear_tipo_imposto()
+        clear_tipo_imposto(email)
     return jsonify({'status': 'ok'})
