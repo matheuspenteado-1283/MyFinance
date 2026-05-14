@@ -8,11 +8,7 @@
 
 export default {
   async fetch(request, env) {
-    const backendUrl = (env.BACKEND_URL || '').trim();
-
-    if (!backendUrl) {
-      return new Response('BACKEND_URL não configurada.', { status: 500 });
-    }
+    const backendUrl = (env.BACKEND_URL || 'https://myfinance-k7ar.onrender.com').trim();
 
     const url = new URL(request.url);
     const targetUrl = backendUrl.replace(/\/$/, '') + url.pathname + url.search;
