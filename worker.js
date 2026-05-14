@@ -8,7 +8,7 @@
 
 export default {
   async fetch(request, env) {
-    const backendUrl = env.BACKEND_URL;
+    const backendUrl = (env.BACKEND_URL || '').trim();
 
     if (!backendUrl) {
       return new Response('BACKEND_URL não configurada.', { status: 500 });
