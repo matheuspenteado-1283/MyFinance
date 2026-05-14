@@ -74,5 +74,21 @@ class PGConnection:
 
 
 def get_connection() -> PGConnection:
-    conn = psycopg2.connect(DATABASE_URL)
+    # Suporta DATABASE_URL ou variáveis individuais (DB_HOST, DB_PASSWORD, etc.)
+    db_url = os.getenv("DATABASE_URL")
+    if db_url:
+        # Adicionar sslmode=require se não estiver presente (exigido pelo Supabase)
+        if "sslmode" not in db_url:
+            sep = "&" if "?" in db_url else "?"
+            db_url = db_url + sep + "sslmode=require"
+        conn = psycopg2.connect(db_url)
+    else:
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST", "localhost"),
+            port=int(os.getenv("DB_PORT", "5432")),
+            dbname=os.getenv("DB_NAME", "postgres"),
+            user=os.getenv("DB_USER", "postgres"),
+            password=os.getenv("DB_PASSWORD", ""),
+            sslmode="require",
+        )
     return PGConnection(conn)
