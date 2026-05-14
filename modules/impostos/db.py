@@ -6,7 +6,7 @@ def init_tables():
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS lcto_impostos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_email TEXT,
             mes_ano TEXT NOT NULL,
             tp_imposto TEXT,
@@ -33,7 +33,7 @@ def init_tables():
 def get_all_lcto_impostos(user_email: str):
     conn = get_connection()
     rows = conn.execute(
-        'SELECT * FROM lcto_impostos WHERE user_email=? ORDER BY mes_ano DESC, tp_imposto',
+        'SELECT * FROM lcto_impostos WHERE user_email=%s ORDER BY mes_ano DESC, tp_imposto',
         (user_email,),
     ).fetchall()
     conn.close()
@@ -47,7 +47,7 @@ def add_lcto_imposto(user_email, mes_ano, tp_imposto, moeda_faturado, valor_fatu
         INSERT INTO lcto_impostos
         (user_email, mes_ano, tp_imposto, moeda_faturado, valor_faturado, valor_imposto,
          moeda_pagamento, pagamento, pagamento_mes_ano, desconto_iva)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (user_email, mes_ano, tp_imposto, moeda_faturado, valor_faturado, valor_imposto,
           moeda_pagamento, pagamento, pagamento_mes_ano, desconto_iva))
     conn.commit()
@@ -59,9 +59,9 @@ def update_lcto_imposto(li_id, mes_ano, tp_imposto, moeda_faturado, valor_fatura
     conn = get_connection()
     conn.execute('''
         UPDATE lcto_impostos SET
-        mes_ano=?, tp_imposto=?, moeda_faturado=?, valor_faturado=?, valor_imposto=?,
-        moeda_pagamento=?, pagamento=?, pagamento_mes_ano=?, desconto_iva=?
-        WHERE id=?
+        mes_ano=%s, tp_imposto=%s, moeda_faturado=%s, valor_faturado=%s, valor_imposto=%s,
+        moeda_pagamento=%s, pagamento=%s, pagamento_mes_ano=%s, desconto_iva=%s
+        WHERE id=%s
     ''', (mes_ano, tp_imposto, moeda_faturado, valor_faturado, valor_imposto,
           moeda_pagamento, pagamento, pagamento_mes_ano, desconto_iva, li_id))
     conn.commit()
@@ -70,7 +70,7 @@ def update_lcto_imposto(li_id, mes_ano, tp_imposto, moeda_faturado, valor_fatura
 
 def delete_lcto_imposto(li_id):
     conn = get_connection()
-    conn.execute('DELETE FROM lcto_impostos WHERE id=?', (li_id,))
+    conn.execute('DELETE FROM lcto_impostos WHERE id=%s', (li_id,))
     conn.commit()
     conn.close()
 
@@ -86,7 +86,7 @@ def get_dashboard_impostos(user_email: str):
             SUM(valor_imposto - COALESCE(desconto_iva, 0)) as valor_liquido,
             pagamento_mes_ano
         FROM lcto_impostos
-        WHERE user_email = ?
+        WHERE user_email = %s
         GROUP BY tp_imposto, pagamento, pagamento_mes_ano
         ORDER BY tp_imposto, pagamento_mes_ano DESC
     ''', (user_email,))

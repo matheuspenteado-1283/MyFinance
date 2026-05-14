@@ -5,7 +5,7 @@ def init_tables():
     conn = get_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS lcto_investimentos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_email TEXT,
             banco TEXT,
             tp_investimento TEXT,
@@ -27,7 +27,7 @@ def init_tables():
 def get_all_lcto_investimentos(user_email: str):
     conn = get_connection()
     rows = conn.execute(
-        'SELECT * FROM lcto_investimentos WHERE user_email=? ORDER BY data_inv DESC, id DESC',
+        'SELECT * FROM lcto_investimentos WHERE user_email=%s ORDER BY data_inv DESC, id DESC',
         (user_email,),
     ).fetchall()
     conn.close()
@@ -51,7 +51,7 @@ def add_lcto_investimento(user_email, banco, tp_investimento, data_inv, valor_in
     conn.execute('''
         INSERT INTO lcto_investimentos
         (user_email, banco, tp_investimento, data_inv, valor_inv, moeda, qtd, taxa, valor_atual, val_mes_ant, aporte)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (user_email, banco, tp_investimento, data_inv, valor_inv, moeda, qtd, taxa, valor_atual, val_mes_ant, aporte))
     conn.commit()
     conn.close()
@@ -62,8 +62,8 @@ def update_lcto_investimento(li_id, banco, tp_investimento, data_inv, valor_inv,
     conn = get_connection()
     conn.execute('''
         UPDATE lcto_investimentos SET
-        banco=?, tp_investimento=?, data_inv=?, valor_inv=?, moeda=?, qtd=?, taxa=?, valor_atual=?, val_mes_ant=?, aporte=?
-        WHERE id=?
+        banco=%s, tp_investimento=%s, data_inv=%s, valor_inv=%s, moeda=%s, qtd=%s, taxa=%s, valor_atual=%s, val_mes_ant=%s, aporte=%s
+        WHERE id=%s
     ''', (banco, tp_investimento, data_inv, valor_inv, moeda, qtd, taxa, valor_atual, val_mes_ant, aporte, li_id))
     conn.commit()
     conn.close()
@@ -71,7 +71,7 @@ def update_lcto_investimento(li_id, banco, tp_investimento, data_inv, valor_inv,
 
 def delete_lcto_investimento(li_id):
     conn = get_connection()
-    conn.execute('DELETE FROM lcto_investimentos WHERE id=?', (li_id,))
+    conn.execute('DELETE FROM lcto_investimentos WHERE id=%s', (li_id,))
     conn.commit()
     conn.close()
 

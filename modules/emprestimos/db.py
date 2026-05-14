@@ -6,7 +6,7 @@ def init_tables():
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS lcto_emprestimos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_email TEXT,
             tipo TEXT NOT NULL,
             beneficiario TEXT,
@@ -32,7 +32,7 @@ def init_tables():
 def get_all_lcto_emprestimos(user_email: str):
     conn = get_connection()
     rows = conn.execute(
-        'SELECT * FROM lcto_emprestimos WHERE user_email=? ORDER BY data_operacao DESC, id DESC',
+        'SELECT * FROM lcto_emprestimos WHERE user_email=%s ORDER BY data_operacao DESC, id DESC',
         (user_email,),
     ).fetchall()
     conn.close()
@@ -45,7 +45,7 @@ def add_lcto_emprestimo(user_email, tipo, beneficiario, valor_operacao, moeda_em
     conn.execute('''
         INSERT INTO lcto_emprestimos
         (user_email, tipo, beneficiario, valor_operacao, moeda_emp, data_emprestimo, data_operacao, obs, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (user_email, tipo, beneficiario, valor_operacao, moeda_emp,
           data_emprestimo, data_operacao, obs, status))
     conn.commit()
@@ -57,8 +57,8 @@ def update_lcto_emprestimo(le_id, tipo, beneficiario, valor_operacao, moeda_emp,
     conn = get_connection()
     conn.execute('''
         UPDATE lcto_emprestimos SET
-        tipo=?, beneficiario=?, valor_operacao=?, moeda_emp=?, data_emprestimo=?, data_operacao=?, obs=?, status=?
-        WHERE id=?
+        tipo=%s, beneficiario=%s, valor_operacao=%s, moeda_emp=%s, data_emprestimo=%s, data_operacao=%s, obs=%s, status=%s
+        WHERE id=%s
     ''', (tipo, beneficiario, valor_operacao, moeda_emp, data_emprestimo, data_operacao, obs, status, le_id))
     conn.commit()
     conn.close()
@@ -66,7 +66,7 @@ def update_lcto_emprestimo(le_id, tipo, beneficiario, valor_operacao, moeda_emp,
 
 def delete_lcto_emprestimo(le_id):
     conn = get_connection()
-    conn.execute('DELETE FROM lcto_emprestimos WHERE id=?', (le_id,))
+    conn.execute('DELETE FROM lcto_emprestimos WHERE id=%s', (le_id,))
     conn.commit()
     conn.close()
 
@@ -78,7 +78,7 @@ def get_saldo_emprestimos(user_email: str):
             SUM(CASE WHEN tipo = 'Empréstimo' THEN valor_operacao ELSE 0 END) as total_emprestado,
             SUM(CASE WHEN tipo IN ('Pagamento', 'Abatimento') THEN valor_operacao ELSE 0 END) as total_pago
         FROM lcto_emprestimos
-        WHERE user_email = ?
+        WHERE user_email = %s
     ''', (user_email,)).fetchone()
     conn.close()
     total_emprestado = row['total_emprestado'] or 0

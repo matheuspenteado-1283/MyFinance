@@ -5,7 +5,7 @@ def init_tables():
     conn = get_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS cad_receitas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             descricao TEXT NOT NULL
         )
     ''')
@@ -22,21 +22,21 @@ def get_all_receitas():
 
 def add_receita(descricao):
     conn = get_connection()
-    conn.execute('INSERT INTO cad_receitas (descricao) VALUES (?)', (descricao,))
+    conn.execute('INSERT INTO cad_receitas (descricao) VALUES (%s)', (descricao,))
     conn.commit()
     conn.close()
 
 
 def update_receita(r_id, descricao):
     conn = get_connection()
-    conn.execute('UPDATE cad_receitas SET descricao=? WHERE id=?', (descricao, r_id))
+    conn.execute('UPDATE cad_receitas SET descricao=%s WHERE id=%s', (descricao, r_id))
     conn.commit()
     conn.close()
 
 
 def delete_receita(r_id):
     conn = get_connection()
-    conn.execute('DELETE FROM cad_receitas WHERE id=?', (r_id,))
+    conn.execute('DELETE FROM cad_receitas WHERE id=%s', (r_id,))
     conn.commit()
     conn.close()
 

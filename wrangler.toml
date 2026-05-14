@@ -1,0 +1,10 @@
+name = "myfinance"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Variável BACKEND_URL deve ser definida no dashboard do Cloudflare Workers
+# (Workers → myfinance → Settings → Variables → BACKEND_URL)
+# Exemplo: https://myfinance.onrender.com
+
+[vars]
+# BACKEND_URL = "https://myfinance.onrender.com"  # descomentar apenas para dev local

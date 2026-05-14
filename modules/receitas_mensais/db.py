@@ -5,7 +5,7 @@ def init_tables():
     conn = get_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS receitas_mensais (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_email TEXT,
             data TEXT,
             tipo_receita TEXT,
@@ -29,12 +29,12 @@ def get_receitas_mensais(user_email, mes=None):
     conn = get_connection()
     if mes:
         rows = conn.execute(
-            'SELECT * FROM receitas_mensais WHERE user_email=? AND mes_referencia=? ORDER BY data, id',
+            'SELECT * FROM receitas_mensais WHERE user_email=%s AND mes_referencia=%s ORDER BY data, id',
             (user_email, mes),
         ).fetchall()
     else:
         rows = conn.execute(
-            'SELECT * FROM receitas_mensais WHERE user_email=? ORDER BY mes_referencia DESC, data, id',
+            'SELECT * FROM receitas_mensais WHERE user_email=%s ORDER BY mes_referencia DESC, data, id',
             (user_email,),
         ).fetchall()
     conn.close()
@@ -47,7 +47,7 @@ def add_receita_mensal(user_email, row):
         INSERT INTO receitas_mensais
         (user_email, data, tipo_receita, valor_original, moeda_original, cotacao, valor_eur, valor_brl,
          conta_bancaria, mes_referencia, despesa_mensal_id, comentarios)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     ''', (
         user_email,
         row.get('data'), row.get('tipo_receita'), row.get('valor_original'),
@@ -63,9 +63,9 @@ def update_receita_mensal(r_id, row):
     conn = get_connection()
     conn.execute('''
         UPDATE receitas_mensais SET
-        data=?, tipo_receita=?, valor_original=?, moeda_original=?, cotacao=?, valor_eur=?, valor_brl=?,
-        conta_bancaria=?, mes_referencia=?, comentarios=?
-        WHERE id=?
+        data=%s, tipo_receita=%s, valor_original=%s, moeda_original=%s, cotacao=%s, valor_eur=%s, valor_brl=%s,
+        conta_bancaria=%s, mes_referencia=%s, comentarios=%s
+        WHERE id=%s
     ''', (
         row.get('data'), row.get('tipo_receita'), row.get('valor_original'),
         row.get('moeda_original'), row.get('cotacao', 1), row.get('valor_eur'),
@@ -78,7 +78,7 @@ def update_receita_mensal(r_id, row):
 
 def delete_receita_mensal(r_id):
     conn = get_connection()
-    conn.execute('DELETE FROM receitas_mensais WHERE id=?', (r_id,))
+    conn.execute('DELETE FROM receitas_mensais WHERE id=%s', (r_id,))
     conn.commit()
     conn.close()
 
@@ -86,11 +86,11 @@ def delete_receita_mensal(r_id):
 def sync_receitas_from_despesas_mensais(user_email, mes):
     conn = get_connection()
     conn.execute(
-        'DELETE FROM receitas_mensais WHERE user_email=? AND mes_referencia=? AND despesa_mensal_id IS NOT NULL',
+        'DELETE FROM receitas_mensais WHERE user_email=%s AND mes_referencia=%s AND despesa_mensal_id IS NOT NULL',
         (user_email, mes),
     )
     rows = conn.execute(
-        'SELECT * FROM despesas_mensais WHERE user_email=? AND mes_referencia=? AND receita=1',
+        'SELECT * FROM despesas_mensais WHERE user_email=%s AND mes_referencia=%s AND receita=1',
         (user_email, mes),
     ).fetchall()
     for r in rows:
@@ -98,7 +98,7 @@ def sync_receitas_from_despesas_mensais(user_email, mes):
             INSERT INTO receitas_mensais
             (user_email, data, tipo_receita, valor_original, moeda_original, cotacao, valor_eur, valor_brl,
              conta_bancaria, mes_referencia, despesa_mensal_id, comentarios)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         ''', (
             user_email, r['data'], r['categoria_final'], r['valor_original'],
             r['moeda'], r['cambio_eur'], r['valor_eur'],
@@ -114,7 +114,7 @@ def get_totais_receitas(user_email, mes):
     conn = get_connection()
     row = conn.execute('''
         SELECT SUM(valor_eur) as total_eur, SUM(valor_brl) as total_brl
-        FROM receitas_mensais WHERE user_email=? AND mes_referencia=?
+        FROM receitas_mensais WHERE user_email=%s AND mes_referencia=%s
     ''', (user_email, mes)).fetchone()
     conn.close()
     return {'total_eur': row['total_eur'] or 0, 'total_brl': row['total_brl'] or 0}

@@ -5,7 +5,7 @@ def init_tables():
     conn = get_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS cad_usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             chave_usr1 TEXT,
             chave_usr2 TEXT,
             nome TEXT NOT NULL,
@@ -26,7 +26,7 @@ def get_all_usuarios():
 def add_usuario(chave_usr1, chave_usr2, nome, fator_pagamento):
     conn = get_connection()
     conn.execute(
-        'INSERT INTO cad_usuarios (chave_usr1, chave_usr2, nome, fator_pagamento) VALUES (?,?,?,?)',
+        'INSERT INTO cad_usuarios (chave_usr1, chave_usr2, nome, fator_pagamento) VALUES (%s,%s,%s,%s)',
         (chave_usr1, chave_usr2, nome, fator_pagamento),
     )
     conn.commit()
@@ -36,7 +36,7 @@ def add_usuario(chave_usr1, chave_usr2, nome, fator_pagamento):
 def update_usuario(u_id, chave_usr1, chave_usr2, nome, fator_pagamento):
     conn = get_connection()
     conn.execute(
-        'UPDATE cad_usuarios SET chave_usr1=?, chave_usr2=?, nome=?, fator_pagamento=? WHERE id=?',
+        'UPDATE cad_usuarios SET chave_usr1=%s, chave_usr2=%s, nome=%s, fator_pagamento=%s WHERE id=%s',
         (chave_usr1, chave_usr2, nome, fator_pagamento, u_id),
     )
     conn.commit()
@@ -45,7 +45,7 @@ def update_usuario(u_id, chave_usr1, chave_usr2, nome, fator_pagamento):
 
 def delete_usuario(u_id):
     conn = get_connection()
-    conn.execute('DELETE FROM cad_usuarios WHERE id=?', (u_id,))
+    conn.execute('DELETE FROM cad_usuarios WHERE id=%s', (u_id,))
     conn.commit()
     conn.close()
 

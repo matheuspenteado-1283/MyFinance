@@ -6,7 +6,7 @@ def init_tables():
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS categorias_aprendidas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             padrao_descricao TEXT UNIQUE NOT NULL,
             categoria TEXT NOT NULL
         )
@@ -19,8 +19,9 @@ def save_category_rule(description: str, category: str):
     conn = get_connection()
     c = conn.cursor()
     c.execute('''
-        INSERT OR REPLACE INTO categorias_aprendidas (padrao_descricao, categoria)
-        VALUES (?, ?)
+        INSERT INTO categorias_aprendidas (padrao_descricao, categoria)
+        VALUES (%s, %s)
+        ON CONFLICT (padrao_descricao) DO UPDATE SET categoria = EXCLUDED.categoria
     ''', (description.lower().strip(), category))
     conn.commit()
     conn.close()
@@ -31,7 +32,7 @@ def guess_category(description: str) -> str:
     c = conn.cursor()
 
     desc_lower = description.lower().strip()
-    c.execute('SELECT categoria FROM categorias_aprendidas WHERE padrao_descricao = ?', (desc_lower,))
+    c.execute('SELECT categoria FROM categorias_aprendidas WHERE padrao_descricao = %s', (desc_lower,))
     row = c.fetchone()
     if row:
         conn.close()

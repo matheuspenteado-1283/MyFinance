@@ -6,7 +6,7 @@ def init_tables():
     conn = get_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS relatorios_configurados (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_email TEXT,
             nome_relatorio TEXT,
             tabelas TEXT,
@@ -27,7 +27,7 @@ def save_relatorio_dinamico(user_email, nome, tabelas, campos, agrupador, mes_in
     conn.execute('''
         INSERT INTO relatorios_configurados
         (user_email, nome_relatorio, tabelas, campos, agrupador, mes_inicio, mes_fim, moedas)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ''', (user_email, nome, json.dumps(tabelas), json.dumps(campos), agrupador, mes_inicio, mes_fim, json.dumps(moedas)))
     conn.commit()
     conn.close()
@@ -36,7 +36,7 @@ def save_relatorio_dinamico(user_email, nome, tabelas, campos, agrupador, mes_in
 def get_all_relatorios_dinamicos(user_email):
     conn = get_connection()
     rows = conn.execute(
-        'SELECT * FROM relatorios_configurados WHERE user_email=? ORDER BY criado_em DESC',
+        'SELECT * FROM relatorios_configurados WHERE user_email=%s ORDER BY criado_em DESC',
         (user_email,),
     ).fetchall()
     conn.close()
@@ -52,7 +52,7 @@ def get_all_relatorios_dinamicos(user_email):
 
 def delete_relatorio_dinamico(r_id):
     conn = get_connection()
-    conn.execute('DELETE FROM relatorios_configurados WHERE id=?', (r_id,))
+    conn.execute('DELETE FROM relatorios_configurados WHERE id=%s', (r_id,))
     conn.commit()
     conn.close()
 
@@ -100,7 +100,7 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
                 SELECT categoria_final, mes_referencia, SUM(valor_original) as valor_original,
                        SUM(valor_eur) as valor_eur, moeda
                 FROM despesas_mensais
-                WHERE user_email=? AND mes_referencia >= ? AND mes_referencia <= ?
+                WHERE user_email=%s AND mes_referencia >= %s AND mes_referencia <= %s
                 GROUP BY categoria_final, mes_referencia, moeda
             ''', (user_email, mes_inicio, mes_fim))
             for row in c.fetchall():
@@ -119,7 +119,7 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
                 SELECT tipo_receita, mes_referencia, SUM(valor_original) as valor_original,
                        SUM(valor_eur) as valor_eur, SUM(valor_brl) as valor_brl, moeda_original
                 FROM receitas_mensais
-                WHERE user_email=? AND mes_referencia >= ? AND mes_referencia <= ?
+                WHERE user_email=%s AND mes_referencia >= %s AND mes_referencia <= %s
                 GROUP BY tipo_receita, mes_referencia, moeda_original
             ''', (user_email, mes_inicio, mes_fim))
             for row in c.fetchall():
@@ -139,7 +139,7 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
                 SELECT tp_imposto, pagamento_mes_ano, SUM(valor_imposto) as valor_imposto,
                        SUM(valor_faturado) as valor_faturado, moeda_faturado, moeda_pagamento
                 FROM lcto_impostos
-                WHERE user_email=? AND pagamento_mes_ano >= ? AND pagamento_mes_ano <= ?
+                WHERE user_email=%s AND pagamento_mes_ano >= %s AND pagamento_mes_ano <= %s
                 GROUP BY tp_imposto, pagamento_mes_ano, moeda_faturado, moeda_pagamento
             ''', (user_email, mes_inicio, mes_fim))
             for row in c.fetchall():
@@ -158,7 +158,7 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
             c.execute('''
                 SELECT beneficiario, data_operacao, valor_operacao, moeda_emp
                 FROM lcto_emprestimos
-                WHERE user_email=? AND substr(data_operacao,1,7) >= ? AND substr(data_operacao,1,7) <= ?
+                WHERE user_email=%s AND substr(data_operacao,1,7) >= %s AND substr(data_operacao,1,7) <= %s
             ''', (user_email, mes_inicio, mes_fim))
             for row in c.fetchall():
                 agr = row['beneficiario'] or 'Sem Beneficiario'
@@ -175,7 +175,7 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
             c.execute('''
                 SELECT banco, tp_investimento, data_inv, valor_atual, valor_inv, moeda
                 FROM lcto_investimentos
-                WHERE user_email=? AND substr(data_inv,1,7) >= ? AND substr(data_inv,1,7) <= ?
+                WHERE user_email=%s AND substr(data_inv,1,7) >= %s AND substr(data_inv,1,7) <= %s
             ''', (user_email, mes_inicio, mes_fim))
             for row in c.fetchall():
                 agr = f"{row['banco']} - {row['tp_investimento']}" if row['banco'] else 'Sem Banco'

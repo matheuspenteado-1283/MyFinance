@@ -5,7 +5,7 @@ def init_tables():
     conn = get_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS cad_contas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             descricao TEXT NOT NULL,
             agencia TEXT,
             conta TEXT,
@@ -28,7 +28,7 @@ def get_all_contas():
 def add_conta(descricao, agencia, conta, dados_acesso, senha, comentarios):
     conn = get_connection()
     conn.execute(
-        'INSERT INTO cad_contas (descricao, agencia, conta, dados_acesso, senha, comentarios) VALUES (?,?,?,?,?,?)',
+        'INSERT INTO cad_contas (descricao, agencia, conta, dados_acesso, senha, comentarios) VALUES (%s,%s,%s,%s,%s,%s)',
         (descricao, agencia, conta, dados_acesso, senha, comentarios),
     )
     conn.commit()
@@ -38,7 +38,7 @@ def add_conta(descricao, agencia, conta, dados_acesso, senha, comentarios):
 def update_conta(c_id, descricao, agencia, conta, dados_acesso, senha, comentarios):
     conn = get_connection()
     conn.execute(
-        'UPDATE cad_contas SET descricao=?, agencia=?, conta=?, dados_acesso=?, senha=?, comentarios=? WHERE id=?',
+        'UPDATE cad_contas SET descricao=%s, agencia=%s, conta=%s, dados_acesso=%s, senha=%s, comentarios=%s WHERE id=%s',
         (descricao, agencia, conta, dados_acesso, senha, comentarios, c_id),
     )
     conn.commit()
@@ -47,7 +47,7 @@ def update_conta(c_id, descricao, agencia, conta, dados_acesso, senha, comentari
 
 def delete_conta(c_id):
     conn = get_connection()
-    conn.execute('DELETE FROM cad_contas WHERE id=?', (c_id,))
+    conn.execute('DELETE FROM cad_contas WHERE id=%s', (c_id,))
     conn.commit()
     conn.close()
 
@@ -61,6 +61,6 @@ def clear_contas():
 
 def get_senha_conta(c_id):
     conn = get_connection()
-    row = conn.execute('SELECT senha FROM cad_contas WHERE id=?', (c_id,)).fetchone()
+    row = conn.execute('SELECT senha FROM cad_contas WHERE id=%s', (c_id,)).fetchone()
     conn.close()
     return row['senha'] if row else ''

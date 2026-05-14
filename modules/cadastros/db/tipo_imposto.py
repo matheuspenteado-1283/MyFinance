@@ -5,7 +5,7 @@ def init_tables():
     conn = get_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS tb_tipo_imposto (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             tp_imposto TEXT NOT NULL,
             alq_imposto REAL,
             pagamento TEXT
@@ -25,7 +25,7 @@ def get_all_tipo_imposto():
 def add_tipo_imposto(tp_imposto, alq_imposto, pagamento):
     conn = get_connection()
     conn.execute(
-        'INSERT INTO tb_tipo_imposto (tp_imposto, alq_imposto, pagamento) VALUES (?, ?, ?)',
+        'INSERT INTO tb_tipo_imposto (tp_imposto, alq_imposto, pagamento) VALUES (%s, %s, %s)',
         (tp_imposto, alq_imposto, pagamento),
     )
     conn.commit()
@@ -35,7 +35,7 @@ def add_tipo_imposto(tp_imposto, alq_imposto, pagamento):
 def update_tipo_imposto(ti_id, tp_imposto, alq_imposto, pagamento):
     conn = get_connection()
     conn.execute(
-        'UPDATE tb_tipo_imposto SET tp_imposto=?, alq_imposto=?, pagamento=? WHERE id=?',
+        'UPDATE tb_tipo_imposto SET tp_imposto=%s, alq_imposto=%s, pagamento=%s WHERE id=%s',
         (tp_imposto, alq_imposto, pagamento, ti_id),
     )
     conn.commit()
@@ -44,7 +44,7 @@ def update_tipo_imposto(ti_id, tp_imposto, alq_imposto, pagamento):
 
 def delete_tipo_imposto(ti_id):
     conn = get_connection()
-    conn.execute('DELETE FROM tb_tipo_imposto WHERE id=?', (ti_id,))
+    conn.execute('DELETE FROM tb_tipo_imposto WHERE id=%s', (ti_id,))
     conn.commit()
     conn.close()
 

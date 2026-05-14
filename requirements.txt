@@ -7,3 +7,6 @@ pdfplumber
 beautifulsoup4
 python-dateutil
 xlrd
+psycopg2-binary
+gunicorn
+python-dotenv

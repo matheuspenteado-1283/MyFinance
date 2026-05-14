@@ -7,7 +7,7 @@ def init_tables():
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL
         )
@@ -21,11 +21,11 @@ def register_user(email: str, password: str) -> bool:
     c = conn.cursor()
     email_lower = email.lower().strip()
     try:
-        c.execute('DELETE FROM despesas_mensais WHERE user_email = ?', (email_lower,))
-        c.execute('DELETE FROM despesas_anuais WHERE user_email = ?', (email_lower,))
-        c.execute('DELETE FROM receitas_mensais WHERE user_email = ?', (email_lower,))
-        c.execute('DELETE FROM lcto_impostos WHERE user_email = ?', (email_lower,))
-        c.execute('INSERT INTO users (email, password_hash) VALUES (?, ?)',
+        c.execute('DELETE FROM despesas_mensais WHERE user_email = %s', (email_lower,))
+        c.execute('DELETE FROM despesas_anuais WHERE user_email = %s', (email_lower,))
+        c.execute('DELETE FROM receitas_mensais WHERE user_email = %s', (email_lower,))
+        c.execute('DELETE FROM lcto_impostos WHERE user_email = %s', (email_lower,))
+        c.execute('INSERT INTO users (email, password_hash) VALUES (%s, %s)',
                   (email_lower, generate_password_hash(password, method='pbkdf2:sha256')))
         conn.commit()
         return True
@@ -38,7 +38,7 @@ def register_user(email: str, password: str) -> bool:
 def verify_user(email: str, password: str) -> bool:
     conn = get_connection()
     c = conn.cursor()
-    c.execute('SELECT password_hash FROM users WHERE email = ?', (email.lower().strip(),))
+    c.execute('SELECT password_hash FROM users WHERE email = %s', (email.lower().strip(),))
     row = c.fetchone()
     conn.close()
     if row and check_password_hash(row['password_hash'], password):
@@ -49,7 +49,7 @@ def verify_user(email: str, password: str) -> bool:
 def get_user_by_email(email: str):
     conn = get_connection()
     c = conn.cursor()
-    c.execute('SELECT id, email FROM users WHERE email = ?', (email.lower().strip(),))
+    c.execute('SELECT id, email FROM users WHERE email = %s', (email.lower().strip(),))
     row = c.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -59,11 +59,11 @@ def limpar_dados_usuario(email: str):
     conn = get_connection()
     c = conn.cursor()
     email_lower = email.lower().strip()
-    c.execute('DELETE FROM despesas_mensais WHERE LOWER(user_email) = ?', (email_lower,))
-    c.execute('DELETE FROM despesas_anuais WHERE LOWER(user_email) = ?', (email_lower,))
-    c.execute('DELETE FROM receitas_mensais WHERE LOWER(user_email) = ?', (email_lower,))
-    c.execute('DELETE FROM lcto_impostos WHERE LOWER(user_email) = ?', (email_lower,))
-    c.execute('DELETE FROM lcto_emprestimos WHERE LOWER(user_email) = ?', (email_lower,))
+    c.execute('DELETE FROM despesas_mensais WHERE LOWER(user_email) = %s', (email_lower,))
+    c.execute('DELETE FROM despesas_anuais WHERE LOWER(user_email) = %s', (email_lower,))
+    c.execute('DELETE FROM receitas_mensais WHERE LOWER(user_email) = %s', (email_lower,))
+    c.execute('DELETE FROM lcto_impostos WHERE LOWER(user_email) = %s', (email_lower,))
+    c.execute('DELETE FROM lcto_emprestimos WHERE LOWER(user_email) = %s', (email_lower,))
     c.execute('DELETE FROM categorias_aprendidas')
     conn.commit()
     conn.close()
