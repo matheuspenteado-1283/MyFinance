@@ -3846,12 +3846,20 @@
             document.getElementById('uploadSection').style.display = 'block';
         }
 
-        function showLoginUI() {
+        function showLoginUI(message) {
             document.body.classList.remove('is-authenticated');
+            const sidebar = document.getElementById('appSidebar');
+            if (sidebar) sidebar.style.display = 'none';
             document.getElementById('loginContainer').style.display = 'block';
             document.getElementById('menuContainer').style.display = 'none';
             document.querySelectorAll('.module-container').forEach(el => el.style.display = 'none');
             document.getElementById('userNav').style.display = 'none';
+            if (message) {
+                const loginError = document.getElementById('loginError');
+                loginError.style.color = 'var(--success, #4ade80)';
+                loginError.textContent = message;
+                setTimeout(() => { loginError.textContent = ''; loginError.style.color = ''; }, 5000);
+            }
         }
 
         function setActiveModule(moduleKey) {
@@ -3870,7 +3878,7 @@
             await fetch('/logout', { method: 'POST' });
             parsedTransactions = [];
             document.getElementById('tableBody').innerHTML = '';
-            showLoginUI();
+            showLoginUI('Obrigado — Aguardamos sua volta!');
         }
 
         // ── Módulo Impostos ─────────────────────────────────────────────
