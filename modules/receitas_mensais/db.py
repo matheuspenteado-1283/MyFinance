@@ -59,26 +59,26 @@ def add_receita_mensal(user_email, row):
     conn.close()
 
 
-def update_receita_mensal(r_id, row):
+def update_receita_mensal(user_email, r_id, row):
     conn = get_connection()
     conn.execute('''
         UPDATE receitas_mensais SET
         data=%s, tipo_receita=%s, valor_original=%s, moeda_original=%s, cotacao=%s, valor_eur=%s, valor_brl=%s,
         conta_bancaria=%s, mes_referencia=%s, comentarios=%s
-        WHERE id=%s
+        WHERE id=%s AND user_email=%s
     ''', (
         row.get('data'), row.get('tipo_receita'), row.get('valor_original'),
         row.get('moeda_original'), row.get('cotacao', 1), row.get('valor_eur'),
         row.get('valor_brl'), row.get('conta_bancaria'), row.get('mes_referencia'),
-        row.get('comentarios'), r_id,
+        row.get('comentarios'), r_id, user_email,
     ))
     conn.commit()
     conn.close()
 
 
-def delete_receita_mensal(r_id):
+def delete_receita_mensal(user_email, r_id):
     conn = get_connection()
-    conn.execute('DELETE FROM receitas_mensais WHERE id=%s', (r_id,))
+    conn.execute('DELETE FROM receitas_mensais WHERE id=%s AND user_email=%s', (r_id, user_email))
     conn.commit()
     conn.close()
 

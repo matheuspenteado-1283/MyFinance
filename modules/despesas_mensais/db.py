@@ -150,14 +150,14 @@ def add_despesa_mensal(user_email, row):
     conn.close()
 
 
-def update_despesa_mensal(d_id, row):
+def update_despesa_mensal(user_email, d_id, row):
     conn = get_connection()
     conn.execute('''
         UPDATE despesas_mensais SET
         data=%s, descricao=%s, valor_original=%s, moeda=%s, cambio_eur=%s, valor_eur=%s,
         usr1=%s, usr2=%s, diferenca_original=%s, status_pago=%s, categoria_final=%s,
         receita=%s, comentarios=%s, conta_bancaria=%s, mes_referencia=%s
-        WHERE id=%s
+        WHERE id=%s AND user_email=%s
     ''', (
         row.get('data'), row.get('descricao'), row.get('valor_original'),
         row.get('moeda'), row.get('cambio_eur'), row.get('valor_eur'),
@@ -165,24 +165,24 @@ def update_despesa_mensal(d_id, row):
         row.get('status_pago', 'Pendente'), row.get('categoria_final'),
         1 if row.get('receita') else 0,
         row.get('comentarios'), row.get('conta_bancaria'), row.get('mes_referencia'),
-        d_id,
+        d_id, user_email,
     ))
     conn.commit()
     conn.close()
 
 
-def delete_despesa_mensal(d_id):
+def delete_despesa_mensal(user_email, d_id):
     conn = get_connection()
-    conn.execute('DELETE FROM despesas_mensais WHERE id=%s', (d_id,))
+    conn.execute('DELETE FROM despesas_mensais WHERE id=%s AND user_email=%s', (d_id, user_email))
     conn.commit()
     conn.close()
 
 
-def delete_despesas_mensais_batch(ids):
+def delete_despesas_mensais_batch(user_email, ids):
     if not ids:
         return
     conn = get_connection()
-    conn.execute('DELETE FROM despesas_mensais WHERE id IN %s', (tuple(ids),))
+    conn.execute('DELETE FROM despesas_mensais WHERE id IN %s AND user_email=%s', (tuple(ids), user_email))
     conn.commit()
     conn.close()
 

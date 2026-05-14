@@ -43,7 +43,7 @@ def api_post_despesa_mensal():
 def api_put_despesa_mensal(d_id):
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    update_despesa_mensal(d_id, request.json or {})
+    update_despesa_mensal(session['user_email'], d_id, request.json or {})
     return jsonify({'status': 'ok'})
 
 
@@ -51,7 +51,7 @@ def api_put_despesa_mensal(d_id):
 def api_delete_despesa_mensal(d_id):
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    delete_despesa_mensal(d_id)
+    delete_despesa_mensal(session['user_email'], d_id)
     return jsonify({'status': 'ok'})
 
 
@@ -62,7 +62,7 @@ def api_batch_delete_despesas_mensais():
     data = request.json or {}
     ids = data.get('ids', [])
     if ids:
-        delete_despesas_mensais_batch(ids)
+        delete_despesas_mensais_batch(session['user_email'], ids)
     return jsonify({'status': 'ok'})
 
 

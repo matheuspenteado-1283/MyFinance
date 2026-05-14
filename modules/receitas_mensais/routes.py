@@ -65,7 +65,7 @@ def api_post_receita_mensal():
 def api_put_receita_mensal(r_id):
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    update_receita_mensal(r_id, request.json or {})
+    update_receita_mensal(session['user_email'], r_id, request.json or {})
     return jsonify({'status': 'ok'})
 
 
@@ -73,7 +73,7 @@ def api_put_receita_mensal(r_id):
 def api_delete_receita_mensal(r_id):
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    delete_receita_mensal(r_id)
+    delete_receita_mensal(session['user_email'], r_id)
     return jsonify({'status': 'ok'})
 
 
