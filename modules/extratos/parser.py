@@ -185,8 +185,18 @@ def _df_to_transactions(df, filepath=''):
 
 def _read_xml_xls(filepath):
     try:
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
+        content = None
+        for enc in ('utf-8-sig', 'utf-16', 'utf-8', 'latin-1'):
+            try:
+                with open(filepath, 'r', encoding=enc, errors='ignore') as f:
+                    content = f.read()
+                if '<?xml' in content:
+                    break
+                content = None
+            except Exception:
+                content = None
+        if not content:
+            return None
         if '<?xml' not in content or ('Workbook' not in content and 'worksheet' not in content.lower()):
             return None
 
