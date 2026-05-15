@@ -220,28 +220,37 @@
         #reviewSection .table-container {
             width: 100%; height: auto; max-height: none; overflow-x: auto; overflow-y: visible; background: transparent; margin: 0;
         }
-        
-        #reviewSection h1 { position: sticky; top: 0; background: #0f172a; padding: 1rem 0; z-index: 30; margin: 0; }
+
+        /* Tabela com min-width para forçar scroll horizontal quando necessário */
+        #reviewSection #transactionsTable {
+            min-width: 1800px;
+        }
+
+        /* H1 não-sticky: rola junto com a página normalmente */
+        #reviewSection h1 { position: static; background: #0f172a; padding: 1rem 0; margin: 0; }
         #reviewSection p { display: none; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 0.5rem; border-bottom: 1px solid var(--glass-border); }
-        th { 
-            background: rgba(30, 41, 59, 0.95); 
+        th {
+            background: rgba(30, 41, 59, 0.95);
             backdrop-filter: blur(8px);
-            font-weight: 600; 
-            color: var(--text-muted); 
-            white-space: nowrap; 
-            vertical-align: top; 
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            vertical-align: top;
             position: sticky;
-            top: 0; 
+            top: 0;
             z-index: 15;
         }
         tr:hover td { background: rgba(255, 255, 255, 0.02); }
-        
-        /* Ajuste para evitar sobreposição no Review Section onde o H1 também é sticky */
-        #reviewSection th {
-            top: 70px; /* Altura aproximada do H1 sticky */
+
+        /* Linha de transação já existente em Despesas Mensais (duplicidade detectada) */
+        #reviewSection tr.already-saved td {
+            background: rgba(16, 185, 129, 0.08);
+        }
+        #reviewSection tr.already-saved td:first-child {
+            border-left: 3px solid #10b981;
         }
 
         .filter-input {
@@ -6063,17 +6072,41 @@
                 if (lbl2) lbl2.textContent = usr2Default || 'Pag2';
             } catch(e) {}
 
-            // Fix: ajustar top do thead sticky com base na altura real do h1
-            const reviewH1 = reviewSection.querySelector('h1');
-            if (reviewH1) {
-                const h1H = reviewH1.offsetHeight;
-                reviewSection.querySelectorAll('thead th').forEach(th => {
-                    th.style.top = h1H + 'px';
+            // Verificar duplicidade contra Despesas Mensais já salvas
+            try {
+                const candidates = parsedTransactions.map(trx => ({
+                    data: trx.data,
+                    descricao: trx.descricao,
+                    valor_original: trx.valor_original,
+                    moeda: trx.moeda,
+                    conta_bancaria: defaultConta || ''
+                }));
+                const dupRes = await fetch('/api/despesas_mensais/check_duplicates', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ candidates })
                 });
-            }
+                if (dupRes.ok) {
+                    const { matches } = await dupRes.json();
+                    Object.entries(matches || {}).forEach(([idx, saved]) => {
+                        const trx = parsedTransactions[parseInt(idx)];
+                        if (!trx) return;
+                        trx.alreadySaved = true;
+                        const u1 = parseFloat(saved.usr1);
+                        const u2 = parseFloat(saved.usr2);
+                        if (!isNaN(u1)) trx.pag1 = u1;
+                        if (!isNaN(u2)) trx.pag2 = u2;
+                        if (saved.categoria_final) trx.categoria = saved.categoria_final;
+                        trx.receita = !!saved.receita;
+                        trx.comentarios = saved.comentarios || '';
+                        if (saved.conta_bancaria) trx.conta_bancaria = saved.conta_bancaria;
+                    });
+                }
+            } catch(e) { console.error('check_duplicates falhou:', e); }
 
-            // Pré-preencher pag1 e pag2 com valores padrão se ainda não definidos
+            // Pré-preencher pag1 e pag2 com valores padrão se ainda não definidos (não sobrescreve duplicatas)
             parsedTransactions.forEach(trx => {
+                if(trx.alreadySaved) return;
                 if(trx.pag1 === undefined || trx.pag1 === null || trx.pag1 === 0) {
                     trx.pag1 = usr1Default ? trx.valor_original : trx.valor_original;
                 }
@@ -6086,6 +6119,7 @@
             parsedTransactions.forEach((trx, i) => {
                 const tr = document.createElement('tr');
                 tr.setAttribute('data-id', trx.id);
+                if (trx.alreadySaved) tr.classList.add('already-saved');
                 const badgeClass = trx.is_debit ? 'val-badge debit' : 'val-badge';
 
                 const isReceita = !!(trx.receita);
@@ -6099,7 +6133,7 @@
 
                 tr.innerHTML = `
                     <td>${trx.data}</td>
-                    <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${trx.descricao}">${trx.descricao}</td>
+                    <td style="min-width: 320px; max-width: 420px; white-space: normal; word-break: break-word; line-height: 1.3;" title="${trx.descricao}">${trx.descricao}</td>
                     <td>
                         <span class="${badgeClass}">${formatCurrency(trx.valor_original)}</span>
                         <span class="currency-badge">${trx.moeda}</span>
@@ -6129,10 +6163,10 @@
                     <td>
                         <select id="cta_${trx.id}" style="width: 150px;">
                             <option value="">—</option>
-                            ${(window.CONTAS_CACHE||[]).map(c => `<option value="${c.descricao}" ${c.descricao===defaultConta?'selected':''}>${c.descricao}</option>`).join('')}
+                            ${(window.CONTAS_CACHE||[]).map(c => `<option value="${c.descricao}" ${c.descricao===(trx.conta_bancaria||defaultConta)?'selected':''}>${c.descricao}</option>`).join('')}
                         </select>
                     </td>
-                    <td><input type="text" id="com_${trx.id}" class="auth-input" style="width:150px;padding:4px;font-size:0.8rem;" placeholder="..."></td>
+                    <td><input type="text" id="com_${trx.id}" class="auth-input" style="width:150px;padding:4px;font-size:0.8rem;" placeholder="..." value="${(trx.comentarios||'').replace(/"/g,'&quot;')}"></td>
                 `;
                 tableBody.appendChild(tr);
 

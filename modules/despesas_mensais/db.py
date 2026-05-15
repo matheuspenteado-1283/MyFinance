@@ -129,6 +129,33 @@ def _despesa_mensal_exists(conn, duplicate_key):
     return row is not None
 
 
+def check_duplicates_with_data(user_email, candidates):
+    """Recebe lista de candidatos {data, descricao, valor_original, moeda, conta_bancaria}.
+    Retorna dict {index: dados_salvos} para os que já existem em despesas_mensais."""
+    conn = get_connection()
+    matches = {}
+    for i, c in enumerate(candidates):
+        key = _despesa_duplicate_key(user_email, c)
+        if not key:
+            continue
+        _, conta_bancaria, data, descricao, valor_original, moeda = key
+        row = conn.execute('''
+            SELECT usr1, usr2, categoria_final, receita, comentarios, status_pago, conta_bancaria
+            FROM despesas_mensais
+            WHERE user_email = %s
+              AND TRIM(COALESCE(conta_bancaria, '')) = %s
+              AND data = %s
+              AND LOWER(TRIM(COALESCE(descricao, ''))) = %s
+              AND ABS(COALESCE(valor_original, 0) - %s) < 0.005
+              AND UPPER(TRIM(COALESCE(moeda, ''))) = %s
+            LIMIT 1
+        ''', (user_email, conta_bancaria, data, descricao, valor_original, moeda)).fetchone()
+        if row:
+            matches[i] = dict(row)
+    conn.close()
+    return matches
+
+
 def add_despesa_mensal(user_email, row):
     conn = get_connection()
     conn.execute('''

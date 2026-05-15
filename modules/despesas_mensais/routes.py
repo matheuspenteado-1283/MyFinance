@@ -10,8 +10,20 @@ from .db import (
     get_despesas_mensais, save_despesas_mensais_batch, add_despesa_mensal,
     update_despesa_mensal, delete_despesa_mensal, delete_despesas_mensais_batch,
     clear_despesas_mensais, consolidar_despesas_anuais, get_consolidacao_tipo_despesa,
-    get_meses_disponiveis,
+    get_meses_disponiveis, check_duplicates_with_data,
 )
+
+
+@bp.route('/api/despesas_mensais/check_duplicates', methods=['POST'])
+def api_check_duplicates_despesas_mensais():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    payload = request.json or {}
+    candidates = payload.get('candidates', [])
+    if not candidates:
+        return jsonify({'matches': {}})
+    matches = check_duplicates_with_data(session['user_email'], candidates)
+    return jsonify({'matches': matches})
 
 
 @bp.route('/api/despesas_mensais', methods=['GET'])
