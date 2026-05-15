@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import dateutil.parser
 import uuid
@@ -305,6 +306,64 @@ def process_file(filepath):
         return transactions
 
     return []
+
+
+def _debug_file(filepath):
+    """Returns diagnostic info about why a file produced 0 transactions."""
+    import traceback
+    info = {'file': os.path.basename(filepath), 'steps': []}
+    try:
+        ext = filepath.lower().split('.')[-1]
+        info['ext'] = ext
+
+        if ext in ('xls', 'xlsx', 'xml'):
+            # Step 1: XML parse
+            try:
+                df_xml = _read_xml_xls(filepath)
+                if df_xml is not None:
+                    info['steps'].append({
+                        'method': 'xml',
+                        'rows': len(df_xml),
+                        'cols': list(df_xml.columns[:10]),
+                        'sample': df_xml.head(5).astype(str).values.tolist(),
+                    })
+                    txns = _df_to_transactions(df_xml, filepath=filepath)
+                    info['steps'][-1]['transactions'] = len(txns)
+                else:
+                    info['steps'].append({'method': 'xml', 'result': 'None (not XML format)'})
+            except Exception as e:
+                info['steps'].append({'method': 'xml', 'error': str(e)})
+
+            # Step 2: openpyxl
+            try:
+                df2 = pd.read_excel(filepath)
+                info['steps'].append({
+                    'method': 'openpyxl',
+                    'rows': len(df2),
+                    'cols': list(df2.columns[:10]),
+                })
+                txns2 = _df_to_transactions(df2, filepath=filepath)
+                info['steps'][-1]['transactions'] = len(txns2)
+            except Exception as e:
+                info['steps'].append({'method': 'openpyxl', 'error': str(e)})
+
+            # Step 3: xlrd
+            try:
+                df3 = pd.read_excel(filepath, engine='xlrd')
+                info['steps'].append({
+                    'method': 'xlrd',
+                    'rows': len(df3),
+                    'cols': list(df3.columns[:10]),
+                })
+                txns3 = _df_to_transactions(df3, filepath=filepath)
+                info['steps'][-1]['transactions'] = len(txns3)
+            except Exception as e:
+                info['steps'].append({'method': 'xlrd', 'error': str(e)})
+
+    except Exception as e:
+        info['error'] = str(e)
+        info['trace'] = traceback.format_exc()
+    return info
 
 
 def process_despesas_file(filepath):

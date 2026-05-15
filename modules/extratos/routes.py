@@ -1,11 +1,12 @@
 import os
 import io
+import traceback
 import pandas as pd
 from flask import request, jsonify, send_file, current_app
 from werkzeug.utils import secure_filename
 
 from . import bp
-from .parser import process_file, process_despesas_file
+from .parser import process_file, process_despesas_file, _debug_file
 from .db import save_category_rule
 from config import allowed_file
 
@@ -21,17 +22,26 @@ def upload_file():
         return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
 
     all_transactions = []
+    debug_info = []
 
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            file_transactions = process_file(filepath)
-            all_transactions.extend(file_transactions)
+            try:
+                file_transactions = process_file(filepath)
+                debug_info.append(_debug_file(filepath))
+                all_transactions.extend(file_transactions)
+            except Exception as e:
+                debug_info.append({'file': filename, 'error': str(e), 'trace': traceback.format_exc()})
 
     if len(all_transactions) == 0:
-        return jsonify({'error': 'Nenhuma transação foi extraída dos arquivos. Verifique os formatos ou as colunas.', 'transactions': []}), 400
+        return jsonify({
+            'error': 'Nenhuma transação foi extraída dos arquivos. Verifique os formatos ou as colunas.',
+            'transactions': [],
+            'debug': debug_info,
+        }), 400
 
     return jsonify({
         'message': f'Extração concluída: {len(all_transactions)} transações processadas.',
