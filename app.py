@@ -1,3 +1,7 @@
+import os
+import threading
+import time
+import requests
 from flask import Flask
 
 from config import configure_app
@@ -16,6 +20,24 @@ from modules.dashboard import bp as dashboard_bp
 from modules.relatorios import bp as relatorios_bp
 
 
+def _start_keep_alive():
+    """Pings own /health every 10 min to prevent Render free-tier spin-down."""
+    url = os.getenv("RENDER_EXTERNAL_URL")
+    if not url:
+        return
+
+    def ping():
+        while True:
+            time.sleep(600)
+            try:
+                requests.get(f"{url}/health", timeout=10)
+            except Exception:
+                pass
+
+    t = threading.Thread(target=ping, daemon=True)
+    t.start()
+
+
 def create_app():
     app = Flask(__name__)
     configure_app(app)
@@ -24,6 +46,10 @@ def create_app():
     # Endpoint de diagnóstico — remover após validar deploy
     from flask import jsonify
     import traceback
+
+    @app.route('/health')
+    def health():
+        return jsonify({"status": "ok"}), 200
 
     @app.route('/debug/db')
     def debug_db():
@@ -59,6 +85,7 @@ def create_app():
 
 
 app = create_app()
+_start_keep_alive()
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
