@@ -274,6 +274,11 @@
             border-top: 2px solid var(--glass-border);
         }
 
+        /* Fix: tfoot não deve herdar position:sticky do seletor th */
+        #reviewSection tfoot th {
+            position: static;
+        }
+
         .val-badge {
             background: rgba(59, 130, 246, 0.15); color: #93c5fd; padding: 0.3rem 0.6rem;
             border-radius: 6px; font-weight: 500; font-family: monospace; display: inline-block;
@@ -1404,8 +1409,8 @@
                             <th>Original</th>
                             <th>Câmbio</th>
                             <th>Valor (EUR)</th>
-                            <th>Pag1<br><small style="font-weight:normal;font-size:0.7rem;">☐ <a href="#" onclick="applyAllUsr(1);return false;" style="color:var(--primary);text-decoration:none;">100%</a></small></th>
-                            <th>Pag2<br><small style="font-weight:normal;font-size:0.7rem;">☐ <a href="#" onclick="applyAllUsr(2);return false;" style="color:var(--primary);text-decoration:none;">100%</a></small></th>
+                            <th><span id="reviewLabelPag1">Pag1</span><br><small style="font-weight:normal;font-size:0.7rem;">☐ <a href="#" onclick="applyAllUsr(1);return false;" style="color:var(--primary);text-decoration:none;">100%</a></small></th>
+                            <th><span id="reviewLabelPag2">Pag2</span><br><small style="font-weight:normal;font-size:0.7rem;">☐ <a href="#" onclick="applyAllUsr(2);return false;" style="color:var(--primary);text-decoration:none;">100%</a></small></th>
                             <th>Diferença</th>
                             <th>Status<br><input type="text" class="filter-input" data-col="8" placeholder="Filtrar..."></th>
                             <th>Receita</th>
@@ -1439,7 +1444,7 @@
                 <button class="btn btn-xs secondary" style="background: linear-gradient(135deg, #10b981, #059669);" id="saveMensaisBtn" onclick="saveDespesasMensais()">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar Despesas Mensais
                 </button>
-                <button class="btn btn-xs secondary" onclick="location.reload()">
+                <button class="btn btn-xs secondary" onclick="resetToUpload()">
                     <i class="fa-solid fa-arrow-rotate-left"></i> Processar Novos Arquivos
                 </button>
             </div>
@@ -6051,8 +6056,22 @@
                 const allUsr2 = usuarios.map(u => u.chave_usr2).filter(k => k);
                 usr1Default = allUsr1[0] || '';
                 usr2Default = allUsr2[0] || '';
+                // Fix: atualizar labels Pag1/Pag2 com nomes reais de USR1/USR2
+                const lbl1 = document.getElementById('reviewLabelPag1');
+                const lbl2 = document.getElementById('reviewLabelPag2');
+                if (lbl1) lbl1.textContent = usr1Default || 'Pag1';
+                if (lbl2) lbl2.textContent = usr2Default || 'Pag2';
             } catch(e) {}
-            
+
+            // Fix: ajustar top do thead sticky com base na altura real do h1
+            const reviewH1 = reviewSection.querySelector('h1');
+            if (reviewH1) {
+                const h1H = reviewH1.offsetHeight;
+                reviewSection.querySelectorAll('thead th').forEach(th => {
+                    th.style.top = h1H + 'px';
+                });
+            }
+
             // Pré-preencher pag1 e pag2 com valores padrão se ainda não definidos
             parsedTransactions.forEach(trx => {
                 if(trx.pag1 === undefined || trx.pag1 === null || trx.pag1 === 0) {
@@ -6069,7 +6088,14 @@
                 tr.setAttribute('data-id', trx.id);
                 const badgeClass = trx.is_debit ? 'val-badge debit' : 'val-badge';
 
-                const catOptions = (window.DYNAMIC_CATEGORIES && window.DYNAMIC_CATEGORIES.length > 0) ? window.DYNAMIC_CATEGORIES : CATEGORIES;
+                const isReceita = !!(trx.receita);
+                const baseCatOptions = isReceita
+                    ? (window.DYNAMIC_RECEITAS && window.DYNAMIC_RECEITAS.length > 0 ? window.DYNAMIC_RECEITAS : [])
+                    : (window.DYNAMIC_CATEGORIES && window.DYNAMIC_CATEGORIES.length > 0 ? window.DYNAMIC_CATEGORIES : CATEGORIES);
+                const catOptions = isReceita
+                    ? baseCatOptions
+                    : (baseCatOptions.includes('Não Categorizado') ? baseCatOptions : ['Não Categorizado', ...baseCatOptions]);
+                const selectedCat = trx.categoria || 'Não Categorizado';
 
                 tr.innerHTML = `
                     <td>${trx.data}</td>
@@ -6094,10 +6120,10 @@
                     </td>
                     <td><span class="val-badge" id="diff_${trx.id}"></span></td>
                     <td><span class="val-badge" id="st_${trx.id}"></span></td>
-                    <td style="text-align:center;"><input type="checkbox" id="rec_${trx.id}" onchange="updateCatDropdown('${trx.id}')"></td>
+                    <td style="text-align:center;"><input type="checkbox" id="rec_${trx.id}" ${isReceita ? 'checked' : ''} onchange="updateCatDropdown('${trx.id}')"></td>
                     <td>
                         <select id="cat_${trx.id}" style="width: 200px;">
-                            ${catOptions.map(c => `<option value="${c}" ${trx.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
+                            ${catOptions.map(c => `<option value="${c}" ${selectedCat === c ? 'selected' : ''}>${c}</option>`).join('')}
                         </select>
                     </td>
                     <td>
@@ -6178,6 +6204,24 @@
                 btnText.textContent = 'Processar Base Documental';
             });
         });
+
+        function resetToUpload() {
+            parsedTransactions = [];
+            selectedFiles = [];
+            fileList.innerHTML = '';
+            tableBody.innerHTML = '';
+            uploadBtn.disabled = false;
+            loader.style.display = 'none';
+            btnIcon.style.display = 'inline-block';
+            btnText.textContent = 'Processar Base Documental';
+
+            reviewSection.style.display = 'none';
+            reviewSection.classList.remove('full-screen-mode');
+            document.getElementById('extratosModule').classList.remove('no-limits');
+            uploadSection.style.display = 'block';
+            document.getElementById('userNav').style.display = 'flex';
+            window.scrollTo(0, 0);
+        }
 
         function saveCategoryRule(description, category, id) {
             fetch('/save_category', {

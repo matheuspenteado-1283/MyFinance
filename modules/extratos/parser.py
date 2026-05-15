@@ -177,6 +177,7 @@ def _df_to_transactions(df, filepath=''):
             'pag2': round(val_float / 2, 2),
             'categoria': categoria,
             'is_debit': is_debit,
+            'receita': not is_debit,
         })
 
     return transactions
