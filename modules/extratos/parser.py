@@ -186,26 +186,63 @@ def _read_xml_xls(filepath):
     try:
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             content = f.read()
-        if '<?xml' in content and ('Workbook' in content or 'worksheet' in content.lower()):
-            soup = BeautifulSoup(content, 'xml')
+        if '<?xml' not in content or ('Workbook' not in content and 'worksheet' not in content.lower()):
+            return None
+
+        # Use lxml.etree directly for correct namespace + ss:Index handling
+        try:
+            import lxml.etree as ET
+            root = ET.fromstring(content.encode('utf-8', errors='ignore'))
             data = []
-            for row in soup.find_all('Row'):
+            for row in root.xpath('//*[local-name()="Row"]'):
                 row_data = []
-                for cell in row.find_all('Cell'):
-                    # Handle sparse cells with ss:Index (Excel XML Spreadsheet format)
-                    idx_attr = cell.get('ss:Index') or cell.get('Index')
+                for cell in row:
+                    if not (cell.tag.endswith('}Cell') or cell.tag == 'Cell'):
+                        continue
+                    # ss:Index may be stored as {namespace_uri}Index by lxml
+                    idx_attr = None
+                    for attr_key, attr_val in cell.attrib.items():
+                        if attr_key.endswith('}Index') or attr_key in ('Index', 'ss:Index'):
+                            idx_attr = attr_val
+                            break
                     if idx_attr:
                         target = int(idx_attr) - 1  # 1-based → 0-based
                         while len(row_data) < target:
                             row_data.append('')
-                    data_tag = cell.find('Data')
-                    row_data.append(data_tag.text if data_tag else '')
+                    data_els = [c for c in cell if c.tag.endswith('}Data') or c.tag == 'Data']
+                    row_data.append(data_els[0].text or '' if data_els else '')
                 if any(row_data):
                     data.append(row_data)
             if data:
                 max_len = max(len(r) for r in data)
                 padded = [r + [''] * (max_len - len(r)) for r in data]
                 return pd.DataFrame(padded)
+        except Exception:
+            pass
+
+        # Fallback: BeautifulSoup (handles some edge cases lxml misses)
+        soup = BeautifulSoup(content, 'xml')
+        data = []
+        for row in soup.find_all('Row'):
+            row_data = []
+            for cell in row.find_all('Cell'):
+                idx_attr = None
+                for key in cell.attrs:
+                    if 'Index' in str(key):
+                        idx_attr = cell.attrs[key]
+                        break
+                if idx_attr:
+                    target = int(idx_attr) - 1
+                    while len(row_data) < target:
+                        row_data.append('')
+                data_tag = cell.find('Data')
+                row_data.append(data_tag.text if data_tag else '')
+            if any(row_data):
+                data.append(row_data)
+        if data:
+            max_len = max(len(r) for r in data)
+            padded = [r + [''] * (max_len - len(r)) for r in data]
+            return pd.DataFrame(padded)
     except Exception:
         pass
     return None
