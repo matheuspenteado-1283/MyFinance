@@ -143,7 +143,16 @@ def _df_to_transactions(df, filepath=''):
 
         moeda = 'BRL'
 
-        if col_deb or col_cred or _find_column(df, ['data operao', 'data operação', 'saldo controlo']):
+        # Detectar moeda inspecionando nomes das colunas de valor (mais confiável)
+        col_hint = ' '.join(str(c).lower() for c in [col_val, col_deb, col_cred, *df.columns] if c)
+        if 'r$' in col_hint or 'reais' in col_hint or '(brl)' in col_hint:
+            moeda = 'BRL'
+        elif '€' in col_hint or '(eur)' in col_hint or 'euros' in col_hint:
+            moeda = 'EUR'
+        elif 'us$' in col_hint or '(usd)' in col_hint or 'dólar' in col_hint or 'dolar' in col_hint:
+            moeda = 'USD'
+        elif col_deb or col_cred or _find_column(df, ['data operao', 'data operação', 'saldo controlo']):
+            # Fallback: débito/crédito separados sem indicador de moeda → Novo Banco PT (EUR)
             moeda = 'EUR'
 
         col_currency = _find_column(df, ['moeda', 'currency'])
