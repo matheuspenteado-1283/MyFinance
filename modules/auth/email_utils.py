@@ -1,7 +1,10 @@
 import os
+import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+logger = logging.getLogger(__name__)
 
 
 def send_reset_email(to_email: str, reset_url: str) -> bool:
@@ -12,6 +15,7 @@ def send_reset_email(to_email: str, reset_url: str) -> bool:
     from_name = os.getenv('SMTP_FROM_NAME', 'MyFinance')
 
     if not smtp_user or not smtp_pass:
+        logger.error('SMTP não configurado: SMTP_USER ou SMTP_PASS ausentes no ambiente')
         return False
 
     msg = MIMEMultipart('alternative')
@@ -67,6 +71,8 @@ Equipe MyFinance
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.sendmail(smtp_user, to_email, msg.as_string())
+        logger.info('Reset email enviado para %s', to_email)
         return True
-    except Exception:
+    except Exception as exc:
+        logger.error('Falha ao enviar e-mail para %s: %s', to_email, exc)
         return False
