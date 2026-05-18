@@ -567,6 +567,30 @@
             color: var(--text-muted);
             cursor: pointer;
         }
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-wrapper .auth-input {
+            width: 100%;
+            padding-right: 2.8rem;
+            box-sizing: border-box;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 0.8rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .toggle-password:hover {
+            color: var(--text-light);
+        }
         .auth-links:hover {
             color: var(--primary);
         }
@@ -834,13 +858,39 @@
         
         <form class="auth-form" id="authForm" onsubmit="handleAuth(event)">
             <input type="email" id="authEmail" class="auth-input" placeholder="Seu e-mail" required>
-            <input type="password" id="authPassword" class="auth-input" placeholder="Sua senha" required>
+            <div class="password-wrapper">
+                <input type="password" id="authPassword" class="auth-input" placeholder="Sua senha" required>
+                <button type="button" class="toggle-password" onclick="togglePasswordVisibility()" tabindex="-1" aria-label="Mostrar/ocultar senha">
+                    <i class="fa-solid fa-eye" id="togglePasswordIcon"></i>
+                </button>
+            </div>
             <button type="submit" class="btn btn-xs secondary" id="authBtn">Entrar</button>
             <div id="loginError"></div>
         </form>
         
         <div class="auth-links" id="toggleAuthMode" onclick="toggleAuthMode()">
             Não tem uma conta? Crie uma aqui.
+        </div>
+        <div class="auth-links" id="forgotPasswordLink" onclick="openForgotPassword()" style="margin-top:4px">
+            Esqueci minha senha
+        </div>
+    </div>
+
+    <!-- Modal: Esqueci minha senha -->
+    <div id="forgotOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
+        <div style="background:#1e293b;border:1px solid rgba(56,189,248,0.2);border-radius:16px;padding:2rem;width:100%;max-width:400px;margin:1rem;display:flex;flex-direction:column;gap:1rem">
+            <h3 style="font-size:1.1rem;color:#38bdf8">Redefinir senha</h3>
+            <p style="font-size:0.9rem;color:#94a3b8">Informe seu e-mail e enviaremos um link para criar uma nova senha.</p>
+            <input type="email" id="forgotEmail" class="auth-input" placeholder="Seu e-mail" autocomplete="email">
+            <div id="forgotMsg" style="font-size:0.85rem;display:none;padding:0.5rem 0.75rem;border-radius:6px"></div>
+            <div style="display:flex;gap:0.75rem">
+                <button class="btn btn-xs secondary" id="forgotSubmitBtn" onclick="submitForgotPassword()" style="flex:1">
+                    <i class="fa-solid fa-paper-plane"></i> Enviar link
+                </button>
+                <button class="btn btn-xs" onclick="closeForgotPassword()" style="flex:1;background:rgba(255,255,255,0.07);color:#e2e8f0">
+                    Cancelar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -2890,6 +2940,74 @@
         // LOCAL AUTHENTICATION LOGIC
         // =====================================================================
         let isLoginMode = true;
+
+        function openForgotPassword() {
+            const overlay = document.getElementById('forgotOverlay');
+            overlay.style.display = 'flex';
+            document.getElementById('forgotEmail').value = document.getElementById('authEmail').value || '';
+            document.getElementById('forgotMsg').style.display = 'none';
+            document.getElementById('forgotSubmitBtn').disabled = false;
+            document.getElementById('forgotSubmitBtn').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar link';
+            setTimeout(() => document.getElementById('forgotEmail').focus(), 50);
+        }
+
+        function closeForgotPassword() {
+            document.getElementById('forgotOverlay').style.display = 'none';
+        }
+
+        document.getElementById('forgotOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeForgotPassword();
+        });
+
+        async function submitForgotPassword() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            const msg = document.getElementById('forgotMsg');
+            const btn = document.getElementById('forgotSubmitBtn');
+            msg.style.display = 'none';
+
+            if (!email) {
+                msg.style.background = 'rgba(248,113,113,0.15)';
+                msg.style.color = '#f87171';
+                msg.textContent = 'Informe o e-mail.';
+                msg.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+
+            try {
+                await fetch('/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                msg.style.background = 'rgba(74,222,128,0.15)';
+                msg.style.color = '#4ade80';
+                msg.textContent = 'Se este e-mail estiver cadastrado, você receberá o link em instantes.';
+                msg.style.display = 'block';
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado';
+            } catch {
+                msg.style.background = 'rgba(248,113,113,0.15)';
+                msg.style.color = '#f87171';
+                msg.textContent = 'Erro de conexão. Tente novamente.';
+                msg.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar link';
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('authPassword');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
 
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;

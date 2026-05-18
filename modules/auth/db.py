@@ -1,3 +1,5 @@
+import secrets
+import datetime
 from db.connection import get_connection
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -10,6 +12,15 @@ def init_tables():
             id SERIAL PRIMARY KEY,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id SERIAL PRIMARY KEY,
+            email TEXT NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expires_at TIMESTAMPTZ NOT NULL,
+            used BOOLEAN NOT NULL DEFAULT FALSE
         )
     ''')
     conn.commit()
@@ -53,6 +64,68 @@ def get_user_by_email(email: str):
     row = c.fetchone()
     conn.close()
     return dict(row) if row else None
+
+
+def create_reset_token(email: str) -> str | None:
+    """Creates a 1-hour reset token. Returns token or None if email not found."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT id FROM users WHERE email = %s', (email.lower().strip(),))
+    if not c.fetchone():
+        conn.close()
+        return None
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+    c.execute(
+        'INSERT INTO password_reset_tokens (email, token, expires_at) VALUES (%s, %s, %s)',
+        (email.lower().strip(), token, expires_at)
+    )
+    conn.commit()
+    conn.close()
+    return token
+
+
+def verify_reset_token(token: str) -> str | None:
+    """Returns the email if the token is valid and unexpired, else None."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        'SELECT email, expires_at, used FROM password_reset_tokens WHERE token = %s',
+        (token,)
+    )
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return None
+    if row['used']:
+        return None
+    if datetime.datetime.now(datetime.timezone.utc) > row['expires_at']:
+        return None
+    return row['email']
+
+
+def consume_reset_token(token: str, new_password: str) -> bool:
+    """Marks token as used and updates the user's password. Returns True on success."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute(
+            'SELECT email FROM password_reset_tokens WHERE token = %s AND used = FALSE AND expires_at > NOW()',
+            (token,)
+        )
+        row = c.fetchone()
+        if not row:
+            return False
+        email = row['email']
+        new_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
+        c.execute('UPDATE users SET password_hash = %s WHERE email = %s', (new_hash, email))
+        c.execute('UPDATE password_reset_tokens SET used = TRUE WHERE token = %s', (token,))
+        conn.commit()
+        return True
+    except Exception:
+        return False
+    finally:
+        conn.close()
 
 
 def limpar_dados_usuario(email: str):
