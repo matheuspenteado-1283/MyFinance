@@ -1,6 +1,7 @@
-from flask import request, jsonify, session, render_template, current_app
+from flask import request, jsonify, session, render_template, current_app, url_for
 from . import bp
-from .db import register_user, verify_user, limpar_dados_usuario
+from .db import register_user, verify_user, limpar_dados_usuario, create_reset_token, verify_reset_token, consume_reset_token
+from .email_utils import send_reset_email
 from modules.cadastros.db.despesas import clear_despesas
 from modules.cadastros.db.contas import clear_contas
 from modules.cadastros.db.receitas import clear_receitas
@@ -43,6 +44,41 @@ def login():
         session['user_email'] = email
         return jsonify({'status': 'ok'})
     return jsonify({'error': 'Credenciais inválidas'}), 401
+
+
+@bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.json or {}
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'error': 'E-mail obrigatório'}), 400
+    token = create_reset_token(email)
+    if token:
+        reset_url = url_for('auth.reset_password_page', token=token, _external=True)
+        send_reset_email(email, reset_url)
+    # Always return success to avoid email enumeration
+    return jsonify({'status': 'ok'})
+
+
+@bp.route('/reset-password', methods=['GET'])
+def reset_password_page():
+    token = request.args.get('token', '')
+    email = verify_reset_token(token) if token else None
+    return render_template('reset_password.html', token=token, valid=bool(email))
+
+
+@bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json or {}
+    token = data.get('token', '')
+    new_password = data.get('password', '')
+    if not token or not new_password:
+        return jsonify({'error': 'Dados incompletos'}), 400
+    if len(new_password) < 6:
+        return jsonify({'error': 'A senha deve ter pelo menos 6 caracteres'}), 400
+    if consume_reset_token(token, new_password):
+        return jsonify({'status': 'ok'})
+    return jsonify({'error': 'Link inválido ou expirado'}), 400
 
 
 @bp.route('/logout', methods=['POST'])
