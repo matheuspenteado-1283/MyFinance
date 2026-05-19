@@ -8196,24 +8196,24 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
                 ]);
                 const [despBudget, recBudget] = await Promise.all([resDespBudget.json(), resRecBudget.json()]);
 
-                // Try to fetch actual values from despesas_mensais / receitas_mensais
+                // Fetch actual values from despesas_mensais / receitas_mensais
                 let realDespMap = {}, realRecMap = {};
                 try {
-                    const rDesp = await fetch(`/api/despesas_mensais?mes_ano=${mesAno}`);
+                    const rDesp = await fetch(`/api/despesas_mensais?mes=${mesAno}`);
                     const dDesp = await rDesp.json();
-                    (dDesp.items || dDesp || []).forEach(d => {
-                        const k = (d.despesa || d.categoria || '').trim().toLowerCase();
-                        if (k) realDespMap[k] = (realDespMap[k]||0) + Math.abs(parseFloat(d.valor||d.valor_eur||0));
+                    (Array.isArray(dDesp) ? dDesp : []).forEach(d => {
+                        const k = (d.categoria_final || '').trim().toLowerCase();
+                        if (k) realDespMap[k] = (realDespMap[k]||0) + Math.abs(parseFloat(d.valor_eur||0));
                     });
-                } catch(e) {}
+                } catch(e) { console.error('Erro despesas reais:', e); }
                 try {
-                    const rRec = await fetch(`/api/receitas_mensais?mes_ano=${mesAno}`);
+                    const rRec = await fetch(`/api/receitas_mensais?mes=${mesAno}`);
                     const dRec = await rRec.json();
-                    (dRec.items || dRec || []).forEach(r => {
-                        const k = (r.descricao || r.receita || r.categoria || '').trim().toLowerCase();
-                        if (k) realRecMap[k] = (realRecMap[k]||0) + Math.abs(parseFloat(r.valor||r.valor_eur||0));
+                    (Array.isArray(dRec) ? dRec : []).forEach(r => {
+                        const k = (r.tipo_receita || '').trim().toLowerCase();
+                        if (k) realRecMap[k] = (realRecMap[k]||0) + Math.abs(parseFloat(r.valor_eur||0));
                     });
-                } catch(e) {}
+                } catch(e) { console.error('Erro receitas reais:', e); }
 
                 const fmt = v => (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
