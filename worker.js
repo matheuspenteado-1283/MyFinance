@@ -13,12 +13,8 @@ export default {
     const url = new URL(request.url);
     const targetUrl = backendUrl.replace(/\/$/, '') + url.pathname + url.search;
 
-    const proxyRequest = new Request(targetUrl, {
-      method: request.method,
-      headers: request.headers,
-      body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
-      redirect: 'follow',
-    });
+    // Use Request clone to preserve Content-Type boundary for multipart/form-data
+    const proxyRequest = new Request(targetUrl, request);
 
     try {
       const response = await fetch(proxyRequest);
