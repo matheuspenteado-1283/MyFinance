@@ -2097,30 +2097,46 @@
 
     <!-- Módulo Relatório Anual -->
     <div class="container module-container module-fullscreen" id="relatorioAnoModule">
-        <h1 style="text-align:center;"><i class="fa-solid fa-calendar-days"></i> Relatório Anual Consolidado</h1>
-        
-        <div style="display:flex; gap:12px; align-items:center; margin-bottom:2rem; justify-content:center;">
+        <h1 style="text-align:center;"><i class="fa-solid fa-calendar-days"></i> Relatório Anual</h1>
+
+        <!-- Controles -->
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:1.5rem; justify-content:center; flex-wrap:wrap;">
+            <!-- Seletor de tipo -->
+            <div style="display:flex; gap:0; border:1px solid var(--glass-border); border-radius:8px; overflow:hidden;">
+                <button id="relAnoBtnDespesas" onclick="relAnoSetTipo('despesas')"
+                    style="padding:8px 20px; font-size:14px; cursor:pointer; border:none; background:var(--primary); color:white; font-weight:600; transition:background 0.2s;">
+                    <i class="fa-solid fa-arrow-trend-down"></i> Despesas
+                </button>
+                <button id="relAnoBtnReceitas" onclick="relAnoSetTipo('receitas')"
+                    style="padding:8px 20px; font-size:14px; cursor:pointer; border:none; background:rgba(255,255,255,0.05); color:var(--text-muted); font-weight:600; transition:background 0.2s;">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Receitas
+                </button>
+            </div>
             <label style="font-size:0.9rem; color:var(--text-muted);">Ano:</label>
-            <select id="relAnoSel" class="auth-input" style="width:120px;" onchange="loadRelatorioAnual()">
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-                <option value="2023">2023</option>
-            </select>
-            <button class="btn btn-xs secondary" onclick="loadRelatorioAnual()"><i class="fa-solid fa-sync"></i> Carregar</button>
+            <select id="relAnoSel" class="auth-input" style="width:120px;" onchange="loadRelatorioAnual()"></select>
+            <button class="btn btn-sm" onclick="loadRelatorioAnual()" style="min-width:120px; padding:8px 16px; font-size:14px; border-radius:8px;">
+                <i class="fa-solid fa-sync"></i> Carregar
+            </button>
         </div>
 
-        <div class="table-container table-full">
-            <table id="relAnoTable">
-                <thead>
-                    <tr>
-                        <th onclick="sortRelAnoTable(0)">Categoria Final <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                        <th style="text-align:center;" onclick="sortRelAnoTable(1)">Total Usr1 <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                        <th style="text-align:center;" onclick="sortRelAnoTable(2)">Total Usr2 <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                        <th style="text-align:center;" onclick="sortRelAnoTable(3)">Total Geral <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
-                    </tr>
-                </thead>
-                <tbody id="relAnoTableBody"></tbody>
-            </table>
+        <!-- Cards por moeda -->
+        <div id="relAnoCards" style="margin-bottom:2rem;"></div>
+
+        <!-- Tabela -->
+        <div id="relAnoTableSection" style="display:none;">
+            <div class="table-container table-full">
+                <div style="overflow-x:auto;">
+                    <table id="relAnoTable" style="min-width:900px;">
+                        <thead id="relAnoTableHead"></thead>
+                        <tbody id="relAnoTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:1.25rem;">
+                <button onclick="relAnoExportExcel()" style="min-width:160px; padding:10px 20px; font-size:14px; border-radius:8px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:var(--success); cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                </button>
+            </div>
         </div>
     </div>
 
@@ -5940,65 +5956,182 @@
         }
 
         // ── Relatório Anual ───────────────────────────────────────────────────
+        // ── Relatório Anual ───────────────────────────────────────────────────
+
+        // Popular seletor de anos dinamicamente
+        (function() {
+            const sel = document.getElementById('relAnoSel');
+            if (!sel) return;
+            const cur = new Date().getFullYear();
+            for (let y = cur; y >= cur - 5; y--) {
+                const opt = document.createElement('option');
+                opt.value = y; opt.textContent = y;
+                if (y === cur) opt.selected = true;
+                sel.appendChild(opt);
+            }
+        })();
+
+        window._relAnoTipo = 'despesas';
+
+        function relAnoSetTipo(tipo) {
+            window._relAnoTipo = tipo;
+            const btnD = document.getElementById('relAnoBtnDespesas');
+            const btnR = document.getElementById('relAnoBtnReceitas');
+            if (tipo === 'despesas') {
+                btnD.style.background = 'var(--primary)'; btnD.style.color = 'white';
+                btnR.style.background = 'rgba(255,255,255,0.05)'; btnR.style.color = 'var(--text-muted)';
+            } else {
+                btnR.style.background = 'var(--success)'; btnR.style.color = 'white';
+                btnD.style.background = 'rgba(255,255,255,0.05)'; btnD.style.color = 'var(--text-muted)';
+            }
+            loadRelatorioAnual();
+        }
+
+        const _relAnoCurrSymbols = { EUR: '€', BRL: 'R$', USD: '$', GBP: '£', CHF: 'Fr' };
+
         async function loadRelatorioAnual() {
             const ano = document.getElementById('relAnoSel').value;
+            const tipo = window._relAnoTipo || 'despesas';
+            const cards = document.getElementById('relAnoCards');
+            const section = document.getElementById('relAnoTableSection');
+            cards.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:1rem;"><i class="fa-solid fa-spinner fa-spin"></i> Carregando...</p>';
+            section.style.display = 'none';
             try {
-                const res = await fetch(`/api/relatorio_anual?ano=${ano}`);
+                const endpoint = tipo === 'despesas'
+                    ? `/api/relatorio_anual_despesas?ano=${ano}`
+                    : `/api/relatorio_anual_receitas?ano=${ano}`;
+                const res = await fetch(endpoint);
                 const data = await res.json();
-                
-                window.relAnoData = data.map(d => ({
-                    categoria: d.categoria_final || 'Sem Categoria',
-                    usr1: d.total_usr1,
-                    usr2: d.total_usr2,
-                    total: d.total_geral
-                }));
-                
-                renderRelAnoTable(window.relAnoData);
-            } catch(e) { console.error("Erro relatório anual:", e); }
-        }
-
-        function renderRelAnoTable(data) {
-            const tbody = document.getElementById('relAnoTableBody');
-            tbody.innerHTML = '';
-            data.forEach(d => {
-                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
-                    <td><b>${d.categoria}</b></td>
-                    <td style="text-align:center;">${formatCurrency(d.usr1)}</td>
-                    <td style="text-align:center;">${formatCurrency(d.usr2)}</td>
-                    <td style="text-align:center;"><b>${formatCurrency(d.total)}</b></td>
-                </tr>`;
-            });
-        }
-
-        function sortRelAnoTable(colIndex) {
-            if (!window.relAnoData) return;
-            const state = window.relAnoSortState = window.relAnoSortState || { col: -1, asc: true };
-            
-            if (state.col === colIndex) {
-                state.asc = !state.asc;
-            } else {
-                state.col = colIndex;
-                state.asc = true;
+                if (data.error) { cards.innerHTML = `<p style="text-align:center;color:var(--error);">${data.error}</p>`; return; }
+                window._relAnoData = data;
+                _renderRelAnoCards(data, tipo);
+                _renderRelAnoTable(data, tipo);
+                section.style.display = 'block';
+            } catch(e) {
+                console.error('Erro relatório anual:', e);
+                cards.innerHTML = '<p style="text-align:center;color:var(--error);">Erro ao carregar dados.</p>';
             }
-            
-            const keys = ['categoria', 'usr1', 'usr2', 'total'];
-            const key = keys[colIndex];
-            
-            window.relAnoData.sort((a, b) => {
-                let valA = a[key];
-                let valB = b[key];
-                
-                if ([1,2,3].includes(colIndex)) {
-                    return state.asc ? valA - valB : valB - valA;
-                }
-                
-                valA = (valA || '').toString().toLowerCase();
-                valB = (valB || '').toString().toLowerCase();
-                return state.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+
+        function _renderRelAnoCards(data, tipo) {
+            const { cards, currencies, ano } = data;
+            const container = document.getElementById('relAnoCards');
+            if (!currencies || currencies.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">Nenhum dado encontrado para o período.</p>';
+                return;
+            }
+            const isD = tipo === 'despesas';
+            const colorMain = isD ? 'var(--error)' : 'var(--success)';
+            const bgMain   = isD ? 'rgba(239,68,68,0.08)'  : 'rgba(16,185,129,0.08)';
+            const bdMain   = isD ? 'rgba(239,68,68,0.2)'   : 'rgba(16,185,129,0.2)';
+            let html = '<div style="display:flex; flex-direction:column; gap:1.2rem;">';
+            currencies.forEach(moeda => {
+                const c = cards[moeda] || { total: 0, media_mensal: 0, meses_com_dados: 0 };
+                const sym = _relAnoCurrSymbols[moeda] || moeda;
+                html += `
+                <div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:0.5rem;text-align:center;">
+                        <i class="fa-solid fa-coins" style="color:var(--primary);"></i>&nbsp;${moeda}
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;">
+                        <div style="background:${bgMain};border:1px solid ${bdMain};border-radius:12px;padding:1.25rem;text-align:center;">
+                            <span style="font-size:0.72rem;color:${colorMain};text-transform:uppercase;letter-spacing:1px;display:block;">Total ${ano}</span>
+                            <div style="font-size:1.25rem;font-weight:700;margin-top:0.4rem;color:${colorMain};">${sym}&nbsp;${formatCurrency(c.total)}</div>
+                        </div>
+                        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:1.25rem;text-align:center;">
+                            <span style="font-size:0.72rem;color:var(--primary);text-transform:uppercase;letter-spacing:1px;display:block;">Média Mensal</span>
+                            <div style="font-size:1.25rem;font-weight:700;margin-top:0.4rem;color:var(--text-light);">${sym}&nbsp;${formatCurrency(c.media_mensal)}</div>
+                        </div>
+                        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:1.25rem;text-align:center;">
+                            <span style="font-size:0.72rem;color:#818cf8;text-transform:uppercase;letter-spacing:1px;display:block;">Meses com Dados</span>
+                            <div style="font-size:1.25rem;font-weight:700;margin-top:0.4rem;color:var(--text-light);">${c.meses_com_dados}&nbsp;/&nbsp;12</div>
+                        </div>
+                    </div>
+                </div>`;
             });
-            
-            updateSortIcons('relAnoTable', colIndex, state.asc);
-            renderRelAnoTable(window.relAnoData);
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function _renderRelAnoTable(data, tipo) {
+            const { currencies, months, month_labels, rows, usr1_nome, usr2_nome } = data;
+            const thead = document.getElementById('relAnoTableHead');
+            const tbody = document.getElementById('relAnoTableBody');
+            const isD = tipo === 'despesas';
+            const sym = m => _relAnoCurrSymbols[m] || m;
+
+            if (!currencies || currencies.length === 0 || !rows || rows.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;color:var(--text-muted);">Sem dados para o período.</td></tr>';
+                return;
+            }
+
+            // Cabeçalho: 2 linhas
+            let h = '<tr>';
+            h += `<th rowspan="2" style="vertical-align:middle;min-width:160px;">${isD ? 'Categoria' : 'Tipo de Receita'}</th>`;
+            if (isD) h += '<th rowspan="2" style="vertical-align:middle;min-width:90px;font-size:0.78rem;">Tipo</th>';
+            currencies.forEach(moeda => {
+                h += `<th colspan="${months.length + 2}" style="text-align:center;background:rgba(59,130,246,0.1);border-left:2px solid rgba(59,130,246,0.25);">${sym(moeda)} ${moeda}</th>`;
+            });
+            h += '</tr><tr>';
+            currencies.forEach(() => {
+                month_labels.forEach((ml, i) => {
+                    h += `<th style="text-align:right;font-size:0.72rem;font-weight:600;min-width:65px;${i===0?'border-left:2px solid rgba(59,130,246,0.25);':''}">${ml}</th>`;
+                });
+                h += '<th style="text-align:right;font-size:0.78rem;font-weight:700;color:var(--error);background:rgba(239,68,68,0.05);min-width:80px;">Total</th>';
+                h += '<th style="text-align:right;font-size:0.78rem;font-weight:700;color:var(--primary);background:rgba(59,130,246,0.05);min-width:80px;">Média Mensal</th>';
+            });
+            h += '</tr>';
+            thead.innerHTML = h;
+
+            // Totais acumulados para linha de rodapé
+            const totals = {};
+            currencies.forEach(m => { totals[m] = { meses: {}, total: 0 }; months.forEach(mes => { totals[m].meses[mes] = 0; }); });
+
+            let b = '';
+            (rows || []).forEach(row => {
+                const label = isD ? row.categoria : row.tipo;
+                const hasData = currencies.some(m => (row.valores[m]?.total || 0) > 0);
+                b += `<tr style="${hasData ? '' : 'opacity:0.35;'}">`;
+                b += `<td><b>${label}</b>${isD && row.tipo_despesa ? `<br><small style="color:var(--text-muted);font-size:0.75rem;">${row.tipo_despesa}</small>` : ''}</td>`;
+                if (isD) b += `<td style="font-size:0.8rem;color:var(--text-muted);">${row.tipo_despesa || ''}</td>`;
+                currencies.forEach((m, mi) => {
+                    const v = row.valores[m] || { meses: {}, total: 0, media: 0 };
+                    months.forEach((mes, idx) => {
+                        const val = isD ? (v.meses[mes]?.total || 0) : (v.meses[mes] || 0);
+                        totals[m].meses[mes] += val;
+                        const dim = val === 0;
+                        b += `<td style="text-align:right;${dim?'color:var(--text-muted);':''}${idx===0?'border-left:2px solid rgba(59,130,246,0.15);':''}">${dim ? '—' : formatCurrency(val)}</td>`;
+                    });
+                    totals[m].total += v.total || 0;
+                    b += `<td style="text-align:right;font-weight:700;color:var(--error);background:rgba(239,68,68,0.03);">${v.total > 0 ? formatCurrency(v.total) : '—'}</td>`;
+                    b += `<td style="text-align:right;font-weight:700;color:var(--primary);background:rgba(59,130,246,0.03);">${v.total > 0 ? formatCurrency(v.media) : '—'}</td>`;
+                });
+                b += '</tr>';
+            });
+
+            // Linha TOTAL GERAL
+            b += '<tr style="border-top:2px solid rgba(59,130,246,0.4);background:rgba(59,130,246,0.05);">';
+            b += `<td style="font-weight:700;font-size:0.9rem;"><i class="fa-solid fa-sigma"></i> TOTAL GERAL</td>`;
+            if (isD) b += '<td></td>';
+            currencies.forEach(m => {
+                months.forEach((mes, idx) => {
+                    const val = totals[m].meses[mes];
+                    b += `<td style="text-align:right;font-weight:700;color:var(--error);${idx===0?'border-left:2px solid rgba(59,130,246,0.25);':''}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+                });
+                b += `<td style="text-align:right;font-weight:700;color:var(--error);background:rgba(239,68,68,0.08);">${sym(m)} ${formatCurrency(totals[m].total)}</td>`;
+                b += `<td style="text-align:right;font-weight:700;color:var(--primary);background:rgba(59,130,246,0.08);">${sym(m)} ${formatCurrency(totals[m].total / 12)}</td>`;
+            });
+            b += '</tr>';
+            tbody.innerHTML = b;
+        }
+
+        function relAnoExportExcel() {
+            const ano = document.getElementById('relAnoSel').value;
+            const tipo = window._relAnoTipo || 'despesas';
+            window.location.href = tipo === 'despesas'
+                ? `/api/relatorio_anual_despesas/exportar?ano=${ano}`
+                : `/api/relatorio_anual_receitas/exportar?ano=${ano}`;
         }
 
         // ── Relatório Mensal ──────────────────────────────────────────────────
