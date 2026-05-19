@@ -141,6 +141,72 @@ def delete_budget_year(user_email, ano, tipo=None):
     conn.close()
 
 
+def get_comparativo(user_email: str, mes_ano: str):
+    """
+    Returns budget vs real for every budget item in a given month.
+    mes_ano format: 'YYYY-MM'
+    Matches budget.categoria_nome against despesas_mensais.categoria_final (case-insensitive)
+    and budget.categoria_nome against receitas_mensais.tipo_receita (case-insensitive).
+    """
+    try:
+        ano = int(mes_ano.split('-')[0])
+        mes_idx = int(mes_ano.split('-')[1]) - 1
+        mes_col = f'valor_{MONTHS[mes_idx]}'
+    except Exception:
+        return []
+
+    conn = get_connection()
+
+    # Budget items for this year
+    budget_rows = conn.execute(
+        f'SELECT tipo, categoria_nome, tipo_categoria, {mes_col} AS valor_budget, '
+        f'variacao_mensal_pct, variacao_anual_pct '
+        f'FROM budget_items WHERE user_email=%s AND ano=%s ORDER BY tipo, categoria_nome',
+        (user_email, ano)
+    ).fetchall()
+    budget_rows = [dict(r) for r in budget_rows]
+
+    # Real despesas: sum valor_eur per categoria_final for the month
+    desp_real = conn.execute(
+        'SELECT LOWER(TRIM(COALESCE(categoria_final,\'\'))) AS cat_key, '
+        'SUM(valor_eur) AS total '
+        'FROM despesas_mensais '
+        'WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0) '
+        'GROUP BY LOWER(TRIM(COALESCE(categoria_final,\'\')))',
+        (user_email, mes_ano)
+    ).fetchall()
+    desp_map = {r['cat_key']: r['total'] for r in desp_real}
+
+    # Real receitas: sum valor_eur per tipo_receita for the month
+    rec_real = conn.execute(
+        'SELECT LOWER(TRIM(COALESCE(tipo_receita,\'\'))) AS cat_key, '
+        'SUM(valor_eur) AS total '
+        'FROM receitas_mensais '
+        'WHERE user_email=%s AND mes_referencia=%s '
+        'GROUP BY LOWER(TRIM(COALESCE(tipo_receita,\'\')))',
+        (user_email, mes_ano)
+    ).fetchall()
+    rec_map = {r['cat_key']: r['total'] for r in rec_real}
+
+    conn.close()
+
+    result = []
+    for b in budget_rows:
+        cat_key = (b['categoria_nome'] or '').strip().lower()
+        real_map = desp_map if b['tipo'] == 'despesa' else rec_map
+        real_val = real_map.get(cat_key, 0) or 0
+        result.append({
+            'tipo': b['tipo'],
+            'categoria_nome': b['categoria_nome'],
+            'tipo_categoria': b['tipo_categoria'],
+            'valor_budget': b['valor_budget'] or 0,
+            'valor_real': real_val,
+            'variacao_mensal_pct': b['variacao_mensal_pct'] or 0,
+            'variacao_anual_pct': b['variacao_anual_pct'] or 0,
+        })
+    return result
+
+
 def bulk_upsert_budget(user_email, ano, tipo, items):
     for item in items:
         upsert_budget_item(

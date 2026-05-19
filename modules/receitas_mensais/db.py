@@ -118,3 +118,71 @@ def get_totais_receitas(user_email, mes):
     ''', (user_email, mes)).fetchone()
     conn.close()
     return {'total_eur': row['total_eur'] or 0, 'total_brl': row['total_brl'] or 0}
+
+
+def get_relatorio_receitas_v2(user_email, mes_referencia):
+    conn = get_connection()
+    c = conn.cursor()
+
+    # Todas as categorias cadastradas (mesmo sem lançamento)
+    c.execute(
+        'SELECT descricao FROM cad_receitas WHERE user_email=%s ORDER BY descricao',
+        (user_email,)
+    )
+    all_cats = [dict(r) for r in c.fetchall()]
+
+    # Receitas do mês agrupadas por tipo + moeda
+    c.execute('''
+        SELECT tipo_receita, moeda_original,
+               COALESCE(SUM(valor_original), 0) as total_original,
+               COALESCE(SUM(valor_eur), 0)      as total_eur,
+               COALESCE(SUM(valor_brl), 0)      as total_brl
+        FROM receitas_mensais
+        WHERE user_email=%s AND mes_referencia=%s
+        GROUP BY tipo_receita, moeda_original
+        ORDER BY tipo_receita, moeda_original
+    ''', (user_email, mes_referencia))
+    rec_rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+
+    data_map = {}
+    currencies_set = set()
+    for r in rec_rows:
+        cat   = r['tipo_receita']    or 'Sem Categoria'
+        moeda = r['moeda_original']  or 'EUR'
+        currencies_set.add(moeda)
+        data_map.setdefault(cat, {})[moeda] = {
+            'total':     float(r['total_original'] or 0),
+            'total_eur': float(r['total_eur']      or 0),
+            'total_brl': float(r['total_brl']      or 0),
+        }
+
+    currencies = sorted(currencies_set)
+
+    rows = []
+    for cat_info in all_cats:
+        cat    = cat_info['descricao']
+        valores = {
+            m: data_map.get(cat, {}).get(m, {'total': 0, 'total_eur': 0, 'total_brl': 0})
+            for m in currencies
+        }
+        rows.append({'categoria': cat, 'valores': valores})
+
+    # Adiciona categorias com lançamentos mas sem cadastro (não deixa sumir)
+    cats_cadastradas = {r['categoria'] for r in rows}
+    for r in rec_rows:
+        cat = r['tipo_receita'] or 'Sem Categoria'
+        if cat not in cats_cadastradas:
+            valores = {
+                m: data_map.get(cat, {}).get(m, {'total': 0, 'total_eur': 0, 'total_brl': 0})
+                for m in currencies
+            }
+            rows.append({'categoria': cat, 'valores': valores})
+            cats_cadastradas.add(cat)
+
+    cards = {
+        m: {'total': sum(float(r['total_original'] or 0) for r in rec_rows if r['moeda_original'] == m)}
+        for m in currencies
+    }
+
+    return {'rows': rows, 'currencies': currencies, 'cards': cards}

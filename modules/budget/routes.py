@@ -7,7 +7,8 @@ from werkzeug.utils import secure_filename
 from . import bp
 from .db import (
     get_budget_items, get_budget_summary, upsert_budget_item,
-    update_budget_item, delete_budget_item, delete_budget_year, bulk_upsert_budget, MONTHS
+    update_budget_item, delete_budget_item, delete_budget_year, bulk_upsert_budget,
+    get_comparativo, MONTHS
 )
 from config import allowed_file
 
@@ -89,6 +90,17 @@ def api_delete_budget(item_id):
         return jsonify({'error': 'Não logado'}), 401
     delete_budget_item(user, item_id)
     return jsonify({'status': 'ok'})
+
+
+@bp.route('/api/budget/comparativo', methods=['GET'])
+def api_get_comparativo():
+    user = _auth()
+    if not user:
+        return jsonify({'error': 'Não logado'}), 401
+    mes_ano = request.args.get('mes_ano', '')
+    if not mes_ano:
+        return jsonify({'error': 'mes_ano obrigatório (YYYY-MM)'}), 400
+    return jsonify(get_comparativo(user, mes_ano))
 
 
 @bp.route('/api/budget/clear', methods=['DELETE'])
