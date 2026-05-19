@@ -2013,42 +2013,33 @@
     <!-- Módulo Relatório Mensal -->
     <div class="container module-container module-fullscreen" id="relatorioMesModule">
         <h1 style="text-align:center;"><i class="fa-solid fa-file-invoice-dollar"></i> Relatório Mensal</h1>
-        
-        <div style="display:flex; justify-content:center; gap:12px; align-items:center; margin-bottom:2rem;">
+
+        <!-- Controles -->
+        <div style="display:flex; justify-content:center; gap:12px; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap;">
             <label style="font-size:0.9rem; color:var(--text-muted);">Período:</label>
-            <input type="month" id="relMesRef" class="auth-input" style="width:200px;" onchange="loadRelatorioMensal()">
+            <input type="month" id="relMesRef" class="auth-input" style="width:200px;">
+            <button class="btn btn-sm" onclick="previewRelatorioMensal()" style="min-width:140px; padding:10px 20px; font-size:14px; border-radius:8px;">
+                <i class="fa-solid fa-eye"></i> Gerar Preview
+            </button>
         </div>
 
-        <!-- Resumo Rápido -->
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
-            <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.2); border-radius:12px; padding:1.5rem; text-align:center;">
-                <span style="font-size:0.8rem; color:var(--success); text-transform:uppercase; letter-spacing:1px;">Total Receitas</span>
-                <h2 id="relMesTotalRec" style="margin:0.5rem 0 0; color:var(--success);">€ 0,00</h2>
-            </div>
-            <div style="background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); border-radius:12px; padding:1.5rem; text-align:center;">
-                <span style="font-size:0.8rem; color:var(--error); text-transform:uppercase; letter-spacing:1px;">Total Despesas</span>
-                <h2 id="relMesTotalExp" style="margin:0.5rem 0 0; color:var(--error);">€ 0,00</h2>
-            </div>
-            <div style="background:rgba(59, 130, 246, 0.1); border:1px solid rgba(59, 130, 246, 0.2); border-radius:12px; padding:1.5rem; text-align:center;">
-                <span style="font-size:0.8rem; color:var(--primary); text-transform:uppercase; letter-spacing:1px;">Saldo Líquido</span>
-                <h2 id="relMesSaldo" style="margin:0.5rem 0 0; color:var(--text-light);">€ 0,00</h2>
-            </div>
+        <!-- Banner de Preview -->
+        <div id="relMesPreviewBanner" style="display:none; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); border-radius:10px; padding:0.6rem 1rem; margin-bottom:1.5rem; text-align:center; font-size:0.85rem; color:var(--primary);">
+            <i class="fa-solid fa-magnifying-glass-chart"></i> Modo Preview — selecione outro mês e clique em <b>Gerar Preview</b> para atualizar
         </div>
 
-        <div class="table-container table-full">
-            <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-list-check"></i> Consolidação por Categoria</h3>
-            <table id="relMesTable">
-                <thead>
-                    <tr>
-                        <th onclick="sortRelMesTable(0)">Categoria <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                        <th style="text-align:center;" onclick="sortRelMesTable(1)">Receita/Despesa <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                        <th style="text-align:center;" onclick="sortRelMesTable(2)">Total Usr1 <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                        <th style="text-align:center;" onclick="sortRelMesTable(3)">Total Usr2 <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
-                        <th style="text-align:center;" onclick="sortRelMesTable(4)">Total Geral <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
-                    </tr>
-                </thead>
-                <tbody id="relMesTableBody"></tbody>
-            </table>
+        <!-- Cards por moeda -->
+        <div id="relMesCards" style="margin-bottom:2rem;"></div>
+
+        <!-- Tabela -->
+        <div class="table-container table-full" id="relMesTableContainer" style="display:none;">
+            <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-list-check"></i> Consolidação por Categoria de Despesa</h3>
+            <div style="overflow-x:auto;">
+                <table id="relMesTable" style="min-width:600px;">
+                    <thead id="relMesTableHead"></thead>
+                    <tbody id="relMesTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -5711,110 +5702,124 @@
         }
 
         // ── Relatório Mensal ──────────────────────────────────────────────────
-        async function loadRelatorioMensal() {
+        async function previewRelatorioMensal() {
             const mesInput = document.getElementById('relMesRef');
-            if(!mesInput.value) {
+            if (!mesInput.value) {
                 mesInput.value = new Date().toISOString().substring(0, 7);
             }
             const mes = mesInput.value;
-            
             try {
-                const res = await fetch(`/api/despesas_mensais?mes=${mes}`);
+                const res = await fetch(`/api/relatorio_mensal?mes=${mes}`);
                 const data = await res.json();
-                
-                let totalRec = 0;
-                let totalExp = 0;
-                const categories = {};
-
-                data.forEach(d => {
-                    const val = d.valor_eur || 0;
-                    if(d.receita) {
-                        totalRec += val;
-                    } else {
-                        totalExp += val;
-                    }
-                    
-                    const catKey = d.categoria_final || 'Sem Categoria';
-                    if(!categories[catKey]) {
-                        categories[catKey] = { usr1: 0, usr2: 0, total: 0, isReceita: d.receita };
-                    }
-                    categories[catKey].usr1 += d.usr1 || 0;
-                    categories[catKey].usr2 += d.usr2 || 0;
-                    categories[catKey].total += val;
-                });
-
-                // Atualiza Cards
-                document.getElementById('relMesTotalRec').innerText = `€ ${formatCurrency(totalRec)}`;
-                document.getElementById('relMesTotalExp').innerText = `€ ${formatCurrency(totalExp)}`;
-                const saldo = totalRec - totalExp;
-                const saldoEl = document.getElementById('relMesSaldo');
-                saldoEl.innerText = `€ ${formatCurrency(saldo)}`;
-                saldoEl.style.color = saldo >= 0 ? 'var(--success)' : 'var(--error)';
-
-                // Atualiza Tabela
-                const tbody = document.getElementById('relMesTableBody');
-                tbody.innerHTML = '';
-                
-                window.relMesData = Object.keys(categories).map(cat => ({
-                    categoria: cat,
-                    tipo: categories[cat].isReceita ? 1 : 0,
-                    usr1: categories[cat].usr1,
-                    usr2: categories[cat].usr2,
-                    total: categories[cat].total
-                }));
-                
-                renderRelMesTable(window.relMesData);
-
-            } catch(e) { console.error("Erro relatório mensal:", e); }
+                if (data.error) { console.error('Erro relatório mensal:', data.error); return; }
+                renderRelMesCards(data);
+                renderRelMesTableNew(data);
+                document.getElementById('relMesPreviewBanner').style.display = 'block';
+                document.getElementById('relMesTableContainer').style.display = 'block';
+                window.relMesDataV2 = data;
+            } catch(e) { console.error('Erro relatório mensal:', e); }
         }
 
-        function renderRelMesTable(data) {
-            const tbody = document.getElementById('relMesTableBody');
-            tbody.innerHTML = '';
-            data.forEach(c => {
-                const typeBadge = c.tipo === 1 ? 
-                    '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">Receita</span>' : 
-                    '<span class="val-badge" style="background:rgba(59,130,246,0.15);color:var(--primary);">Despesa</span>';
-                
-                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${c.id}"></td>
-                    <td><b>${c.categoria}</b></td>
-                    <td style="text-align:center;">${typeBadge}</td>
-                    <td style="text-align:center;">${formatCurrency(c.usr1)}</td>
-                    <td style="text-align:center;">${formatCurrency(c.usr2)}</td>
-                    <td style="text-align:center;"><b>${formatCurrency(c.total)}</b></td>
-                </tr>`;
-            });
+        function loadRelatorioMensal() {
+            previewRelatorioMensal();
         }
 
-        function sortRelMesTable(colIndex) {
-            if (!window.relMesData) return;
-            const state = window.relMesSortState = window.relMesSortState || { col: -1, asc: true };
-            
-            if (state.col === colIndex) {
-                state.asc = !state.asc;
-            } else {
-                state.col = colIndex;
-                state.asc = true;
+        const _relMesCurrSymbols = { EUR: '€', BRL: 'R$', USD: '$', GBP: '£', CHF: 'Fr' };
+
+        function renderRelMesCards(data) {
+            const { cards, currencies, usr1_nome, usr2_nome } = data;
+            const container = document.getElementById('relMesCards');
+            if (!currencies || currencies.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">Nenhuma despesa registada para este mês.</p>';
+                return;
             }
-            
-            const keys = ['categoria', 'tipo', 'usr1', 'usr2', 'total'];
-            const key = keys[colIndex];
-            
-            window.relMesData.sort((a, b) => {
-                let valA = a[key];
-                let valB = b[key];
-                
-                if ([2,3,4].includes(colIndex)) {
-                    return state.asc ? valA - valB : valB - valA;
-                }
-                
-                valA = (valA || '').toString().toLowerCase();
-                valB = (valB || '').toString().toLowerCase();
-                return state.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            let html = '<div style="display:flex; flex-direction:column; gap:1.2rem;">';
+            currencies.forEach(moeda => {
+                const card = cards[moeda] || { usr1: 0, usr2: 0, total: 0 };
+                const sym = _relMesCurrSymbols[moeda] || moeda;
+                html += `
+                <div>
+                    <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.5rem; text-align:center;">
+                        <i class="fa-solid fa-coins" style="color:var(--primary);"></i>&nbsp;${moeda}
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem;">
+                        <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:12px; padding:1.25rem; text-align:center;">
+                            <span style="font-size:0.72rem; color:var(--primary); text-transform:uppercase; letter-spacing:1px; display:block;">${usr1_nome}</span>
+                            <div style="font-size:1.25rem; font-weight:700; margin-top:0.4rem; color:var(--text-light);">${sym}&nbsp;${formatCurrency(card.usr1)}</div>
+                        </div>
+                        <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:1.25rem; text-align:center;">
+                            <span style="font-size:0.72rem; color:#818cf8; text-transform:uppercase; letter-spacing:1px; display:block;">${usr2_nome}</span>
+                            <div style="font-size:1.25rem; font-weight:700; margin-top:0.4rem; color:var(--text-light);">${sym}&nbsp;${formatCurrency(card.usr2)}</div>
+                        </div>
+                        <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:12px; padding:1.25rem; text-align:center;">
+                            <span style="font-size:0.72rem; color:var(--error); text-transform:uppercase; letter-spacing:1px; display:block;">Total ${moeda}</span>
+                            <div style="font-size:1.25rem; font-weight:700; margin-top:0.4rem; color:var(--error);">${sym}&nbsp;${formatCurrency(card.total)}</div>
+                        </div>
+                    </div>
+                </div>`;
             });
-            
-            updateSortIcons('relMesTable', colIndex, state.asc);
-            renderRelMesTable(window.relMesData);
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderRelMesTableNew(data) {
+            const { rows, currencies, usr1_nome, usr2_nome } = data;
+            const thead = document.getElementById('relMesTableHead');
+            const tbody = document.getElementById('relMesTableBody');
+            if (!currencies || currencies.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Sem dados</td></tr>';
+                return;
+            }
+
+            // Header — linha 1: Despesa + moedas agrupadas
+            let h = '<tr><th rowspan="2" style="vertical-align:middle; min-width:160px;">Despesa</th>';
+            currencies.forEach(m => {
+                const sym = _relMesCurrSymbols[m] || m;
+                h += `<th colspan="3" style="text-align:center; background:rgba(59,130,246,0.1); border-left:2px solid rgba(59,130,246,0.25);">${sym} ${m}</th>`;
+            });
+            h += '</tr><tr>';
+            currencies.forEach(() => {
+                h += `<th style="text-align:right; font-size:0.78rem; font-weight:600; border-left:2px solid rgba(59,130,246,0.25);">${usr1_nome}</th>`;
+                h += `<th style="text-align:right; font-size:0.78rem; font-weight:600;">${usr2_nome}</th>`;
+                h += `<th style="text-align:right; font-size:0.78rem; font-weight:700;">Total</th>`;
+            });
+            h += '</tr>';
+            thead.innerHTML = h;
+
+            // Totals accumulator
+            const totals = {};
+            currencies.forEach(m => { totals[m] = { usr1: 0, usr2: 0, total: 0 }; });
+
+            let b = '';
+            (rows || []).forEach(row => {
+                b += '<tr>';
+                b += `<td><b>${row.categoria}</b>${row.tipo_despesa ? `<br><small style="color:var(--text-muted);font-size:0.75rem;">${row.tipo_despesa}</small>` : ''}</td>`;
+                currencies.forEach(m => {
+                    const v = (row.valores && row.valores[m]) || { usr1: 0, usr2: 0, total: 0 };
+                    totals[m].usr1 += v.usr1;
+                    totals[m].usr2 += v.usr2;
+                    totals[m].total += v.total;
+                    const empty = v.usr1 === 0 && v.usr2 === 0 && v.total === 0;
+                    const dimStyle = empty ? ' color:var(--text-muted);' : '';
+                    b += `<td style="text-align:right;${dimStyle} border-left:2px solid rgba(59,130,246,0.15);">${formatCurrency(v.usr1)}</td>`;
+                    b += `<td style="text-align:right;${dimStyle}">${formatCurrency(v.usr2)}</td>`;
+                    b += `<td style="text-align:right; font-weight:700;${dimStyle}">${formatCurrency(v.total)}</td>`;
+                });
+                b += '</tr>';
+            });
+
+            // Total row
+            b += '<tr style="border-top:2px solid rgba(59,130,246,0.4); background:rgba(59,130,246,0.05);">';
+            b += '<td style="font-weight:700; font-size:0.9rem;"><i class="fa-solid fa-sigma"></i> TOTAL</td>';
+            currencies.forEach(m => {
+                const sym = _relMesCurrSymbols[m] || m;
+                b += `<td style="text-align:right; font-weight:700; color:var(--error); border-left:2px solid rgba(59,130,246,0.25);">${formatCurrency(totals[m].usr1)}</td>`;
+                b += `<td style="text-align:right; font-weight:700; color:var(--error);">${formatCurrency(totals[m].usr2)}</td>`;
+                b += `<td style="text-align:right; font-weight:700; color:var(--error);">${sym} ${formatCurrency(totals[m].total)}</td>`;
+            });
+            b += '</tr>';
+            tbody.innerHTML = b;
         }
 
         // Run checkAuthStatus on mount

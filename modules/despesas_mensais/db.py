@@ -271,3 +271,79 @@ def get_meses_disponiveis(user_email):
     ).fetchall()
     conn.close()
     return [r['mes_referencia'] for r in rows]
+
+
+def get_relatorio_mensal_v2(user_email, mes_referencia):
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        'SELECT despesa, tipo_despesa FROM cad_despesas WHERE user_email=%s ORDER BY prioridade, despesa',
+        (user_email,)
+    )
+    all_cats = [dict(r) for r in c.fetchall()]
+
+    c.execute('''
+        SELECT categoria_final, moeda,
+               COALESCE(SUM(CAST(usr1 AS NUMERIC)), 0) as total_usr1,
+               COALESCE(SUM(CAST(usr2 AS NUMERIC)), 0) as total_usr2,
+               COALESCE(SUM(valor_original), 0) as total_original
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia=%s AND receita=0
+        GROUP BY categoria_final, moeda
+        ORDER BY categoria_final, moeda
+    ''', (user_email, mes_referencia))
+    despesas_rows = [dict(r) for r in c.fetchall()]
+
+    c.execute(
+        'SELECT chave_usr1, chave_usr2 FROM cad_usuarios WHERE user_email=%s LIMIT 1',
+        (user_email,)
+    )
+    usr_row = c.fetchone()
+    usr1_nome = (usr_row['chave_usr1'] if usr_row else None) or 'USR1'
+    usr2_nome = (usr_row['chave_usr2'] if usr_row else None) or 'USR2'
+
+    conn.close()
+
+    data_map = {}
+    currencies_set = set()
+    for d in despesas_rows:
+        cat = d['categoria_final'] or 'Sem Categoria'
+        moeda = d['moeda'] or 'EUR'
+        currencies_set.add(moeda)
+        if cat not in data_map:
+            data_map[cat] = {}
+        data_map[cat][moeda] = {
+            'usr1': float(d['total_usr1'] or 0),
+            'usr2': float(d['total_usr2'] or 0),
+            'total': float(d['total_original'] or 0),
+        }
+
+    currencies = sorted(currencies_set)
+
+    rows = []
+    for cat_info in all_cats:
+        cat = cat_info['despesa']
+        valores = {}
+        for moeda in currencies:
+            valores[moeda] = data_map.get(cat, {}).get(moeda, {'usr1': 0, 'usr2': 0, 'total': 0})
+        rows.append({
+            'categoria': cat,
+            'tipo_despesa': cat_info['tipo_despesa'] or '',
+            'valores': valores,
+        })
+
+    cards = {}
+    for moeda in currencies:
+        u1 = sum(float(d.get('total_usr1') or 0) for d in despesas_rows if d['moeda'] == moeda)
+        u2 = sum(float(d.get('total_usr2') or 0) for d in despesas_rows if d['moeda'] == moeda)
+        t = sum(float(d.get('total_original') or 0) for d in despesas_rows if d['moeda'] == moeda)
+        cards[moeda] = {'usr1': u1, 'usr2': u2, 'total': t}
+
+    return {
+        'rows': rows,
+        'currencies': currencies,
+        'cards': cards,
+        'usr1_nome': usr1_nome,
+        'usr2_nome': usr2_nome,
+    }

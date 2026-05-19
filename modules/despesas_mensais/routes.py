@@ -1,5 +1,6 @@
 import os
 import io
+import traceback
 import datetime
 import pandas as pd
 from flask import request, jsonify, send_file, session, current_app
@@ -10,7 +11,7 @@ from .db import (
     get_despesas_mensais, save_despesas_mensais_batch, add_despesa_mensal,
     update_despesa_mensal, delete_despesa_mensal, delete_despesas_mensais_batch,
     clear_despesas_mensais, consolidar_despesas_anuais, get_consolidacao_tipo_despesa,
-    get_meses_disponiveis, check_duplicates_with_data,
+    get_meses_disponiveis, check_duplicates_with_data, get_relatorio_mensal_v2,
 )
 
 
@@ -351,3 +352,17 @@ def export_consolidacao():
 
     return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=True, download_name=filename)
+
+
+@bp.route('/api/relatorio_mensal', methods=['GET'])
+def api_relatorio_mensal():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    mes = request.args.get('mes', '')
+    if not mes:
+        return jsonify({'rows': [], 'currencies': [], 'cards': {}, 'usr1_nome': 'USR1', 'usr2_nome': 'USR2'})
+    try:
+        return jsonify(get_relatorio_mensal_v2(session['user_email'], mes))
+    except Exception:
+        traceback.print_exc()
+        return jsonify({'error': 'Erro interno'}), 500
