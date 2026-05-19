@@ -781,6 +781,9 @@
             <button class="side-link" data-module="emprestimos" onclick="openModule('emprestimos')">
                 <i class="fa-solid fa-money-bill-transfer"></i><span>Empréstimos</span>
             </button>
+            <button class="side-link" data-module="budget" onclick="openModule('budget')">
+                <i class="fa-solid fa-bullseye"></i><span>Planejamento</span>
+            </button>
 
             <div class="side-section">Patrimônio</div>
             <button class="side-link" data-module="investimentos" onclick="openModule('investimentos')">
@@ -2542,6 +2545,277 @@
         </div>
     </div>
 
+    <!-- ╔══════════════════════════════════════════════════════════════╗ -->
+    <!-- ║  MÓDULO PLANEJAMENTO FINANCEIRO (BUDGET)                   ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════════╝ -->
+    <div class="container module-container module-fullscreen" id="budgetModule" style="display:none;">
+
+        <!-- Cabeçalho com navegação de ano -->
+        <div style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:1.5rem;">
+            <button onclick="budgetChangeYear(-1)" style="background:rgba(255,255,255,0.08); border:1px solid var(--glass-border); border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light); font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" onmouseover="this.style.background='rgba(59,130,246,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div style="text-align:center;">
+                <h1 style="margin:0; font-size:1.6rem; display:flex; align-items:center; gap:0.75rem;">
+                    <i class="fa-solid fa-bullseye" style="color:var(--primary);"></i>
+                    Planejamento Financeiro
+                </h1>
+                <span id="budgetAnoLabel" style="font-size:1.1rem; color:var(--primary); font-weight:600;"></span>
+            </div>
+            <button onclick="budgetChangeYear(1)" style="background:rgba(255,255,255,0.08); border:1px solid var(--glass-border); border-radius:50%; width:36px; height:36px; cursor:pointer; color:var(--text-light); font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" onmouseover="this.style.background='rgba(59,130,246,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Cards de Resumo Anual -->
+        <div id="budgetSummaryCards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+            <div style="background:rgba(239,68,68,0.13); border:1px solid rgba(239,68,68,0.3); border-radius:12px; padding:1.25rem; text-align:center;">
+                <span style="font-size:0.75rem; color:#fca5a5; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:0.4rem;">Despesas Previstas</span>
+                <h2 id="budgetTotalDespesas" style="margin:0; color:#fca5a5; font-size:1.35rem;">€ 0,00</h2>
+                <span style="font-size:0.7rem; color:var(--text-dim); margin-top:0.25rem; display:block;">Anual</span>
+            </div>
+            <div style="background:rgba(16,185,129,0.13); border:1px solid rgba(16,185,129,0.3); border-radius:12px; padding:1.25rem; text-align:center;">
+                <span style="font-size:0.75rem; color:#6ee7b7; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:0.4rem;">Receitas Previstas</span>
+                <h2 id="budgetTotalReceitas" style="margin:0; color:#6ee7b7; font-size:1.35rem;">€ 0,00</h2>
+                <span style="font-size:0.7rem; color:var(--text-dim); margin-top:0.25rem; display:block;">Anual</span>
+            </div>
+            <div style="background:rgba(59,130,246,0.13); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:1.25rem; text-align:center;">
+                <span style="font-size:0.75rem; color:#93c5fd; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:0.4rem;">Saldo Previsto</span>
+                <h2 id="budgetSaldoPrevisto" style="margin:0; color:#93c5fd; font-size:1.35rem;">€ 0,00</h2>
+                <span style="font-size:0.7rem; color:var(--text-dim); margin-top:0.25rem; display:block;">Anual</span>
+            </div>
+            <div style="background:rgba(139,92,246,0.13); border:1px solid rgba(139,92,246,0.3); border-radius:12px; padding:1.25rem; text-align:center;">
+                <span style="font-size:0.75rem; color:#c4b5fd; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:0.4rem;">Média Mensal</span>
+                <h2 id="budgetMediaMensal" style="margin:0; color:#c4b5fd; font-size:1.35rem;">€ 0,00</h2>
+                <span style="font-size:0.7rem; color:var(--text-dim); margin-top:0.25rem; display:block;">Saldo ÷ 12</span>
+            </div>
+        </div>
+
+        <!-- Abas Despesas / Receitas / Comparativo -->
+        <div style="display:flex; gap:8px; margin-bottom:1.25rem; flex-wrap:wrap;">
+            <button id="budgetTabBtnDespesa" class="btn btn-xs" onclick="budgetShowTab('despesa')" style="background:linear-gradient(135deg,#ef4444,#dc2626); min-width:140px;">
+                <i class="fa-solid fa-arrow-trend-down"></i> Despesas
+            </button>
+            <button id="budgetTabBtnReceita" class="btn btn-xs secondary" onclick="budgetShowTab('receita')" style="min-width:140px;">
+                <i class="fa-solid fa-arrow-trend-up"></i> Receitas
+            </button>
+            <button id="budgetTabBtnComparativo" class="btn btn-xs secondary" onclick="budgetShowTab('comparativo')" style="min-width:140px;">
+                <i class="fa-solid fa-scale-balanced"></i> Comparativo
+            </button>
+        </div>
+
+        <!-- Barra de Ações (Despesas / Receitas) -->
+        <div id="budgetActionBar" class="action-bar" style="margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <div class="action-bar-left" style="gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-xs secondary" onclick="openBudgetForm(null)" style="background:#0ea5e9;">
+                    <i class="fa-solid fa-plus"></i> Adicionar Item
+                </button>
+                <label class="btn btn-xs secondary" style="cursor:pointer; background:#7c3aed;" title="Importar planilha Excel">
+                    <i class="fa-solid fa-file-excel"></i> Importar Excel
+                    <input type="file" id="budgetUploadInput" accept=".xlsx,.csv" style="display:none;" onchange="uploadBudgetExcel(this)">
+                </label>
+                <button class="btn btn-xs secondary" onclick="downloadBudgetTemplate()" style="background:#475569;" title="Baixar modelo de planilha">
+                    <i class="fa-solid fa-download"></i> Modelo
+                </button>
+            </div>
+            <div class="action-bar-right" style="gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-xs secondary" onclick="exportBudgetExcel()" style="background:#10b981;">
+                    <i class="fa-solid fa-file-export"></i> Exportar Excel
+                </button>
+                <button class="btn btn-xs secondary" onclick="clearBudgetTab()" style="background:linear-gradient(135deg,#ef4444,#dc2626);">
+                    <i class="fa-solid fa-trash"></i> Limpar
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab: Despesas / Receitas — Tabela -->
+        <div id="budgetTabItems">
+            <div id="budgetStatusMsg" style="font-size:13px; font-weight:600; color:#10b981; margin-bottom:0.5rem; min-height:20px;"></div>
+            <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border);">
+                <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.06); text-transform:uppercase; letter-spacing:0.5px; font-size:0.72rem; color:var(--text-muted);">
+                            <th style="padding:10px 12px; text-align:left; position:sticky; left:0; background:#1e293b; z-index:2; min-width:160px;">Categoria</th>
+                            <th style="padding:10px 8px; text-align:left; min-width:100px;">Tipo</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Jan</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Fev</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Mar</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Abr</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Mai</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Jun</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Jul</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Ago</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Set</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Out</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Nov</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:90px;">Dez</th>
+                            <th style="padding:10px 8px; text-align:right; min-width:100px; color:#fcd34d;">Total Anual</th>
+                            <th style="padding:10px 8px; text-align:center; min-width:90px;" title="Variação mensal permitida (%)">Var. Mensal %</th>
+                            <th style="padding:10px 8px; text-align:center; min-width:90px;" title="Variação anual permitida (%)">Var. Anual %</th>
+                            <th style="padding:10px 8px; text-align:center; min-width:80px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="budgetTableBody">
+                        <tr><td colspan="18" style="text-align:center; padding:2rem; color:var(--text-muted);">
+                            <i class="fa-solid fa-bullseye" style="font-size:2rem; opacity:0.3; display:block; margin-bottom:0.5rem;"></i>
+                            Nenhum item cadastrado. Adicione manualmente ou importe via Excel.
+                        </td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr id="budgetTableFooter" style="background:rgba(59,130,246,0.1); border-top:2px solid rgba(59,130,246,0.3); font-weight:700; font-size:0.8rem; display:none;">
+                            <td style="padding:10px 12px; position:sticky; left:0; background:rgba(15,23,42,0.95); z-index:2; color:var(--primary);">TOTAL</td>
+                            <td></td>
+                            <td id="bfJan" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfFev" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfMar" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfAbr" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfMai" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfJun" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfJul" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfAgo" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfSet" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfOut" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfNov" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfDez" style="padding:10px 8px; text-align:right; color:#93c5fd;">€ 0</td>
+                            <td id="bfAnual" style="padding:10px 8px; text-align:right; color:#fcd34d;">€ 0</td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab: Comparativo Budget vs Real -->
+        <div id="budgetTabComparativo" style="display:none;">
+            <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:12px; padding:1.25rem; margin-bottom:1.25rem; display:flex; align-items:flex-start; gap:1rem;">
+                <i class="fa-solid fa-circle-info" style="color:#fcd34d; font-size:1.2rem; margin-top:0.1rem; flex-shrink:0;"></i>
+                <p style="margin:0; color:var(--text-muted); font-size:0.9rem; line-height:1.5;">
+                    O comparativo cruza os valores planejados neste módulo com os lançamentos reais de <strong style="color:var(--text-light);">Despesas Mensais</strong> e <strong style="color:var(--text-light);">Receitas Mensais</strong>.
+                    Selecione o mês de referência para visualizar o desvio em relação ao budget.
+                </p>
+            </div>
+            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; flex-wrap:wrap;">
+                <div>
+                    <label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-bottom:4px;">Mês de Referência</label>
+                    <input type="month" id="budgetCompMes" class="auth-input" style="min-width:180px;" onchange="loadBudgetComparativo()">
+                </div>
+                <button class="btn btn-xs secondary" onclick="loadBudgetComparativo()" style="margin-top:20px;">
+                    <i class="fa-solid fa-arrows-rotate"></i> Atualizar
+                </button>
+            </div>
+            <div id="budgetCompStatus" style="font-size:13px; color:var(--text-muted); margin-bottom:0.75rem;"></div>
+            <div style="overflow-x:auto; border-radius:12px; border:1px solid var(--glass-border);">
+                <table style="width:100%; border-collapse:collapse; font-size:0.83rem;">
+                    <thead>
+                        <tr style="background:rgba(255,255,255,0.06); text-transform:uppercase; letter-spacing:0.5px; font-size:0.72rem; color:var(--text-muted);">
+                            <th style="padding:10px 12px; text-align:left; min-width:160px;">Categoria</th>
+                            <th style="padding:10px 8px; text-align:left;">Tipo</th>
+                            <th style="padding:10px 8px; text-align:right; color:#93c5fd;">Budget Mensal</th>
+                            <th style="padding:10px 8px; text-align:right; color:#6ee7b7;">Real</th>
+                            <th style="padding:10px 8px; text-align:right;">Desvio (€)</th>
+                            <th style="padding:10px 8px; text-align:right;">Desvio (%)</th>
+                            <th style="padding:10px 8px; text-align:center;">Var. Permitida %</th>
+                            <th style="padding:10px 8px; text-align:center;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="budgetCompTableBody">
+                        <tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">
+                            Selecione um mês para carregar o comparativo.
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Budget — Adicionar / Editar Item -->
+    <div id="budgetModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:#1e293b; border:1px solid var(--glass-border); border-radius:16px; padding:2rem; width:100%; max-width:680px; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 id="budgetModalTitle" style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:0.6rem;">
+                    <i class="fa-solid fa-bullseye" style="color:var(--primary);"></i> Novo Item de Budget
+                </h3>
+                <button onclick="closeBudgetModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="budgetForm" onsubmit="saveBudgetItem(event)">
+                <input type="hidden" id="bItemId" value="">
+
+                <div class="form-row" style="margin-bottom:1rem;">
+                    <div class="form-field">
+                        <label>Categoria</label>
+                        <select id="bCategoria" class="auth-input" required onchange="budgetModalCatChanged()">
+                            <option value="">— Selecione ou digite abaixo —</option>
+                            <option value="__custom__">+ Adicionar categoria manualmente</option>
+                        </select>
+                    </div>
+                    <div class="form-field" id="bCustomNomeWrap" style="display:none;">
+                        <label>Nome da Categoria</label>
+                        <input type="text" id="bCustomNome" class="auth-input" placeholder="Ex: Alimentação">
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-bottom:1rem;">
+                    <div class="form-field">
+                        <label>Moeda</label>
+                        <select id="bMoeda" class="auth-input">
+                            <option value="EUR">EUR</option>
+                            <option value="BRL">BRL</option>
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Var. Mensal Permitida (%)</label>
+                        <input type="number" id="bVarMensal" class="auth-input" step="0.1" min="0" max="100" placeholder="Ex: 10" value="0">
+                    </div>
+                    <div class="form-field">
+                        <label>Var. Anual Permitida (%)</label>
+                        <input type="number" id="bVarAnual" class="auth-input" step="0.1" min="0" max="100" placeholder="Ex: 15" value="0">
+                    </div>
+                </div>
+
+                <!-- Grid de meses -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:1rem; margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
+                        <span style="font-size:0.82rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Valores Mensais Planejados</span>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <input type="number" id="bValorReplicate" class="auth-input" step="0.01" min="0" placeholder="Valor" style="width:110px; padding:5px 8px; font-size:0.82rem;">
+                            <button type="button" class="btn btn-xs secondary" onclick="budgetReplicateValue()" style="background:#475569; padding:5px 10px; font-size:0.78rem;" title="Replicar valor para todos os meses">
+                                <i class="fa-solid fa-copy"></i> Replicar
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.6rem;">
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Janeiro</label><input type="number" id="bJan" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Fevereiro</label><input type="number" id="bFev" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Março</label><input type="number" id="bMar" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Abril</label><input type="number" id="bAbr" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Maio</label><input type="number" id="bMai" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Junho</label><input type="number" id="bJun" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Julho</label><input type="number" id="bJul" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Agosto</label><input type="number" id="bAgo" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Setembro</label><input type="number" id="bSet" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Outubro</label><input type="number" id="bOut" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Novembro</label><input type="number" id="bNov" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                        <div><label style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:3px;">Dezembro</label><input type="number" id="bDez" class="auth-input budget-month-input" step="0.01" min="0" value="0" style="padding:6px 8px;"></div>
+                    </div>
+                    <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--glass-border); display:flex; justify-content:flex-end; align-items:center; gap:0.75rem;">
+                        <span style="font-size:0.8rem; color:var(--text-muted);">Total Anual:</span>
+                        <span id="bTotalAnual" style="font-size:1rem; font-weight:700; color:#fcd34d;">€ 0,00</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                    <button type="button" class="btn btn-xs secondary" onclick="closeBudgetModal()" style="background:#475569;">Cancelar</button>
+                    <button type="submit" class="btn btn-xs" id="bSaveBtn">
+                        <i class="fa-solid fa-floppy-disk"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Módulo Trader -->
     <div class="container module-container module-fullscreen" id="traderModule" style="display:none;">
         <h1 style="text-align:center; margin-bottom:2rem;"><i class="fa-solid fa-arrow-trend-up" style="margin-right:15px; color:var(--primary);"></i>Trader</h1>
@@ -3067,6 +3341,7 @@
             'despesas_flex': 'Despesas Flex',
             'impostos': 'Impostos',
             'emprestimos': 'Empréstimos',
+            'budget': 'Planejamento Financeiro',
             'patrimonio': 'Patrimônio',
             'acessos': 'Acessos',
             'configuracoes': 'Configurações',
@@ -3142,6 +3417,7 @@
                 'relatorio_dinamico': () => { document.getElementById('relatorioDinamicoModule').style.display = 'block'; nav.style.maxWidth = '1400px'; initRelatorioDinamico(); },
                 'impostos':          () => { document.getElementById('impostosModule').style.display = 'block'; nav.style.maxWidth = '1200px'; initImpostos(); },
                 'emprestimos':       () => { document.getElementById('emprestimosModule').style.display = 'block'; nav.style.maxWidth = '1200px'; initEmprestimos(); loadEmprestimos(); },
+                'budget':            () => { document.getElementById('budgetModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initBudget(); },
                 'trader':            () => { document.getElementById('traderModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initTrader(); },
                 'lcto_investimentos': () => { document.getElementById('lctoInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadLctoInvestimentos(); },
                 'avancado':          () => { document.getElementById('avancadoModule').style.display = 'block'; nav.style.maxWidth = '800px'; },
@@ -7281,6 +7557,446 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
         document.addEventListener('DOMContentLoaded', () => {
             checkSimplesNacionalReminder();
         });
+
+        // ══════════════════════════════════════════════════════════════
+        //  MÓDULO PLANEJAMENTO FINANCEIRO (BUDGET)
+        // ══════════════════════════════════════════════════════════════
+
+        const BUDGET_MONTHS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+        let budgetAno = new Date().getFullYear();
+        let budgetTipo = 'despesa';  // 'despesa' | 'receita'
+        let budgetData = [];
+
+        function initBudget() {
+            budgetAno = new Date().getFullYear();
+            budgetTipo = 'despesa';
+            document.getElementById('budgetAnoLabel').textContent = budgetAno;
+            budgetShowTab('despesa');
+            loadBudgetSummary();
+            loadBudget();
+            const hoje = new Date();
+            const mesStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+            document.getElementById('budgetCompMes').value = mesStr;
+        }
+
+        function budgetChangeYear(delta) {
+            budgetAno += delta;
+            document.getElementById('budgetAnoLabel').textContent = budgetAno;
+            loadBudgetSummary();
+            loadBudget();
+        }
+
+        function budgetShowTab(tab) {
+            budgetTipo = tab === 'comparativo' ? budgetTipo : tab;
+            document.getElementById('budgetTabItems').style.display = tab !== 'comparativo' ? 'block' : 'none';
+            document.getElementById('budgetActionBar').style.display = tab !== 'comparativo' ? 'flex' : 'none';
+            document.getElementById('budgetTabComparativo').style.display = tab === 'comparativo' ? 'block' : 'none';
+
+            ['despesa','receita','comparativo'].forEach(t => {
+                const btn = document.getElementById(`budgetTabBtn${t.charAt(0).toUpperCase()+t.slice(1)}`);
+                if (!btn) return;
+                if (t === tab) {
+                    if (t === 'despesa') btn.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+                    else if (t === 'receita') btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+                    else btn.style.background = 'linear-gradient(135deg,#3b82f6,#2563eb)';
+                    btn.classList.remove('secondary');
+                } else {
+                    btn.style.background = '';
+                    btn.classList.add('secondary');
+                }
+            });
+
+            if (tab !== 'comparativo') {
+                budgetTipo = tab;
+                loadBudget();
+            } else {
+                loadBudgetComparativo();
+            }
+        }
+
+        async function loadBudgetSummary() {
+            try {
+                const res = await fetch(`/api/budget/summary?ano=${budgetAno}`);
+                const data = await res.json();
+                let totDespesa = 0, totReceita = 0;
+                data.forEach(r => {
+                    if (r.tipo === 'despesa') totDespesa = r.total_anual || 0;
+                    else if (r.tipo === 'receita') totReceita = r.total_anual || 0;
+                });
+                const saldo = totReceita - totDespesa;
+                const media = saldo / 12;
+                const fmt = v => v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+                document.getElementById('budgetTotalDespesas').textContent = `€ ${fmt(totDespesa)}`;
+                document.getElementById('budgetTotalReceitas').textContent = `€ ${fmt(totReceita)}`;
+                const saldoEl = document.getElementById('budgetSaldoPrevisto');
+                saldoEl.textContent = `€ ${fmt(Math.abs(saldo))}`;
+                saldoEl.style.color = saldo >= 0 ? '#6ee7b7' : '#fca5a5';
+                document.getElementById('budgetMediaMensal').textContent = `€ ${fmt(Math.abs(media))}`;
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadBudget() {
+            try {
+                const res = await fetch(`/api/budget?ano=${budgetAno}&tipo=${budgetTipo}`);
+                budgetData = await res.json();
+                renderBudgetTable();
+            } catch(e) { console.error(e); }
+        }
+
+        function renderBudgetTable() {
+            const tbody = document.getElementById('budgetTableBody');
+            const footer = document.getElementById('budgetTableFooter');
+            const fmt = (v) => (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+            if (!budgetData.length) {
+                tbody.innerHTML = `<tr><td colspan="18" style="text-align:center; padding:2rem; color:var(--text-muted);">
+                    <i class="fa-solid fa-bullseye" style="font-size:2rem; opacity:0.3; display:block; margin-bottom:0.5rem;"></i>
+                    Nenhum item cadastrado. Adicione manualmente ou importe via Excel.
+                </td></tr>`;
+                footer.style.display = 'none';
+                return;
+            }
+
+            const totals = {jan:0,fev:0,mar:0,abr:0,mai:0,jun:0,jul:0,ago:0,set:0,out:0,nov:0,dez:0,anual:0};
+            const colorDot = budgetTipo === 'despesa' ? '#f87171' : '#6ee7b7';
+
+            tbody.innerHTML = budgetData.map(item => {
+                const anual = BUDGET_MONTHS.reduce((s,m) => s + (item[`valor_${m}`]||0), 0);
+                BUDGET_MONTHS.forEach(m => { totals[m] += item[`valor_${m}`]||0; });
+                totals.anual += anual;
+                return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background=''">
+                    <td style="padding:9px 12px; position:sticky; left:0; background:#0f172a; z-index:1;">
+                        <div style="display:flex; align-items:center; gap:7px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:${colorDot}; flex-shrink:0;"></span>
+                            <span style="font-weight:500; color:var(--text-light);">${item.categoria_nome}</span>
+                        </div>
+                    </td>
+                    <td style="padding:9px 8px; color:var(--text-muted); font-size:0.78rem;">${item.tipo_categoria||'—'}</td>
+                    ${BUDGET_MONTHS.map(m => `<td style="padding:9px 8px; text-align:right; color:var(--text-light);">${fmt(item[`valor_${m}`])}</td>`).join('')}
+                    <td style="padding:9px 8px; text-align:right; font-weight:700; color:#fcd34d;">${fmt(anual)}</td>
+                    <td style="padding:9px 8px; text-align:center;">
+                        <span style="background:rgba(245,158,11,0.15); color:#fcd34d; border-radius:6px; padding:2px 8px; font-size:0.78rem; font-weight:600;">${(item.variacao_mensal_pct||0).toFixed(1)}%</span>
+                    </td>
+                    <td style="padding:9px 8px; text-align:center;">
+                        <span style="background:rgba(139,92,246,0.15); color:#c4b5fd; border-radius:6px; padding:2px 8px; font-size:0.78rem; font-weight:600;">${(item.variacao_anual_pct||0).toFixed(1)}%</span>
+                    </td>
+                    <td style="padding:9px 8px; text-align:center;">
+                        <div style="display:flex; gap:5px; justify-content:center;">
+                            <button onclick="openBudgetForm(${item.id})" title="Editar" style="background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.4); border-radius:6px; width:28px; height:28px; cursor:pointer; color:#93c5fd; font-size:0.75rem; display:flex; align-items:center; justify-content:center; transition:background 0.15s;" onmouseover="this.style.background='rgba(59,130,246,0.4)'" onmouseout="this.style.background='rgba(59,130,246,0.2)'">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteBudgetItem(${item.id})" title="Remover" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); border-radius:6px; width:28px; height:28px; cursor:pointer; color:#fca5a5; font-size:0.75rem; display:flex; align-items:center; justify-content:center; transition:background 0.15s;" onmouseover="this.style.background='rgba(239,68,68,0.35)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            // Footer totals
+            footer.style.display = '';
+            BUDGET_MONTHS.forEach(m => {
+                const el = document.getElementById(`bf${m.charAt(0).toUpperCase()+m.slice(1)}`);
+                if (el) el.textContent = `€ ${fmt(totals[m])}`;
+            });
+            document.getElementById('bfAnual').textContent = `€ ${fmt(totals.anual)}`;
+        }
+
+        async function openBudgetForm(itemId) {
+            document.getElementById('budgetModalTitle').innerHTML = itemId
+                ? '<i class="fa-solid fa-pen" style="color:var(--primary);"></i> Editar Item de Budget'
+                : '<i class="fa-solid fa-plus" style="color:var(--primary);"></i> Novo Item de Budget';
+            document.getElementById('bItemId').value = itemId || '';
+
+            // Reset form
+            BUDGET_MONTHS.forEach(m => { document.getElementById(`b${m.charAt(0).toUpperCase()+m.slice(1)}`).value = 0; });
+            document.getElementById('bVarMensal').value = 0;
+            document.getElementById('bVarAnual').value = 0;
+            document.getElementById('bMoeda').value = 'EUR';
+            document.getElementById('bCustomNomeWrap').style.display = 'none';
+
+            // Populate categoria select
+            await loadBudgetCategoriaSelect();
+
+            if (itemId) {
+                const item = budgetData.find(i => i.id === itemId);
+                if (item) {
+                    const sel = document.getElementById('bCategoria');
+                    // try to match by name
+                    const opt = Array.from(sel.options).find(o => o.text === item.categoria_nome);
+                    if (opt) sel.value = opt.value;
+                    else {
+                        sel.value = '__custom__';
+                        document.getElementById('bCustomNomeWrap').style.display = 'block';
+                        document.getElementById('bCustomNome').value = item.categoria_nome;
+                    }
+                    BUDGET_MONTHS.forEach(m => {
+                        const el = document.getElementById(`b${m.charAt(0).toUpperCase()+m.slice(1)}`);
+                        if (el) el.value = item[`valor_${m}`] || 0;
+                    });
+                    document.getElementById('bVarMensal').value = item.variacao_mensal_pct || 0;
+                    document.getElementById('bVarAnual').value = item.variacao_anual_pct || 0;
+                    document.getElementById('bMoeda').value = item.moeda || 'EUR';
+                }
+            }
+            budgetCalcTotal();
+            document.querySelectorAll('.budget-month-input').forEach(el => el.addEventListener('input', budgetCalcTotal));
+            document.getElementById('budgetModal').style.display = 'flex';
+        }
+
+        async function loadBudgetCategoriaSelect() {
+            const sel = document.getElementById('bCategoria');
+            const current = sel.value;
+            sel.innerHTML = '<option value="">— Selecione —</option>';
+            try {
+                const endpoint = budgetTipo === 'despesa' ? '/api/cad_despesas' : '/api/cad_receitas';
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                const group = document.createElement('optgroup');
+                group.label = budgetTipo === 'despesa' ? 'Despesas Cadastradas' : 'Receitas Cadastradas';
+                data.forEach(d => {
+                    const opt = document.createElement('option');
+                    const nome = d.despesa || d.descricao || '';
+                    opt.value = JSON.stringify({id: d.id, nome, tipo: d.tipo_despesa || ''});
+                    opt.textContent = nome;
+                    group.appendChild(opt);
+                });
+                sel.appendChild(group);
+            } catch(e) {}
+            const customOpt = document.createElement('option');
+            customOpt.value = '__custom__';
+            customOpt.textContent = '+ Adicionar categoria manualmente';
+            sel.appendChild(customOpt);
+            if (current) sel.value = current;
+        }
+
+        function budgetModalCatChanged() {
+            const val = document.getElementById('bCategoria').value;
+            document.getElementById('bCustomNomeWrap').style.display = val === '__custom__' ? 'block' : 'none';
+        }
+
+        function budgetCalcTotal() {
+            const total = BUDGET_MONTHS.reduce((s,m) => {
+                const el = document.getElementById(`b${m.charAt(0).toUpperCase()+m.slice(1)}`);
+                return s + parseFloat(el?.value || 0);
+            }, 0);
+            document.getElementById('bTotalAnual').textContent = `€ ${total.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+        }
+
+        function budgetReplicateValue() {
+            const val = parseFloat(document.getElementById('bValorReplicate').value) || 0;
+            BUDGET_MONTHS.forEach(m => {
+                const el = document.getElementById(`b${m.charAt(0).toUpperCase()+m.slice(1)}`);
+                if (el) el.value = val;
+            });
+            budgetCalcTotal();
+        }
+
+        function closeBudgetModal() {
+            document.getElementById('budgetModal').style.display = 'none';
+        }
+
+        async function saveBudgetItem(e) {
+            e.preventDefault();
+            const itemId = document.getElementById('bItemId').value;
+            const catVal = document.getElementById('bCategoria').value;
+
+            let catId = null, catNome = '', tipoCat = '';
+            if (catVal === '__custom__') {
+                catNome = document.getElementById('bCustomNome').value.trim();
+            } else if (catVal) {
+                try {
+                    const parsed = JSON.parse(catVal);
+                    catId = parsed.id;
+                    catNome = parsed.nome;
+                    tipoCat = parsed.tipo || '';
+                } catch(e) { catNome = catVal; }
+            }
+            if (!catNome) { alert('Selecione ou informe uma categoria.'); return; }
+
+            const payload = {
+                ano: budgetAno,
+                tipo: budgetTipo,
+                categoria_id: catId,
+                categoria_nome: catNome,
+                tipo_categoria: tipoCat,
+                moeda: document.getElementById('bMoeda').value,
+                variacao_mensal_pct: parseFloat(document.getElementById('bVarMensal').value) || 0,
+                variacao_anual_pct: parseFloat(document.getElementById('bVarAnual').value) || 0,
+            };
+            BUDGET_MONTHS.forEach(m => {
+                payload[`valor_${m}`] = parseFloat(document.getElementById(`b${m.charAt(0).toUpperCase()+m.slice(1)}`).value) || 0;
+            });
+
+            try {
+                const btn = document.getElementById('bSaveBtn');
+                btn.disabled = true;
+                const url = itemId ? `/api/budget/${itemId}` : '/api/budget';
+                const method = itemId ? 'PUT' : 'POST';
+                await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                closeBudgetModal();
+                budgetStatusMsg('Item salvo com sucesso!', '#10b981');
+                await loadBudget();
+                await loadBudgetSummary();
+                btn.disabled = false;
+            } catch(err) {
+                alert('Erro ao salvar: ' + err.message);
+                document.getElementById('bSaveBtn').disabled = false;
+            }
+        }
+
+        async function deleteBudgetItem(itemId) {
+            if (!confirm('Remover este item do planejamento?')) return;
+            await fetch(`/api/budget/${itemId}`, { method: 'DELETE' });
+            budgetStatusMsg('Item removido.', '#f87171');
+            await loadBudget();
+            await loadBudgetSummary();
+        }
+
+        async function clearBudgetTab() {
+            const label = budgetTipo === 'despesa' ? 'despesas' : 'receitas';
+            if (!confirm(`Limpar todos os itens de ${label} do planejamento ${budgetAno}?`)) return;
+            await fetch(`/api/budget/clear?ano=${budgetAno}&tipo=${budgetTipo}`, { method: 'DELETE' });
+            budgetStatusMsg('Itens removidos.', '#f87171');
+            await loadBudget();
+            await loadBudgetSummary();
+        }
+
+        async function uploadBudgetExcel(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const label = budgetTipo === 'despesa' ? 'despesas' : 'receitas';
+            if (!confirm(`Importar planilha de ${label} para o ano ${budgetAno}? Itens existentes com mesmo nome de categoria serão atualizados.`)) {
+                input.value = ''; return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('ano', budgetAno);
+            formData.append('tipo', budgetTipo);
+            try {
+                budgetStatusMsg('Importando...', '#fcd34d');
+                const res = await fetch('/api/budget/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.error) { budgetStatusMsg('Erro: ' + data.error, '#f87171'); }
+                else {
+                    budgetStatusMsg(`${data.importados} itens importados com sucesso!`, '#10b981');
+                    await loadBudget();
+                    await loadBudgetSummary();
+                }
+            } catch(e) { budgetStatusMsg('Erro na importação.', '#f87171'); }
+            input.value = '';
+        }
+
+        function exportBudgetExcel() {
+            window.location.href = `/api/budget/export?ano=${budgetAno}&tipo=${budgetTipo}`;
+        }
+
+        function downloadBudgetTemplate() {
+            window.location.href = `/api/budget/template?tipo=${budgetTipo}`;
+        }
+
+        function budgetStatusMsg(msg, color) {
+            const el = document.getElementById('budgetStatusMsg');
+            el.textContent = msg;
+            el.style.color = color || '#10b981';
+            setTimeout(() => { el.textContent = ''; }, 4000);
+        }
+
+        async function loadBudgetComparativo() {
+            const mesAno = document.getElementById('budgetCompMes').value;
+            if (!mesAno) return;
+            const [ano, mes] = mesAno.split('-').map(Number);
+            const mesNames = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+            const mesKey = `valor_${mesNames[mes-1]}`;
+
+            document.getElementById('budgetCompStatus').textContent = 'Carregando...';
+            const tbody = document.getElementById('budgetCompTableBody');
+
+            try {
+                const [resDespBudget, resRecBudget] = await Promise.all([
+                    fetch(`/api/budget?ano=${ano}&tipo=despesa`),
+                    fetch(`/api/budget?ano=${ano}&tipo=receita`),
+                ]);
+                const [despBudget, recBudget] = await Promise.all([resDespBudget.json(), resRecBudget.json()]);
+
+                // Try to fetch actual values from despesas_mensais / receitas_mensais
+                let realDespMap = {}, realRecMap = {};
+                try {
+                    const rDesp = await fetch(`/api/despesas_mensais?mes_ano=${mesAno}`);
+                    const dDesp = await rDesp.json();
+                    (dDesp.items || dDesp || []).forEach(d => {
+                        const k = (d.despesa || d.categoria || '').trim().toLowerCase();
+                        if (k) realDespMap[k] = (realDespMap[k]||0) + Math.abs(parseFloat(d.valor||d.valor_eur||0));
+                    });
+                } catch(e) {}
+                try {
+                    const rRec = await fetch(`/api/receitas_mensais?mes_ano=${mesAno}`);
+                    const dRec = await rRec.json();
+                    (dRec.items || dRec || []).forEach(r => {
+                        const k = (r.descricao || r.receita || r.categoria || '').trim().toLowerCase();
+                        if (k) realRecMap[k] = (realRecMap[k]||0) + Math.abs(parseFloat(r.valor||r.valor_eur||0));
+                    });
+                } catch(e) {}
+
+                const fmt = v => (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+                const buildRows = (items, realMap, tipo) => items.map(item => {
+                    const budget = item[mesKey] || 0;
+                    const real = realMap[(item.categoria_nome||'').toLowerCase()] || 0;
+                    const desvio = real - budget;
+                    const desvioPct = budget !== 0 ? (desvio / budget) * 100 : null;
+                    const permitido = item.variacao_mensal_pct || 0;
+                    const desvioAbs = Math.abs(desvioPct ?? 0);
+                    let status, statusColor, statusBg;
+                    if (real === 0 && budget === 0) {
+                        status = 'N/A'; statusColor = '#94a3b8'; statusBg = 'rgba(148,163,184,0.12)';
+                    } else if (desvioAbs <= permitido) {
+                        status = 'OK'; statusColor = '#6ee7b7'; statusBg = 'rgba(16,185,129,0.15)';
+                    } else {
+                        const over = tipo === 'despesa' ? desvio > 0 : desvio < 0;
+                        status = over ? 'Acima' : 'Abaixo';
+                        statusColor = over ? '#fca5a5' : '#fcd34d';
+                        statusBg = over ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)';
+                    }
+                    const desvioColor = desvio === 0 ? 'var(--text-muted)' : (
+                        (tipo === 'despesa' && desvio > 0) || (tipo === 'receita' && desvio < 0)
+                        ? '#fca5a5' : '#6ee7b7'
+                    );
+                    const colorDot = tipo === 'despesa' ? '#f87171' : '#6ee7b7';
+                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+                        <td style="padding:9px 12px;">
+                            <div style="display:flex; align-items:center; gap:7px;">
+                                <span style="width:7px; height:7px; border-radius:50%; background:${colorDot}; flex-shrink:0;"></span>
+                                <span style="color:var(--text-light); font-weight:500;">${item.categoria_nome}</span>
+                            </div>
+                        </td>
+                        <td style="padding:9px 8px; color:var(--text-muted); font-size:0.78rem;">${item.tipo_categoria||'—'}</td>
+                        <td style="padding:9px 8px; text-align:right; color:#93c5fd;">€ ${fmt(budget)}</td>
+                        <td style="padding:9px 8px; text-align:right; color:#6ee7b7;">€ ${fmt(real)}</td>
+                        <td style="padding:9px 8px; text-align:right; color:${desvioColor};">${desvio >= 0 ? '+' : ''}€ ${fmt(desvio)}</td>
+                        <td style="padding:9px 8px; text-align:right; color:${desvioColor};">${desvioPct !== null ? (desvioPct >= 0 ? '+' : '') + desvioPct.toFixed(1) + '%' : '—'}</td>
+                        <td style="padding:9px 8px; text-align:center;"><span style="background:rgba(245,158,11,0.15); color:#fcd34d; border-radius:6px; padding:2px 8px; font-size:0.78rem;">${permitido.toFixed(1)}%</span></td>
+                        <td style="padding:9px 8px; text-align:center;"><span style="background:${statusBg}; color:${statusColor}; border-radius:6px; padding:3px 10px; font-size:0.78rem; font-weight:600;">${status}</span></td>
+                    </tr>`;
+                });
+
+                const allRows = [
+                    ...buildRows(despBudget, realDespMap, 'despesa'),
+                    ...buildRows(recBudget, realRecMap, 'receita'),
+                ];
+
+                if (!allRows.length) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">Nenhum item de budget cadastrado para ${ano}.</td></tr>`;
+                } else {
+                    tbody.innerHTML = allRows.join('');
+                }
+                document.getElementById('budgetCompStatus').textContent =
+                    `Comparativo de ${mesNames[mes-1].toUpperCase()}/${ano} — ${allRows.length} itens`;
+            } catch(e) {
+                console.error(e);
+                document.getElementById('budgetCompStatus').textContent = 'Erro ao carregar dados.';
+            }
+        }
 
     </script>
 </body>
