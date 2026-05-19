@@ -8184,46 +8184,31 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
             if (!mesAno) return;
             const [ano, mes] = mesAno.split('-').map(Number);
             const mesNames = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-            const mesKey = `valor_${mesNames[mes-1]}`;
 
             document.getElementById('budgetCompStatus').textContent = 'Carregando...';
             const tbody = document.getElementById('budgetCompTableBody');
 
             try {
-                const [resDespBudget, resRecBudget] = await Promise.all([
-                    fetch(`/api/budget?ano=${ano}&tipo=despesa`),
-                    fetch(`/api/budget?ano=${ano}&tipo=receita`),
-                ]);
-                const [despBudget, recBudget] = await Promise.all([resDespBudget.json(), resRecBudget.json()]);
+                const res = await fetch(`/api/budget/comparativo?mes_ano=${mesAno}`);
+                const rows = await res.json();
 
-                // Fetch actual values from despesas_mensais / receitas_mensais
-                let realDespMap = {}, realRecMap = {};
-                try {
-                    const rDesp = await fetch(`/api/despesas_mensais?mes=${mesAno}`);
-                    const dDesp = await rDesp.json();
-                    (Array.isArray(dDesp) ? dDesp : []).forEach(d => {
-                        const k = (d.categoria_final || '').trim().toLowerCase();
-                        if (k) realDespMap[k] = (realDespMap[k]||0) + Math.abs(parseFloat(d.valor_eur||0));
-                    });
-                } catch(e) { console.error('Erro despesas reais:', e); }
-                try {
-                    const rRec = await fetch(`/api/receitas_mensais?mes=${mesAno}`);
-                    const dRec = await rRec.json();
-                    (Array.isArray(dRec) ? dRec : []).forEach(r => {
-                        const k = (r.tipo_receita || '').trim().toLowerCase();
-                        if (k) realRecMap[k] = (realRecMap[k]||0) + Math.abs(parseFloat(r.valor_eur||0));
-                    });
-                } catch(e) { console.error('Erro receitas reais:', e); }
+                if (!rows.length) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">Nenhum item de budget cadastrado para ${ano}.</td></tr>`;
+                    document.getElementById('budgetCompStatus').textContent = `Nenhum item encontrado para ${mesNames[mes-1].toUpperCase()}/${ano}`;
+                    return;
+                }
 
-                const fmt = v => (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+                const fmt = v => Math.abs(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-                const buildRows = (items, realMap, tipo) => items.map(item => {
-                    const budget = item[mesKey] || 0;
-                    const real = realMap[(item.categoria_nome||'').toLowerCase()] || 0;
+                tbody.innerHTML = rows.map(item => {
+                    const budget = item.valor_budget || 0;
+                    const real   = item.valor_real   || 0;
+                    const tipo   = item.tipo;
                     const desvio = real - budget;
                     const desvioPct = budget !== 0 ? (desvio / budget) * 100 : null;
                     const permitido = item.variacao_mensal_pct || 0;
                     const desvioAbs = Math.abs(desvioPct ?? 0);
+
                     let status, statusColor, statusBg;
                     if (real === 0 && budget === 0) {
                         status = 'N/A'; statusColor = '#94a3b8'; statusBg = 'rgba(148,163,184,0.12)';
@@ -8240,35 +8225,27 @@ tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><in
                         ? '#fca5a5' : '#6ee7b7'
                     );
                     const colorDot = tipo === 'despesa' ? '#f87171' : '#6ee7b7';
+                    const desvioSign = desvio >= 0 ? '+' : '-';
+
                     return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
                         <td style="padding:9px 12px;">
                             <div style="display:flex; align-items:center; gap:7px;">
-                                <span style="width:7px; height:7px; border-radius:50%; background:${colorDot}; flex-shrink:0;"></span>
-                                <span style="color:var(--text-light); font-weight:500;">${item.categoria_nome}</span>
+                                <span style="width:7px;height:7px;border-radius:50%;background:${colorDot};flex-shrink:0;"></span>
+                                <span style="color:var(--text-light);font-weight:500;">${item.categoria_nome}</span>
                             </div>
                         </td>
-                        <td style="padding:9px 8px; color:var(--text-muted); font-size:0.78rem;">${item.tipo_categoria||'—'}</td>
-                        <td style="padding:9px 8px; text-align:right; color:#93c5fd;">€ ${fmt(budget)}</td>
-                        <td style="padding:9px 8px; text-align:right; color:#6ee7b7;">€ ${fmt(real)}</td>
-                        <td style="padding:9px 8px; text-align:right; color:${desvioColor};">${desvio >= 0 ? '+' : ''}€ ${fmt(desvio)}</td>
-                        <td style="padding:9px 8px; text-align:right; color:${desvioColor};">${desvioPct !== null ? (desvioPct >= 0 ? '+' : '') + desvioPct.toFixed(1) + '%' : '—'}</td>
-                        <td style="padding:9px 8px; text-align:center;"><span style="background:rgba(245,158,11,0.15); color:#fcd34d; border-radius:6px; padding:2px 8px; font-size:0.78rem;">${permitido.toFixed(1)}%</span></td>
-                        <td style="padding:9px 8px; text-align:center;"><span style="background:${statusBg}; color:${statusColor}; border-radius:6px; padding:3px 10px; font-size:0.78rem; font-weight:600;">${status}</span></td>
+                        <td style="padding:9px 8px;color:var(--text-muted);font-size:0.78rem;">${item.tipo_categoria||'—'}</td>
+                        <td style="padding:9px 8px;text-align:right;color:#93c5fd;">€ ${fmt(budget)}</td>
+                        <td style="padding:9px 8px;text-align:right;color:#6ee7b7;">€ ${fmt(real)}</td>
+                        <td style="padding:9px 8px;text-align:right;color:${desvioColor};">${desvioSign}€ ${fmt(desvio)}</td>
+                        <td style="padding:9px 8px;text-align:right;color:${desvioColor};">${desvioPct !== null ? (desvioPct >= 0 ? '+' : '') + desvioPct.toFixed(1) + '%' : '—'}</td>
+                        <td style="padding:9px 8px;text-align:center;"><span style="background:rgba(245,158,11,0.15);color:#fcd34d;border-radius:6px;padding:2px 8px;font-size:0.78rem;">${permitido.toFixed(1)}%</span></td>
+                        <td style="padding:9px 8px;text-align:center;"><span style="background:${statusBg};color:${statusColor};border-radius:6px;padding:3px 10px;font-size:0.78rem;font-weight:600;">${status}</span></td>
                     </tr>`;
-                });
+                }).join('');
 
-                const allRows = [
-                    ...buildRows(despBudget, realDespMap, 'despesa'),
-                    ...buildRows(recBudget, realRecMap, 'receita'),
-                ];
-
-                if (!allRows.length) {
-                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">Nenhum item de budget cadastrado para ${ano}.</td></tr>`;
-                } else {
-                    tbody.innerHTML = allRows.join('');
-                }
                 document.getElementById('budgetCompStatus').textContent =
-                    `Comparativo de ${mesNames[mes-1].toUpperCase()}/${ano} — ${allRows.length} itens`;
+                    `Comparativo de ${mesNames[mes-1].toUpperCase()}/${ano} — ${rows.length} itens`;
             } catch(e) {
                 console.error(e);
                 document.getElementById('budgetCompStatus').textContent = 'Erro ao carregar dados.';
