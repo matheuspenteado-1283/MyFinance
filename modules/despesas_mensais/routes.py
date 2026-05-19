@@ -113,11 +113,12 @@ def api_upload_despesas_mensais():
         df = pd.read_excel(filepath) if filename.endswith(('.xls', '.xlsx')) else pd.read_csv(filepath)
         df.columns = df.columns.str.strip().str.lower()
 
-        mes_ref = (request.form or {}).get('mes') or (request.json or {}).get('mes') if request.form or request.json else None
+        _json = request.get_json(silent=True) or {}
+        mes_ref = request.form.get('mes') or _json.get('mes')
         if not mes_ref:
             return jsonify({'error': 'Mês de referência não informado'}), 400
 
-        force_moeda = (request.form or {}).get('moeda') or (request.json or {}).get('moeda') if request.form or request.json else None
+        force_moeda = request.form.get('moeda') or _json.get('moeda')
 
         is_revolut = any(c in df.columns for c in ['descrição', 'descricao', 'description']) or any(c in df.columns for c in ['tipo', 'type'])
         has_moeda_col = 'moeda' in df.columns
