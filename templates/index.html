@@ -2017,6 +2017,18 @@
     <div class="container module-container module-fullscreen" id="relatorioMesModule">
         <h1 style="text-align:center;"><i class="fa-solid fa-file-invoice-dollar"></i> Relatório Mensal</h1>
 
+        <!-- Toggle Despesas / Receitas -->
+        <div style="display:flex; justify-content:center; gap:10px; margin-bottom:1.5rem; flex-wrap:wrap;">
+            <button id="relMesBtnDespesas" class="btn btn-sm" onclick="relMesSetTipo('despesas')"
+                style="min-width:180px; padding:10px 20px; font-size:14px; border-radius:8px;">
+                <i class="fa-solid fa-receipt"></i> Relatório de Despesas
+            </button>
+            <button id="relMesBtnReceitas" class="btn btn-sm secondary" onclick="relMesSetTipo('receitas')"
+                style="min-width:180px; padding:10px 20px; font-size:14px; border-radius:8px;">
+                <i class="fa-solid fa-arrow-trend-up"></i> Relatório de Receitas
+            </button>
+        </div>
+
         <!-- Controles -->
         <div style="display:flex; justify-content:center; gap:12px; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap;">
             <label style="font-size:0.9rem; color:var(--text-muted);">Período:</label>
@@ -2034,7 +2046,7 @@
         <!-- Cards por moeda -->
         <div id="relMesCards" style="margin-bottom:2rem;"></div>
 
-        <!-- Barra de filtro + ações (aparece após preview) -->
+        <!-- Barra de filtro + ações (aparece após preview, somente Despesas) -->
         <div id="relMesFilterBar" style="display:none; margin-bottom:1rem; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between;">
             <div style="display:flex; gap:8px; align-items:center;">
                 <label style="font-size:0.85rem; color:var(--text-muted);">Tipo:</label>
@@ -2052,9 +2064,19 @@
             </div>
         </div>
 
+        <!-- Barra de seleção (Receitas — sem filtro de tipo) -->
+        <div id="relMesFilterBarReceitas" style="display:none; margin-bottom:1rem; gap:12px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+            <button class="btn btn-sm secondary" onclick="relMesSelectAll(true)" style="min-width:120px; padding:8px 16px; font-size:13px; border-radius:8px;">
+                <i class="fa-solid fa-check-double"></i> Sel. Todos
+            </button>
+            <button class="btn btn-sm secondary" onclick="relMesSelectAll(false)" style="min-width:100px; padding:8px 16px; font-size:13px; border-radius:8px;">
+                <i class="fa-solid fa-xmark"></i> Limpar
+            </button>
+        </div>
+
         <!-- Tabela -->
         <div class="table-container table-full" id="relMesTableContainer" style="display:none;">
-            <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-list-check"></i> Consolidação por Categoria de Despesa</h3>
+            <h3 id="relMesTabelaTitulo" style="margin-bottom:1rem;"><i class="fa-solid fa-list-check"></i> Consolidação por Categoria</h3>
             <div style="overflow-x:auto;">
                 <table id="relMesTable" style="min-width:600px;">
                     <thead id="relMesTableHead"></thead>
@@ -6002,21 +6024,52 @@
         }
 
         // ── Relatório Mensal ──────────────────────────────────────────────────
+        window._relMesTipo = 'despesas';
+
+        function relMesSetTipo(tipo) {
+            window._relMesTipo = tipo;
+            const isDespesas = tipo === 'despesas';
+            document.getElementById('relMesBtnDespesas').className = isDespesas ? 'btn btn-sm' : 'btn btn-sm secondary';
+            document.getElementById('relMesBtnReceitas').className = isDespesas ? 'btn btn-sm secondary' : 'btn btn-sm';
+            // Limpa resultado anterior
+            document.getElementById('relMesCards').innerHTML = '';
+            document.getElementById('relMesTableContainer').style.display = 'none';
+            document.getElementById('relMesPreviewBanner').style.display = 'none';
+            document.getElementById('relMesFilterBar').style.display = 'none';
+            document.getElementById('relMesFilterBarReceitas').style.display = 'none';
+            // Se já tem mês selecionado, recarrega
+            if (document.getElementById('relMesRef').value) previewRelatorioMensal();
+        }
+
         async function previewRelatorioMensal() {
             const mesInput = document.getElementById('relMesRef');
-            if (!mesInput.value) {
-                mesInput.value = new Date().toISOString().substring(0, 7);
-            }
-            const mes = mesInput.value;
+            if (!mesInput.value) mesInput.value = new Date().toISOString().substring(0, 7);
+            const mes  = mesInput.value;
+            const tipo = window._relMesTipo || 'despesas';
+            const url  = tipo === 'receitas'
+                ? `/api/relatorio_receitas?mes=${mes}`
+                : `/api/relatorio_mensal?mes=${mes}`;
             try {
-                const res = await fetch(`/api/relatorio_mensal?mes=${mes}`);
+                const res  = await fetch(url);
                 const data = await res.json();
-                if (data.error) { console.error('Erro relatório mensal:', data.error); return; }
-                renderRelMesCards(data);
-                renderRelMesTableNew(data);
+                if (data.error) { console.error('Erro relatório:', data.error); return; }
+
+                if (tipo === 'receitas') {
+                    renderRelMesCardsReceitas(data);
+                    renderRelMesTableReceitas(data);
+                    document.getElementById('relMesFilterBar').style.display = 'none';
+                    document.getElementById('relMesFilterBarReceitas').style.display = 'flex';
+                    document.getElementById('relMesTabelaTitulo').innerHTML =
+                        '<i class="fa-solid fa-list-check"></i> Consolidação por Categoria de Receita';
+                } else {
+                    renderRelMesCards(data);
+                    renderRelMesTableNew(data);
+                    document.getElementById('relMesFilterBarReceitas').style.display = 'none';
+                    document.getElementById('relMesTabelaTitulo').innerHTML =
+                        '<i class="fa-solid fa-list-check"></i> Consolidação por Categoria de Despesa';
+                }
                 document.getElementById('relMesPreviewBanner').style.display = 'block';
                 document.getElementById('relMesTableContainer').style.display = 'block';
-                document.getElementById('relMesFilterBar').style.display = 'flex';
                 window.relMesDataV2 = data;
             } catch(e) { console.error('Erro relatório mensal:', e); }
         }
@@ -6192,10 +6245,129 @@
             relMesUpdateSubtotal();
         }
 
+        // ── Relatório de Receitas ────────────────────────────────────────────────
+
+        function renderRelMesCardsReceitas(data) {
+            const { cards, currencies } = data;
+            const container = document.getElementById('relMesCards');
+            if (!currencies || currencies.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">Nenhuma receita registada para este mês.</p>';
+                return;
+            }
+            let html = '<div style="display:flex; flex-direction:column; gap:1.2rem;">';
+            currencies.forEach(moeda => {
+                const card = cards[moeda] || { total: 0 };
+                const sym  = _relMesCurrSymbols[moeda] || moeda;
+                html += `
+                <div>
+                    <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.5rem; text-align:center;">
+                        <i class="fa-solid fa-coins" style="color:var(--success);"></i>&nbsp;${moeda}
+                    </div>
+                    <div style="display:flex; justify-content:center;">
+                        <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:12px; padding:1.25rem 3rem; text-align:center; min-width:220px;">
+                            <span style="font-size:0.72rem; color:var(--success); text-transform:uppercase; letter-spacing:1px; display:block;">Total Receitas ${moeda}</span>
+                            <div style="font-size:1.4rem; font-weight:700; margin-top:0.4rem; color:var(--success);">${sym}&nbsp;${formatCurrency(card.total)}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderRelMesTableReceitas(data) {
+            const { rows, currencies } = data;
+            const thead = document.getElementById('relMesTableHead');
+            const tbody = document.getElementById('relMesTableBody');
+            if (!currencies || currencies.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Sem dados</td></tr>';
+                return;
+            }
+
+            // Header
+            let h = '<tr>';
+            h += '<th style="text-align:center; width:36px;"><input type="checkbox" id="relMesCheckAll" onchange="relMesSelectAll(this.checked)" title="Selecionar todos"></th>';
+            h += '<th style="min-width:200px;">Categoria de Receita</th>';
+            currencies.forEach(m => {
+                const sym = _relMesCurrSymbols[m] || m;
+                h += `<th style="text-align:right; background:rgba(16,185,129,0.08); border-left:2px solid rgba(16,185,129,0.2);">${sym} ${m}</th>`;
+            });
+            h += '</tr>';
+            thead.innerHTML = h;
+
+            const totals = {};
+            currencies.forEach(m => { totals[m] = 0; });
+
+            let b = '';
+            (rows || []).forEach(row => {
+                const rowVals = {};
+                currencies.forEach(m => {
+                    rowVals[m] = (row.valores && row.valores[m]?.total) || 0;
+                    totals[m] += rowVals[m];
+                });
+                const valsAttr = encodeURIComponent(JSON.stringify(rowVals));
+                b += `<tr class="relmes-data-row" data-tipo="" data-vals="${valsAttr}">`;
+                b += `<td style="text-align:center;"><input type="checkbox" class="relmes-cb" onchange="relMesUpdateSubtotalReceitas()"></td>`;
+                b += `<td><b>${row.categoria}</b></td>`;
+                currencies.forEach(m => {
+                    const v = rowVals[m];
+                    const dim = v === 0 ? ' color:var(--text-muted);' : '';
+                    b += `<td style="text-align:right; font-weight:${v ? '700' : '400'};${dim} border-left:2px solid rgba(16,185,129,0.15);">${formatCurrency(v)}</td>`;
+                });
+                b += '</tr>';
+            });
+
+            // Subtotal row
+            b += `<tr id="relMesSubtotalRow" style="display:none; border-top:2px dashed rgba(99,102,241,0.5); background:rgba(99,102,241,0.05);">`;
+            b += `<td></td><td style="font-weight:700; color:#818cf8;"><i class="fa-solid fa-filter"></i> SUBTOTAL</td>`;
+            currencies.forEach(m => {
+                b += `<td id="relMesSub_${m}_t" style="text-align:right; font-weight:700; color:#818cf8; border-left:2px solid rgba(99,102,241,0.25);">0,00</td>`;
+            });
+            b += '</tr>';
+
+            // Total row
+            b += '<tr style="border-top:2px solid rgba(16,185,129,0.4); background:rgba(16,185,129,0.05);">';
+            b += '<td></td><td style="font-weight:700;"><i class="fa-solid fa-sigma"></i> TOTAL GERAL</td>';
+            currencies.forEach(m => {
+                const sym = _relMesCurrSymbols[m] || m;
+                b += `<td style="text-align:right; font-weight:700; color:var(--success); border-left:2px solid rgba(16,185,129,0.25);">${sym} ${formatCurrency(totals[m])}</td>`;
+            });
+            b += '</tr>';
+            tbody.innerHTML = b;
+            window._relMesCurrencies = currencies;
+        }
+
+        function relMesUpdateSubtotalReceitas() {
+            const currencies = window._relMesCurrencies || [];
+            const checked    = document.querySelectorAll('.relmes-cb:checked');
+            const row        = document.getElementById('relMesSubtotalRow');
+            if (checked.length === 0) { row.style.display = 'none'; return; }
+            row.style.display = '';
+            const subs = {};
+            currencies.forEach(m => { subs[m] = 0; });
+            checked.forEach(cb => {
+                try {
+                    const vals = JSON.parse(decodeURIComponent(cb.closest('tr').dataset.vals || '{}'));
+                    currencies.forEach(m => { subs[m] += vals[m] || 0; });
+                } catch(e) {}
+            });
+            currencies.forEach(m => {
+                const el = document.getElementById(`relMesSub_${m}_t`);
+                if (el) el.textContent = formatCurrency(subs[m]);
+            });
+        }
+
+        // ── Export Excel (detecta tipo automaticamente) ──────────────────────────
+
         function relMesExportExcel() {
             const mes = document.getElementById('relMesRef').value;
             if (!mes) { alert('Selecione um mês primeiro.'); return; }
-            window.location.href = `/api/relatorio_mensal/exportar?mes=${mes}`;
+            const tipo = window._relMesTipo || 'despesas';
+            const url  = tipo === 'receitas'
+                ? `/api/relatorio_receitas/exportar?mes=${mes}`
+                : `/api/relatorio_mensal/exportar?mes=${mes}`;
+            window.location.href = url;
         }
 
         // Run checkAuthStatus on mount

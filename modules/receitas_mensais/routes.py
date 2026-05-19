@@ -1,4 +1,5 @@
 import io
+import traceback
 import pandas as pd
 from flask import request, jsonify, send_file, session
 
@@ -6,6 +7,7 @@ from . import bp
 from .db import (
     get_receitas_mensais, add_receita_mensal, update_receita_mensal,
     delete_receita_mensal, sync_receitas_from_despesas_mensais, get_totais_receitas,
+    get_relatorio_receitas_v2,
 )
 from exchange_api import get_exchange_rate
 
@@ -107,3 +109,60 @@ def export_receitas_mensais():
 
     return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=True, download_name=filename)
+
+
+@bp.route('/api/relatorio_receitas', methods=['GET'])
+def api_relatorio_receitas():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    mes = request.args.get('mes', '')
+    if not mes:
+        return jsonify({'rows': [], 'currencies': [], 'cards': {}})
+    try:
+        return jsonify(get_relatorio_receitas_v2(session['user_email'], mes))
+    except Exception:
+        traceback.print_exc()
+        return jsonify({'error': 'Erro interno'}), 500
+
+
+@bp.route('/api/relatorio_receitas/exportar', methods=['GET'])
+def api_relatorio_receitas_exportar():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    mes = request.args.get('mes', '')
+    if not mes:
+        return jsonify({'error': 'Mês não informado'}), 400
+    try:
+        data = get_relatorio_receitas_v2(session['user_email'], mes)
+        rows = data['rows']
+        currencies = data['currencies']
+
+        col_headers = ['Categoria de Receita']
+        for m in currencies:
+            col_headers.append(f'{m} Total')
+
+        excel_rows = []
+        for row in rows:
+            r = [row['categoria']]
+            for m in currencies:
+                r.append(row['valores'].get(m, {}).get('total', 0))
+            excel_rows.append(r)
+
+        df = pd.DataFrame(excel_rows, columns=col_headers)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório Receitas')
+            ws = writer.sheets['Relatório Receitas']
+            for col_idx in range(2, len(col_headers) + 1):
+                for row_idx in range(2, len(excel_rows) + 2):
+                    ws.cell(row=row_idx, column=col_idx).number_format = '#,##0.00'
+        output.seek(0)
+
+        ano, mes_num = mes.split('-')
+        filename = f'Relatorio_Receitas_{ano}_{mes_num}.xlsx'
+        return send_file(output,
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         as_attachment=True, download_name=filename)
+    except Exception:
+        traceback.print_exc()
+        return jsonify({'error': 'Erro ao gerar Excel'}), 500
