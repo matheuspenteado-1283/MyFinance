@@ -288,6 +288,61 @@
             position: static;
         }
 
+        /* ── Relatório Dinâmico ── */
+        .rel-din-tabela-card {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.55rem 0.9rem; border-radius: 10px; cursor: pointer; user-select: none;
+            border: 1.5px solid transparent; font-size: 0.88rem; font-weight: 500;
+            color: var(--card-color); background: var(--card-bg);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .rel-din-tabela-card:hover {
+            border-color: var(--card-color);
+        }
+        .rel-din-tabela-card.ativo {
+            border-color: var(--card-color);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--card-color) 25%, transparent);
+        }
+        .rel-din-tabela-card.ativo::after {
+            content: '✓'; margin-left: auto; font-size: 0.8rem;
+        }
+        .rel-din-moeda-label {
+            display: flex; align-items: center; gap: 0.4rem; cursor: pointer;
+            font-size: 0.88rem; font-weight: 500;
+        }
+        .rel-din-moeda-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .rel-din-moeda-tab {
+            padding: 0.35rem 0.9rem; border-radius: 8px; border: 1.5px solid var(--glass-border);
+            background: transparent; cursor: pointer; font-size: 0.85rem; color: var(--text-muted);
+            transition: all 0.15s;
+        }
+        .rel-din-moeda-tab.ativo { border-color: var(--primary); color: var(--primary); background: rgba(99,102,241,0.12); }
+        .rel-din-result-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        .rel-din-result-table th {
+            padding: 0.55rem 0.75rem; text-align: right; font-weight: 600; font-size: 0.8rem;
+            color: var(--text-muted); border-bottom: 1px solid var(--glass-border); white-space: nowrap;
+        }
+        .rel-din-result-table th:first-child { text-align: left; }
+        .rel-din-result-table td {
+            padding: 0.5rem 0.75rem; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text-light);
+        }
+        .rel-din-result-table td:first-child { text-align: left; color: var(--text-light); font-weight: 500; }
+        .rel-din-result-table tr:hover td { background: rgba(255,255,255,0.03); }
+        .rel-din-result-table tfoot td {
+            font-weight: 700; border-top: 2px solid var(--glass-border);
+            border-bottom: none; color: var(--primary);
+        }
+        .rel-din-result-table tfoot td:first-child { color: var(--text-light); }
+        .rel-din-zero { color: var(--text-muted) !important; font-weight: 400 !important; }
+        .rel-din-total-col { color: var(--secondary) !important; font-weight: 600 !important; }
+        @media (max-width: 800px) {
+            #relatorioDinamicoModule > div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+            .form-panel[style*="position:sticky"] { position: static !important; }
+        }
+
         .val-badge {
             background: rgba(59, 130, 246, 0.15); color: #93c5fd; padding: 0.3rem 0.6rem;
             border-radius: 6px; font-weight: 500; font-family: monospace; display: inline-block;
@@ -2164,157 +2219,207 @@
 
     <!-- Módulo Relatório Dinâmico -->
     <div class="container module-container module-fullscreen" id="relatorioDinamicoModule">
-        <h1 style="text-align:center;"><i class="fa-solid fa-table-columns"></i> Relatório Dinâmico</h1>
-        
-        <div style="display:flex; gap:1rem; justify-content:center; margin-bottom:2rem; flex-wrap:wrap;">
-            <button class="btn btn-xs secondary" id="relDinBtnCriar" onclick="showRelDinTab('criar')"><i class="fa-solid fa-plus"></i> Criar Novo</button>
-            <button class="btn btn-xs secondary" id="relDinBtnSalvos" onclick="showRelDinTab('salvos')"><i class="fa-solid fa-folder"></i> Relatórios Salvos</button>
-            <button class="btn btn-xs secondary" id="relDinBtnVisualizar" onclick="showRelDinTab('visualizar')"><i class="fa-solid fa-eye"></i> Visualizar</button>
+
+        <!-- Header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+            <h1 style="margin:0;"><i class="fa-solid fa-table-columns"></i> Relatório Dinâmico</h1>
+            <button class="btn btn-xs secondary" onclick="relDinAbrirModalSalvos()">
+                <i class="fa-solid fa-folder-open"></i> Relatórios Salvos
+            </button>
         </div>
 
-        <!-- Tab Criar -->
-        <div id="relDinTabCriar">
-            <div class="form-panel" style="margin-bottom:2rem;">
-                <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-sliders"></i> Configuração do Relatório</h3>
-                
-                <div class="form-row" style="grid-template-columns: repeat(2, 1fr);">
-                    <div class="form-field">
-                        <label>Nome do Relatório</label>
-                        <input type="text" id="relDinNome" class="auth-input" placeholder="Ex: Despesas por Categoria">
-                    </div>
-                    <div class="form-field">
-                        <label>Agrupador (Group By)</label>
-                        <select id="relDinAgrupador" class="auth-input">
-                            <option value="">Selecione...</option>
-                            <option value="categoria_final">Categoria Final</option>
-                            <option value="tp_investimento">Tipo Investimento</option>
-                            <option value="tp_imposto">Tipo Imposto</option>
-                            <option value="tipo_receita">Tipo Receita</option>
-                            <option value="banco">Banco</option>
-                            <option value="beneficiario">Beneficiário</option>
-                            <option value="despesa">Despesa (Cad.)</option>
-                            <option value="tipo_despesa">Tipo Despesa (Cad.)</option>
-                            <option value="descricao">Descrição (Contas/Receitas)</option>
-                            <option value="nome">Nome (Usuários)</option>
-                            <option value="tp_imposto">Tipo Imposto (Config)</option>
-                        </select>
-                    </div>
+        <!-- Toast de feedback -->
+        <div id="relDinToast" style="display:none; position:fixed; bottom:2rem; right:2rem; z-index:9999;
+             background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px;
+             padding:1rem 1.5rem; font-size:0.95rem; color:var(--text-light);
+             box-shadow:0 8px 32px rgba(0,0,0,0.4); transition:opacity 0.3s;">
+        </div>
+
+        <!-- Layout side-by-side -->
+        <div style="display:grid; grid-template-columns:320px 1fr; gap:1.5rem; align-items:start;">
+
+            <!-- ── Painel de Configuração (esquerda, sticky) ── -->
+            <div class="form-panel" style="position:sticky; top:1rem;">
+
+                <h3 style="margin-bottom:1.25rem; color:var(--primary);"><i class="fa-solid fa-sliders"></i> Configuração</h3>
+
+                <div class="form-field" style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted);">Nome do Relatório</label>
+                    <input type="text" id="relDinNome" class="auth-input" placeholder="Ex: Despesas por Categoria">
                 </div>
 
-                <div class="form-row" style="grid-template-columns: repeat(2, 1fr);">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1rem;">
                     <div class="form-field">
-                        <label>Mês Início</label>
+                        <label style="font-size:0.85rem; color:var(--text-muted);">Mês Início</label>
                         <input type="month" id="relDinMesInicio" class="auth-input">
                     </div>
                     <div class="form-field">
-                        <label>Mês Fim</label>
+                        <label style="font-size:0.85rem; color:var(--text-muted);">Mês Fim</label>
                         <input type="month" id="relDinMesFim" class="auth-input">
                     </div>
                 </div>
 
-                <h4 style="margin:1.5rem 0 1rem; color:var(--primary);">Selecione as Tabelas</h4>
-                <div id="relDinTabelas" style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:1rem;">
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="despesas_mensais" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge">Despesas Mensais</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="receitas_mensais" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">Receitas Mensais</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="lcto_impostos" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(245,158,11,0.15);color:#fcd34d;">Impostos</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="lcto_emprestimos" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(139,92,246,0.15);color:#c4b5fd;">Empréstimos</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="lcto_investimentos" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(59,130,246,0.15);color:#93c5fd;">Investimentos</span>
-                    </label>
+                <!-- Moedas -->
+                <div style="margin-bottom:1.25rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.5rem;">Moedas de Exibição</label>
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                        <label class="rel-din-moeda-label">
+                            <input type="checkbox" class="rel-din-moeda" value="EUR" checked>
+                            <span style="color:#fcd34d;">€ EUR</span>
+                        </label>
+                        <label class="rel-din-moeda-label">
+                            <input type="checkbox" class="rel-din-moeda" value="BRL">
+                            <span style="color:#86efac;">R$ BRL</span>
+                        </label>
+                        <label class="rel-din-moeda-label">
+                            <input type="checkbox" class="rel-din-moeda" value="USD">
+                            <span style="color:#93c5fd;">$ USD</span>
+                        </label>
+                        <label class="rel-din-moeda-label">
+                            <input type="checkbox" class="rel-din-moeda" value="GBP">
+                            <span style="color:#fca5a5;">£ GBP</span>
+                        </label>
+                    </div>
                 </div>
 
-                <h4 style="margin:1.5rem 0 1rem; color:var(--warning);">Tabelas de Configuração</h4>
-                <div id="relDinTabelasConfig" style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:1rem;">
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="cad_despesas" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(236,72,153,0.15);color:#f472b6;">Cad. Despesas</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="cad_contas" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(34,211,238,0.15);color:#22d3ee;">Cad. Contas</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="cad_receitas" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(134,239,172,0.15);color:#86efac;">Cad. Receitas</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="cad_investimentos" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(167,139,250,0.15);color:#a78bfa;">Cad. Invest.</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="cad_usuarios" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;">Cad. Usuários</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-tabela" value="tb_tipo_imposto" onchange="updateRelDinCampos()"> 
-                        <span class="val-badge" style="background:rgba(252,165,165,0.15);color:#fca5a5;">Tipo Imposto</span>
-                    </label>
+                <!-- Fontes de dados — Transacionais -->
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.5rem;">Fontes de Dados</label>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <div class="rel-din-tabela-card" data-tabela="despesas_mensais" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#f87171; --card-bg:rgba(248,113,113,0.12);">
+                            <i class="fa-solid fa-credit-card"></i> Despesas Mensais
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="receitas_mensais" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#6ee7b7; --card-bg:rgba(110,231,183,0.12);">
+                            <i class="fa-solid fa-arrow-trend-up"></i> Receitas Mensais
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="lcto_impostos" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#fcd34d; --card-bg:rgba(252,211,77,0.12);">
+                            <i class="fa-solid fa-receipt"></i> Impostos
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="lcto_emprestimos" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#c4b5fd; --card-bg:rgba(196,181,253,0.12);">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> Empréstimos
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="lcto_investimentos" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#93c5fd; --card-bg:rgba(147,197,253,0.12);">
+                            <i class="fa-solid fa-chart-line"></i> Investimentos
+                        </div>
+                    </div>
                 </div>
 
-                <h4 style="margin:1.5rem 0 1rem; color:var(--primary);">Campos Selecionados</h4>
-                <div id="relDinCampos" style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:center; min-height:40px;">
-                    <span style="color:var(--text-muted); font-style:italic;">Selecione as tabelas acima para ver os campos disponíveis</span>
+                <!-- Fontes de dados — Cadastros (colapsável) -->
+                <details style="margin-bottom:1rem;">
+                    <summary style="font-size:0.85rem; color:var(--text-muted); cursor:pointer; margin-bottom:0.5rem; user-select:none;">
+                        Tabelas de Configuração
+                    </summary>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
+                        <div class="rel-din-tabela-card" data-tabela="cad_despesas" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#f472b6; --card-bg:rgba(244,114,182,0.12);">
+                            <i class="fa-solid fa-list"></i> Cad. Despesas
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="cad_contas" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#22d3ee; --card-bg:rgba(34,211,238,0.12);">
+                            <i class="fa-solid fa-piggy-bank"></i> Cad. Contas
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="cad_receitas" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#86efac; --card-bg:rgba(134,239,172,0.12);">
+                            <i class="fa-solid fa-coins"></i> Cad. Receitas
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="cad_investimentos" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#a78bfa; --card-bg:rgba(167,139,250,0.12);">
+                            <i class="fa-solid fa-briefcase"></i> Cad. Investimentos
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="cad_usuarios" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#fbbf24; --card-bg:rgba(251,191,36,0.12);">
+                            <i class="fa-solid fa-users"></i> Cad. Usuários
+                        </div>
+                        <div class="rel-din-tabela-card" data-tabela="tb_tipo_imposto" onclick="relDinToggleTabela(this)"
+                             style="--card-color:#fca5a5; --card-bg:rgba(252,165,165,0.12);">
+                            <i class="fa-solid fa-building-columns"></i> Tipos de Imposto
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Agrupador dinâmico -->
+                <div class="form-field" style="margin-bottom:1.25rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted);">Agrupar por</label>
+                    <select id="relDinAgrupador" class="auth-input">
+                        <option value="">— selecione as tabelas —</option>
+                    </select>
                 </div>
 
-                <h4 style="margin:1.5rem 0 1rem; color:var(--primary);">Moedas de Exibição</h4>
-                <div style="display:flex; gap:1rem; justify-content:center; margin-bottom:2rem;">
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-moeda" value="EUR" checked> <span style="color:#fcd34d;">€ EUR</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-moeda" value="BRL"> <span style="color:#86efac;">R$ BRL</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-moeda" value="USD"> <span style="color:#93c5fd;">$ USD</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-                        <input type="checkbox" class="rel-din-moeda" value="GBP"> <span style="color:#fca5a5;">£ GBP</span>
-                    </label>
+                <!-- Botões de ação -->
+                <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                    <button class="btn" onclick="gerarRelatorioDinamico()" id="relDinBtnGerar">
+                        <i class="fa-solid fa-play"></i> Gerar Relatório
+                    </button>
+                    <div style="display:flex; gap:0.6rem;">
+                        <button class="btn btn-xs secondary" onclick="salvarRelatorioDinamico()" style="flex:1;">
+                            <i class="fa-solid fa-floppy-disk"></i> Salvar
+                        </button>
+                        <button class="btn btn-xs secondary" onclick="exportarRelatorioExcel()" style="flex:1; background:rgba(16,185,129,0.15); color:#6ee7b7; border-color:rgba(16,185,129,0.3);">
+                            <i class="fa-solid fa-file-excel"></i> Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Área de Resultado (direita) ── -->
+            <div id="relDinAreaResultado">
+                <!-- Estado inicial -->
+                <div id="relDinEstadoInicial" style="display:flex; flex-direction:column; align-items:center; justify-content:center;
+                     min-height:400px; color:var(--text-muted); text-align:center; gap:1rem;">
+                    <i class="fa-solid fa-table-columns" style="font-size:3rem; opacity:0.3;"></i>
+                    <p style="font-size:1rem; max-width:280px;">Selecione as fontes de dados, configure o período e clique em <strong>Gerar Relatório</strong></p>
                 </div>
 
-                <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
-                    <button class="btn btn-xs" onclick="salvarRelatorioDinamico()"><i class="fa-solid fa-save"></i> Salvar</button>
-                    <button class="btn btn-xs" onclick="gerarRelatorioDinamico()"><i class="fa-solid fa-play"></i> Gerar Relatório</button>
-                    <button class="btn btn-xs" style="background:var(--success);" onclick="exportarRelatorioExcel()"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button>
+                <!-- Spinner de carregamento -->
+                <div id="relDinSpinner" style="display:none; align-items:center; justify-content:center; min-height:300px;">
+                    <div style="text-align:center; color:var(--text-muted);">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:1rem; display:block;"></i>
+                        Gerando relatório...
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div id="relDinResultado" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Modal Relatórios Salvos -->
+        <div id="relDinModalSalvos" style="display:none; position:fixed; inset:0; z-index:1000;
+             background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center;"
+             onclick="if(event.target===this) relDinFecharModalSalvos()">
+            <div style="background:var(--card-bg,#1a1a2e); border:1px solid var(--glass-border);
+                 border-radius:16px; padding:1.5rem; width:min(680px,95vw); max-height:80vh;
+                 display:flex; flex-direction:column; gap:1rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <h3 style="margin:0;"><i class="fa-solid fa-folder-open"></i> Relatórios Salvos</h3>
+                    <button class="btn btn-xs secondary" onclick="relDinFecharModalSalvos()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div style="overflow-y:auto; flex:1;">
+                    <table style="width:100%; border-collapse:collapse;" id="relDinSalvosTable">
+                        <thead>
+                            <tr style="border-bottom:1px solid var(--glass-border);">
+                                <th style="text-align:left; padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-muted); font-weight:500;">Nome</th>
+                                <th style="text-align:left; padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-muted); font-weight:500;">Tabelas</th>
+                                <th style="text-align:left; padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-muted); font-weight:500;">Período</th>
+                                <th style="width:100px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="relDinSalvosTableBody"></tbody>
+                    </table>
+                    <div id="relDinSalvosVazio" style="display:none; text-align:center; padding:2rem; color:var(--text-muted);">
+                        Nenhum relatório salvo ainda.
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tab Salvos -->
-        <div id="relDinTabSalvos" style="display:none;">
-            <div class="table-container">
-                <table id="relDinSalvosTable">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Tabelas</th>
-                            <th>Agrupador</th>
-                            <th>Período</th>
-                            <th style="width:150px;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="relDinSalvosTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Tab Visualizar -->
-        <div id="relDinTabVisualizar" style="display:none;">
-            <div id="relDinResultado" style="display:grid; gap:1.5rem;"></div>
-        </div>
     </div>
 
     <!-- Módulo Impostos -->
@@ -7417,287 +7522,346 @@
         }
 
         // ── Relatório Dinâmico ─────────────────────────────────────────────────
-        let relDinCamposPorTabela = {};
+        const REL_DIN_AGRUPADORES = {
+            despesas_mensais:   [{ value: 'categoria_final',  label: 'Categoria Final' }],
+            receitas_mensais:   [{ value: 'tipo_receita',     label: 'Tipo de Receita' }],
+            lcto_impostos:      [{ value: 'tp_imposto',       label: 'Tipo de Imposto' }],
+            lcto_emprestimos:   [{ value: 'beneficiario',     label: 'Beneficiário' }],
+            lcto_investimentos: [{ value: 'tp_investimento',  label: 'Tipo Investimento' }, { value: 'banco', label: 'Banco' }],
+            cad_despesas:       [{ value: 'tipo_despesa',     label: 'Tipo Despesa (Cad.)' }],
+            cad_contas:         [{ value: 'descricao',        label: 'Descrição (Contas)' }],
+            cad_receitas:       [{ value: 'descricao',        label: 'Descrição (Receitas)' }],
+            cad_investimentos:  [{ value: 'descricao',        label: 'Descrição (Invest.)' }],
+            cad_usuarios:       [{ value: 'nome',             label: 'Nome (Usuários)' }],
+            tb_tipo_imposto:    [{ value: 'tp_imposto',       label: 'Tipo Imposto (Config)' }],
+        };
+        const REL_DIN_MOEDA_COR = { EUR: '#fcd34d', BRL: '#86efac', USD: '#93c5fd', GBP: '#fca5a5' };
+        let relDinMoedaAtiva = 'EUR';
+
+        function relDinFmt(val) {
+            if (!val || val === 0) return '—';
+            return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function relDinToast(msg, tipo = 'ok') {
+            const el = document.getElementById('relDinToast');
+            el.textContent = msg;
+            el.style.borderColor = tipo === 'ok' ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)';
+            el.style.display = 'block';
+            el.style.opacity = '1';
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => { el.style.display = 'none'; }, 300); }, 2500);
+        }
+
+        function relDinGetTabelas() {
+            return Array.from(document.querySelectorAll('.rel-din-tabela-card.ativo')).map(el => el.dataset.tabela);
+        }
+
+        function relDinToggleTabela(card) {
+            card.classList.toggle('ativo');
+            relDinAtualizarAgrupador();
+        }
+
+        function relDinAtualizarAgrupador() {
+            const tabelas = relDinGetTabelas();
+            const select = document.getElementById('relDinAgrupador');
+            const valorAtual = select.value;
+            select.innerHTML = '';
+
+            const visto = new Set();
+            tabelas.forEach(t => {
+                (REL_DIN_AGRUPADORES[t] || []).forEach(opt => {
+                    if (!visto.has(opt.value)) {
+                        visto.add(opt.value);
+                        const o = document.createElement('option');
+                        o.value = opt.value;
+                        o.textContent = opt.label;
+                        select.appendChild(o);
+                    }
+                });
+            });
+
+            if (visto.size === 0) {
+                const o = document.createElement('option');
+                o.value = '';
+                o.textContent = '— selecione as tabelas —';
+                select.appendChild(o);
+            } else if (visto.has(valorAtual)) {
+                select.value = valorAtual;
+            }
+        }
 
         async function initRelatorioDinamico() {
             try {
                 const meRes = await fetch('/api/me');
                 const meData = await meRes.json();
-                if(!meData.logged_in) {
-                    alert('Você precisa fazer login para usar o Relatório Dinâmico');
-                    showLoginUI();
-                    return;
-                }
-                
-                const res = await fetch('/api/relatorio_dinamico/tabelas');
-                if(!res.ok) { throw new Error('Erro ao carregar tabelas'); }
-                relDinCamposPorTabela = await res.json();
-                
+                if (!meData.logged_in) { showLoginUI(); return; }
+
                 const mesesRes = await fetch('/api/relatorio_dinamico/meses');
-                if(mesesRes.ok) {
+                if (mesesRes.ok) {
                     const meses = await mesesRes.json();
-                    if(meses.length > 0) {
-                        document.getElementById('relDinMesInicio').value = meses[meses.length-1];
+                    if (meses.length > 0) {
+                        document.getElementById('relDinMesInicio').value = meses[meses.length - 1];
                         document.getElementById('relDinMesFim').value = meses[0];
                     }
                 }
-                showRelDinTab('criar');
-            } catch(e) { 
-                console.error("Erro init relatorio dinamico:", e);
-                alert('Erro ao inicializar: ' + e.message);
+            } catch (e) {
+                console.error('Erro init relatorio dinamico:', e);
             }
-        }
-
-        function showRelDinTab(tab) {
-            document.getElementById('relDinTabCriar').style.display = 'none';
-            document.getElementById('relDinTabSalvos').style.display = 'none';
-            document.getElementById('relDinTabVisualizar').style.display = 'none';
-            document.getElementById('relDinBtnCriar').classList.remove('secondary');
-            document.getElementById('relDinBtnSalvos').classList.remove('secondary');
-            document.getElementById('relDinBtnVisualizar').classList.remove('secondary');
-            
-            document.getElementById('relDinTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
-            document.getElementById('relDinBtn' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('secondary');
-            
-            if(tab === 'salvos') loadRelatoriosSalvos();
-        }
-
-        function updateRelDinCampos() {
-            const checkboxes = document.querySelectorAll('.rel-din-tabela:checked');
-            const container = document.getElementById('relDinCampos');
-            container.innerHTML = '';
-            
-            if(checkboxes.length === 0) {
-                container.innerHTML = '<span style="color:var(--text-muted); font-style:italic;">Selecione as tabelas acima para ver os campos disponíveis</span>';
-                return;
-            }
-            
-            checkboxes.forEach(cb => {
-                const tabela = cb.value;
-                const campos = relDinCamposPorTabela[tabela] || [];
-                container.innerHTML += `<div style="margin:0.5rem;">
-                    <span style="color:var(--primary); font-size:0.9rem;">${tabela}:</span>
-                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
-                        ${campos.map(c => `<label style="font-size:0.85rem;"><input type="checkbox" class="rel-din-campo" value="${c}" checked> ${c}</label>`).join('')}
-                    </div>
-                </div>`;
-            });
-        }
-
-        async function salvarRelatorioDinamico() {
-            const nome = document.getElementById('relDinNome').value;
-            if(!nome) { alert('Informe o nome do relatório'); return; }
-            
-            const tabelas = Array.from(document.querySelectorAll('.rel-din-tabela:checked')).map(cb => cb.value);
-            if(tabelas.length === 0) { alert('Selecione pelo menos uma tabela'); return; }
-            
-            const campos = Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value);
-            const agrupador = document.getElementById('relDinAgrupador').value;
-            const mes_inicio = document.getElementById('relDinMesInicio').value;
-            const mes_fim = document.getElementById('relDinMesFim').value;
-            const moedas = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
-            
-            try {
-                const res = await fetch('/api/relatorio_dinamico', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ nome, tabelas, campos, agrupador, mes_inicio, mes_fim, moedas })
-                });
-                if(res.ok) {
-                    alert('Relatório salvo com sucesso!');
-                    showRelDinTab('salvos');
-                }
-            } catch(e) { console.error(e); alert('Erro ao salvar'); }
         }
 
         async function gerarRelatorioDinamico() {
-            const tabelas = Array.from(document.querySelectorAll('.rel-din-tabela:checked')).map(cb => cb.value);
-            if(tabelas.length === 0) { alert('Selecione pelo menos uma tabela'); return; }
-            
-            const campos = Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value);
-            const agrupador = document.getElementById('relDinAgrupador').value || 'categoria_final';
+            const tabelas = relDinGetTabelas();
+            if (tabelas.length === 0) { relDinToast('Selecione pelo menos uma fonte de dados', 'erro'); return; }
+
+            const agrupador = document.getElementById('relDinAgrupador').value;
+            if (!agrupador) { relDinToast('Selecione o agrupador', 'erro'); return; }
+
             const mes_inicio = document.getElementById('relDinMesInicio').value;
-            const mes_fim = document.getElementById('relDinMesFim').value;
-            const moedas = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
-            
+            const mes_fim    = document.getElementById('relDinMesFim').value;
+            const moedas     = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
+            if (moedas.length === 0) { relDinToast('Selecione ao menos uma moeda', 'erro'); return; }
+
+            document.getElementById('relDinEstadoInicial').style.display = 'none';
+            document.getElementById('relDinResultado').style.display = 'none';
+            document.getElementById('relDinSpinner').style.display = 'flex';
+
             try {
                 const res = await fetch('/api/relatorio_dinamico/gerar', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ tabelas, campos, agrupador, mes_inicio, mes_fim, moedas })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tabelas, campos: [], agrupador, mes_inicio, mes_fim, moedas }),
                 });
-                if(!res.ok) {
+                if (!res.ok) {
                     const err = await res.json();
-                    alert('Erro: ' + (err.error || 'Erro desconhecido'));
+                    relDinToast('Erro: ' + (err.error || 'Erro desconhecido'), 'erro');
+                    document.getElementById('relDinSpinner').style.display = 'none';
+                    document.getElementById('relDinEstadoInicial').style.display = 'flex';
                     return;
                 }
                 const data = await res.json();
+                document.getElementById('relDinSpinner').style.display = 'none';
+                relDinMoedaAtiva = moedas[0];
                 renderRelatorioDinamico(data, moedas);
-                showRelDinTab('visualizar');
-            } catch(e) { console.error(e); alert('Erro ao gerar relatório: ' + e.message); }
+            } catch (e) {
+                console.error(e);
+                relDinToast('Erro ao gerar relatório', 'erro');
+                document.getElementById('relDinSpinner').style.display = 'none';
+                document.getElementById('relDinEstadoInicial').style.display = 'flex';
+            }
         }
 
         function renderRelatorioDinamico(data, moedas) {
             const container = document.getElementById('relDinResultado');
             container.innerHTML = '';
-            
-            if(!data.agrupadores || data.agrupadores.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:2rem;">Nenhum dado encontrado para os filtros selecionados.</div>';
+            container.style.display = 'block';
+
+            if (!data.agrupadores || data.agrupadores.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:3rem;">Nenhum dado encontrado para os filtros selecionados.</div>';
                 return;
             }
-            
+
             const meses = data.meses || [];
-            const hasMeses = meses.length > 0;
-            
-            if(hasMeses) {
-                let totaisHtml = '<div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:12px; padding:1.5rem; margin-bottom:1.5rem;">';
-                totaisHtml += '<h3 style="margin-bottom:1rem; color:var(--primary);">Totais por Mês</h3>';
-                totaisHtml += '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:1rem;">';
-                
-                meses.forEach(mes => {
-                    let total = 0;
-                    data.agrupadores.forEach(agr => {
-                        if(agr.valores && agr.valores[mes]) {
-                            const vals = agr.valores[mes];
-                            if(vals.EUR) total += vals.EUR;
-                        }
-                    });
-                    totaisHtml += `<div style="text-align:center;">
-                        <div style="font-size:0.8rem; color:var(--text-muted);">${mes}</div>
-                        <div style="font-size:1.2rem; font-weight:bold;">€ ${total.toFixed(2)}</div>
-                    </div>`;
-                });
-                totaisHtml += '</div></div>';
-                container.innerHTML += totaisHtml;
-            }
-            
-            data.agrupadores.forEach(agr => {
-                let cardHtml = `<div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:12px; padding:1.5rem; margin-bottom:1rem;">
-                    <h4 style="margin-bottom:1rem; color:var(--secondary);">${agr.nome || 'Sem Categoria'}</h4>`;
-                
-                if(agr.dados && Object.keys(agr.dados).length > 0) {
-                    cardHtml += '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">';
-                    Object.entries(agr.dados).forEach(([k, v]) => {
-                        cardHtml += `<div style="background:rgba(255,255,255,0.05); padding:0.75rem; border-radius:8px;">
-                            <span style="color:var(--text-muted); font-size:0.85rem;">${k}:</span>
-                            <span style="color:var(--text-light); font-weight:500;">${v || '-'}</span>
-                        </div>`;
-                    });
-                    cardHtml += '</div>';
-                }
-                
-                if(hasMeses) {
-                    cardHtml += '<table style="width:100%; border-collapse:collapse;">';
-                    cardHtml += '<thead><tr>';
-                    cardHtml += '<th style="text-align:left; padding:0.5rem; border-bottom:1px solid var(--glass-border);">Mês</th>';
-                    moedas.forEach(m => {
-                        const cor = m === 'EUR' ? '#fcd34d' : m === 'BRL' ? '#86efac' : m === 'USD' ? '#93c5fd' : '#fca5a5';
-                        cardHtml += `<th style="text-align:right; padding:0.5rem; border-bottom:1px solid var(--glass-border); color:${cor};">${m}</th>`;
-                    });
-                    cardHtml += '</tr></thead><tbody>';
-                    
-                    meses.forEach(mes => {
-                        const vals = agr.valores && agr.valores[mes] ? agr.valores[mes] : {};
-                        cardHtml += '<tr>';
-                        cardHtml += `<td style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">${mes}</td>`;
-                        moedas.forEach(m => {
-                            const val = vals[m] || 0;
-                            const cor = m === 'EUR' ? '#fcd34d' : m === 'BRL' ? '#86efac' : m === 'USD' ? '#93c5fd' : '#fca5a5';
-                            cardHtml += `<td style="text-align:right; padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05); color:${cor};">${val.toFixed(2)}</td>`;
-                        });
-                        cardHtml += '</tr>';
-                    });
-                    
-                    cardHtml += '</tbody></table>';
-                }
-                
-                cardHtml += '</div>';
-                container.innerHTML += cardHtml;
+            const totalGeral = data.total_geral || {};
+            const totalPorAgrupador = data.total_por_agrupador || {};
+
+            const agrupadores = [...data.agrupadores].sort((a, b) => {
+                const totA = (totalPorAgrupador[a.nome] || {})[moedas[0]] || 0;
+                const totB = (totalPorAgrupador[b.nome] || {})[moedas[0]] || 0;
+                return totB - totA;
             });
+
+            if (moedas.length > 1) {
+                const tabsDiv = document.createElement('div');
+                tabsDiv.className = 'rel-din-moeda-tabs';
+                moedas.forEach(m => {
+                    const btn = document.createElement('button');
+                    btn.className = 'rel-din-moeda-tab' + (m === relDinMoedaAtiva ? ' ativo' : '');
+                    btn.style.color = m === relDinMoedaAtiva ? (REL_DIN_MOEDA_COR[m] || 'var(--primary)') : '';
+                    btn.textContent = m;
+                    btn.onclick = () => { relDinMoedaAtiva = m; renderRelatorioDinamico(data, moedas); };
+                    tabsDiv.appendChild(btn);
+                });
+                container.appendChild(tabsDiv);
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.style.overflowX = 'auto';
+            wrapper.style.borderRadius = '12px';
+            wrapper.style.border = '1px solid var(--glass-border)';
+
+            const table = document.createElement('table');
+            table.className = 'rel-din-result-table';
+
+            const thead = document.createElement('thead');
+            let thHtml = '<tr><th style="min-width:180px;">Categoria</th>';
+            meses.forEach(m => { thHtml += `<th>${m}</th>`; });
+            thHtml += '<th style="color:var(--secondary);">Total</th></tr>';
+            thead.innerHTML = thHtml;
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            agrupadores.forEach(agr => {
+                const tr = document.createElement('tr');
+                let tdHtml = `<td>${agr.nome || 'Sem Categoria'}</td>`;
+                meses.forEach(mes => {
+                    const val = (agr.valores[mes] || {})[relDinMoedaAtiva] || 0;
+                    tdHtml += val ? `<td>${relDinFmt(val)}</td>` : `<td class="rel-din-zero">—</td>`;
+                });
+                const tot = (totalPorAgrupador[agr.nome] || {})[relDinMoedaAtiva] || 0;
+                tdHtml += `<td class="rel-din-total-col">${relDinFmt(tot)}</td>`;
+                tr.innerHTML = tdHtml;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            const tfoot = document.createElement('tfoot');
+            let tfHtml = '<tr><td>TOTAL GERAL</td>';
+            meses.forEach(mes => {
+                const val = (totalGeral[mes] || {})[relDinMoedaAtiva] || 0;
+                tfHtml += `<td>${relDinFmt(val)}</td>`;
+            });
+            const grandTotal = agrupadores.reduce((acc, agr) => acc + ((totalPorAgrupador[agr.nome] || {})[relDinMoedaAtiva] || 0), 0);
+            tfHtml += `<td>${relDinFmt(grandTotal)}</td></tr>`;
+            tfoot.innerHTML = tfHtml;
+            table.appendChild(tfoot);
+
+            wrapper.appendChild(table);
+            container.appendChild(wrapper);
+
+            const exportBtn = document.createElement('div');
+            exportBtn.style.cssText = 'display:flex; justify-content:flex-end; margin-top:1rem;';
+            exportBtn.innerHTML = `<button class="btn btn-xs secondary" onclick="exportarRelatorioExcel()"
+                style="background:rgba(16,185,129,0.12); color:#6ee7b7; border-color:rgba(16,185,129,0.3);">
+                <i class="fa-solid fa-file-excel"></i> Exportar Excel
+            </button>`;
+            container.appendChild(exportBtn);
         }
 
-        async function loadRelatoriosSalvos() {
+        async function salvarRelatorioDinamico() {
+            const nome = document.getElementById('relDinNome').value.trim();
+            if (!nome) { relDinToast('Informe o nome do relatório', 'erro'); return; }
+
+            const tabelas = relDinGetTabelas();
+            if (tabelas.length === 0) { relDinToast('Selecione pelo menos uma fonte de dados', 'erro'); return; }
+
+            const agrupador  = document.getElementById('relDinAgrupador').value;
+            const mes_inicio = document.getElementById('relDinMesInicio').value;
+            const mes_fim    = document.getElementById('relDinMesFim').value;
+            const moedas     = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
+
+            try {
+                const res = await fetch('/api/relatorio_dinamico', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, tabelas, campos: [], agrupador, mes_inicio, mes_fim, moedas }),
+                });
+                if (res.ok) relDinToast('Relatório salvo!');
+                else relDinToast('Erro ao salvar', 'erro');
+            } catch (e) { console.error(e); relDinToast('Erro ao salvar', 'erro'); }
+        }
+
+        function relDinAbrirModalSalvos() {
+            const modal = document.getElementById('relDinModalSalvos');
+            modal.style.display = 'flex';
+            relDinCarregarSalvos();
+        }
+
+        function relDinFecharModalSalvos() {
+            document.getElementById('relDinModalSalvos').style.display = 'none';
+        }
+
+        async function relDinCarregarSalvos() {
             try {
                 const res = await fetch('/api/relatorio_dinamico');
                 const rels = await res.json();
                 const tbody = document.getElementById('relDinSalvosTableBody');
+                const vazio = document.getElementById('relDinSalvosVazio');
                 tbody.innerHTML = '';
-                
+
+                if (!rels.length) { vazio.style.display = 'block'; return; }
+                vazio.style.display = 'none';
+
                 rels.forEach(r => {
-tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${c.id}"></td>
-                        <td><b>${r.nome_relatorio}</b></td>
-                        <td>${r.tabelas.join(', ')}</td>
-                        <td>${r.agrupador || '-'}</td>
-                        <td>${r.mes_inicio} até ${r.mes_fim}</td>
-                        <td style="display:flex; gap:0.5rem;">
-                            <button class="btn btn-xs" onclick='carregarRelatorioSalvo(${JSON.stringify(r)})'><i class="fa-solid fa-eye"></i></button>
-                            <button class="btn btn-xs" style="background:var(--error);" onclick="excluirRelatorioSalvo(${r.id})"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>`;
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--glass-border)';
+                    tr.innerHTML = `
+                        <td style="padding:0.6rem 0.5rem; font-weight:500;">${r.nome_relatorio}</td>
+                        <td style="padding:0.6rem 0.5rem; font-size:0.8rem; color:var(--text-muted);">${(r.tabelas || []).join(', ')}</td>
+                        <td style="padding:0.6rem 0.5rem; font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">${r.mes_inicio} → ${r.mes_fim}</td>
+                        <td style="padding:0.6rem 0.5rem;">
+                            <div style="display:flex; gap:0.4rem;">
+                                <button class="btn btn-xs" onclick='relDinCarregarConfig(${JSON.stringify(r)})' title="Carregar">
+                                    <i class="fa-solid fa-upload"></i>
+                                </button>
+                                <button class="btn btn-xs" style="background:rgba(239,68,68,0.15); color:#fca5a5; border-color:rgba(239,68,68,0.3);"
+                                    onclick="relDinExcluirSalvo(${r.id})" title="Excluir">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>`;
+                    tbody.appendChild(tr);
                 });
-            } catch(e) { console.error(e); }
+            } catch (e) { console.error(e); }
         }
 
-        function carregarRelatorioSalvo(r) {
+        function relDinCarregarConfig(r) {
             document.getElementById('relDinNome').value = r.nome_relatorio;
-            document.getElementById('relDinAgrupador').value = r.agrupador;
             document.getElementById('relDinMesInicio').value = r.mes_inicio;
             document.getElementById('relDinMesFim').value = r.mes_fim;
-            
-            document.querySelectorAll('.rel-din-tabela').forEach(cb => {
-                cb.checked = r.tabelas.includes(cb.value);
+
+            document.querySelectorAll('.rel-din-tabela-card').forEach(card => {
+                card.classList.toggle('ativo', (r.tabelas || []).includes(card.dataset.tabela));
             });
-            updateRelDinCampos();
-            
+            relDinAtualizarAgrupador();
+
             setTimeout(() => {
-                document.querySelectorAll('.rel-din-campo').forEach(cb => {
-                    cb.checked = r.campos.includes(cb.value);
-                });
+                if (r.agrupador) document.getElementById('relDinAgrupador').value = r.agrupador;
                 document.querySelectorAll('.rel-din-moeda').forEach(cb => {
-                    cb.checked = r.moedas.includes(cb.value);
+                    cb.checked = (r.moedas || []).includes(cb.value);
                 });
-            }, 100);
-            
-            showRelDinTab('criar');
+            }, 50);
+
+            relDinFecharModalSalvos();
+            relDinToast('Configuração carregada');
         }
 
-        async function excluirRelatorioSalvo(id) {
-            if(!confirm('Confirmar exclusão?')) return;
+        async function relDinExcluirSalvo(id) {
+            if (!confirm('Excluir este relatório salvo?')) return;
             await fetch(`/api/relatorio_dinamico/${id}`, { method: 'DELETE' });
-            loadRelatoriosSalvos();
+            relDinCarregarSalvos();
         }
 
         async function exportarRelatorioExcel() {
-            const tabelas = Array.from(document.querySelectorAll('.rel-din-tabela:checked')).map(cb => cb.value);
-            if(tabelas.length === 0) { alert('Selecione pelo menos uma tabela'); return; }
-            
-            const campos = Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value);
-            const agrupador = document.getElementById('relDinAgrupador').value || 'categoria_final';
+            const tabelas = relDinGetTabelas();
+            if (tabelas.length === 0) { relDinToast('Selecione as fontes de dados primeiro', 'erro'); return; }
+
+            const agrupador  = document.getElementById('relDinAgrupador').value || 'categoria_final';
             const mes_inicio = document.getElementById('relDinMesInicio').value;
-            const mes_fim = document.getElementById('relDinMesFim').value;
-            const moedas = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
-            const nome = document.getElementById('relDinNome').value || 'Relatorio_Dinamico';
-            
+            const mes_fim    = document.getElementById('relDinMesFim').value;
+            const moedas     = Array.from(document.querySelectorAll('.rel-din-moeda:checked')).map(cb => cb.value);
+            const nome       = document.getElementById('relDinNome').value || 'Relatorio_Dinamico';
+
             try {
                 const res = await fetch('/api/relatorio_dinamico/exportar', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ tabelas, campos, agrupador, mes_inicio, mes_fim, moedas, nome })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tabelas, campos: [], agrupador, mes_inicio, mes_fim, moedas, nome }),
                 });
-                if(res.ok) {
+                if (res.ok) {
                     const blob = await res.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
+                    const url  = window.URL.createObjectURL(blob);
+                    const a    = document.createElement('a');
                     a.href = url;
                     a.download = nome.replace(/[^a-z0-9]/gi, '_') + '.xlsx';
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
                     a.remove();
+                    relDinToast('Excel exportado!');
                 } else {
-                    alert('Erro ao exportar');
+                    relDinToast('Erro ao exportar', 'erro');
                 }
-            } catch(e) { console.error(e); alert('Erro ao exportar para Excel'); }
+            } catch (e) { console.error(e); relDinToast('Erro ao exportar para Excel', 'erro'); }
         }
 
         // --- Lógica Lembrete Simples Nacional ---

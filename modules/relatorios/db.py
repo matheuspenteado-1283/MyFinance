@@ -249,6 +249,17 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
 
     conn.close()
 
+    total_por_agrupador = {}
+    total_geral = {}
+    for k, v in resultado.items():
+        total_por_agrupador[k] = {}
+        for mes, moedas_vals in v.get('valores', {}).items():
+            for moeda, val in moedas_vals.items():
+                total_por_agrupador[k][moeda] = total_por_agrupador[k].get(moeda, 0) + (val or 0)
+                if mes not in total_geral:
+                    total_geral[mes] = {}
+                total_geral[mes][moeda] = total_geral[mes].get(moeda, 0) + (val or 0)
+
     return {
         'agrupadores': [
             {
@@ -260,4 +271,6 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
             for k, v in resultado.items()
         ],
         'meses': meses_periodo,
+        'total_por_agrupador': total_por_agrupador,
+        'total_geral': total_geral,
     }
