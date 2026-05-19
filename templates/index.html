@@ -2031,6 +2031,24 @@
         <!-- Cards por moeda -->
         <div id="relMesCards" style="margin-bottom:2rem;"></div>
 
+        <!-- Barra de filtro + ações (aparece após preview) -->
+        <div id="relMesFilterBar" style="display:none; margin-bottom:1rem; gap:12px; align-items:center; flex-wrap:wrap; justify-content:space-between;">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label style="font-size:0.85rem; color:var(--text-muted);">Tipo:</label>
+                <select id="relMesTipoFilter" class="auth-input" style="width:200px; font-size:0.85rem;" onchange="relMesApplyFilter()">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-sm secondary" onclick="relMesSelectAll(true)" style="min-width:120px; padding:8px 16px; font-size:13px; border-radius:8px;">
+                    <i class="fa-solid fa-check-double"></i> Sel. Todos
+                </button>
+                <button class="btn btn-sm secondary" onclick="relMesSelectAll(false)" style="min-width:100px; padding:8px 16px; font-size:13px; border-radius:8px;">
+                    <i class="fa-solid fa-xmark"></i> Limpar
+                </button>
+            </div>
+        </div>
+
         <!-- Tabela -->
         <div class="table-container table-full" id="relMesTableContainer" style="display:none;">
             <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-list-check"></i> Consolidação por Categoria de Despesa</h3>
@@ -2039,6 +2057,12 @@
                     <thead id="relMesTableHead"></thead>
                     <tbody id="relMesTableBody"></tbody>
                 </table>
+            </div>
+            <!-- Exportar Excel — ao final do relatório -->
+            <div style="display:flex; justify-content:flex-end; margin-top:1.25rem;">
+                <button onclick="relMesExportExcel()" style="min-width:160px; padding:10px 20px; font-size:14px; border-radius:8px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:var(--success); cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                </button>
             </div>
         </div>
     </div>
@@ -5716,13 +5740,12 @@
                 renderRelMesTableNew(data);
                 document.getElementById('relMesPreviewBanner').style.display = 'block';
                 document.getElementById('relMesTableContainer').style.display = 'block';
+                document.getElementById('relMesFilterBar').style.display = 'flex';
                 window.relMesDataV2 = data;
             } catch(e) { console.error('Erro relatório mensal:', e); }
         }
 
-        function loadRelatorioMensal() {
-            previewRelatorioMensal();
-        }
+        function loadRelatorioMensal() { previewRelatorioMensal(); }
 
         const _relMesCurrSymbols = { EUR: '€', BRL: 'R$', USD: '$', GBP: '£', CHF: 'Fr' };
 
@@ -5772,8 +5795,15 @@
                 return;
             }
 
-            // Header — linha 1: Despesa + moedas agrupadas
-            let h = '<tr><th rowspan="2" style="vertical-align:middle; min-width:160px;">Despesa</th>';
+            // Popular filtro de tipo
+            const tipoSel = document.getElementById('relMesTipoFilter');
+            const tipos = [...new Set((rows || []).map(r => r.tipo_despesa).filter(t => t))].sort();
+            tipoSel.innerHTML = '<option value="">Todos</option>' + tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+
+            // Header 2 linhas: [✓] Despesa | moeda agrupada...
+            let h = '<tr>';
+            h += '<th rowspan="2" style="text-align:center; width:36px; vertical-align:middle;"><input type="checkbox" id="relMesCheckAll" onchange="relMesSelectAll(this.checked)" title="Selecionar todos"></th>';
+            h += '<th rowspan="2" style="vertical-align:middle; min-width:160px;">Despesa</th>';
             currencies.forEach(m => {
                 const sym = _relMesCurrSymbols[m] || m;
                 h += `<th colspan="3" style="text-align:center; background:rgba(59,130,246,0.1); border-left:2px solid rgba(59,130,246,0.25);">${sym} ${m}</th>`;
@@ -5787,31 +5817,46 @@
             h += '</tr>';
             thead.innerHTML = h;
 
-            // Totals accumulator
             const totals = {};
             currencies.forEach(m => { totals[m] = { usr1: 0, usr2: 0, total: 0 }; });
 
             let b = '';
             (rows || []).forEach(row => {
-                b += '<tr>';
+                const rowVals = {};
+                currencies.forEach(m => {
+                    rowVals[m] = (row.valores && row.valores[m]) || { usr1: 0, usr2: 0, total: 0 };
+                    totals[m].usr1 += rowVals[m].usr1;
+                    totals[m].usr2 += rowVals[m].usr2;
+                    totals[m].total += rowVals[m].total;
+                });
+                const valsAttr = encodeURIComponent(JSON.stringify(rowVals));
+                b += `<tr class="relmes-data-row" data-tipo="${row.tipo_despesa || ''}" data-vals="${valsAttr}">`;
+                b += `<td style="text-align:center;"><input type="checkbox" class="relmes-cb" onchange="relMesUpdateSubtotal()"></td>`;
                 b += `<td><b>${row.categoria}</b>${row.tipo_despesa ? `<br><small style="color:var(--text-muted);font-size:0.75rem;">${row.tipo_despesa}</small>` : ''}</td>`;
                 currencies.forEach(m => {
-                    const v = (row.valores && row.valores[m]) || { usr1: 0, usr2: 0, total: 0 };
-                    totals[m].usr1 += v.usr1;
-                    totals[m].usr2 += v.usr2;
-                    totals[m].total += v.total;
+                    const v = rowVals[m];
                     const empty = v.usr1 === 0 && v.usr2 === 0 && v.total === 0;
-                    const dimStyle = empty ? ' color:var(--text-muted);' : '';
-                    b += `<td style="text-align:right;${dimStyle} border-left:2px solid rgba(59,130,246,0.15);">${formatCurrency(v.usr1)}</td>`;
-                    b += `<td style="text-align:right;${dimStyle}">${formatCurrency(v.usr2)}</td>`;
-                    b += `<td style="text-align:right; font-weight:700;${dimStyle}">${formatCurrency(v.total)}</td>`;
+                    const dim = empty ? ' color:var(--text-muted);' : '';
+                    b += `<td style="text-align:right;${dim} border-left:2px solid rgba(59,130,246,0.15);">${formatCurrency(v.usr1)}</td>`;
+                    b += `<td style="text-align:right;${dim}">${formatCurrency(v.usr2)}</td>`;
+                    b += `<td style="text-align:right; font-weight:700;${dim}">${formatCurrency(v.total)}</td>`;
                 });
                 b += '</tr>';
             });
 
-            // Total row
+            // Linha subtotal (oculta até selecionar)
+            b += `<tr id="relMesSubtotalRow" style="display:none; border-top:2px dashed rgba(99,102,241,0.5); background:rgba(99,102,241,0.05);">`;
+            b += `<td></td><td style="font-weight:700; font-size:0.85rem; color:#818cf8;"><i class="fa-solid fa-filter"></i> SUBTOTAL</td>`;
+            currencies.forEach(m => {
+                b += `<td id="relMesSub_${m}_u1" style="text-align:right; font-weight:700; color:#818cf8; border-left:2px solid rgba(99,102,241,0.25);">0,00</td>`;
+                b += `<td id="relMesSub_${m}_u2" style="text-align:right; font-weight:700; color:#818cf8;">0,00</td>`;
+                b += `<td id="relMesSub_${m}_t"  style="text-align:right; font-weight:700; color:#818cf8;">0,00</td>`;
+            });
+            b += '</tr>';
+
+            // Linha total geral
             b += '<tr style="border-top:2px solid rgba(59,130,246,0.4); background:rgba(59,130,246,0.05);">';
-            b += '<td style="font-weight:700; font-size:0.9rem;"><i class="fa-solid fa-sigma"></i> TOTAL</td>';
+            b += '<td></td><td style="font-weight:700; font-size:0.9rem;"><i class="fa-solid fa-sigma"></i> TOTAL GERAL</td>';
             currencies.forEach(m => {
                 const sym = _relMesCurrSymbols[m] || m;
                 b += `<td style="text-align:right; font-weight:700; color:var(--error); border-left:2px solid rgba(59,130,246,0.25);">${formatCurrency(totals[m].usr1)}</td>`;
@@ -5820,6 +5865,61 @@
             });
             b += '</tr>';
             tbody.innerHTML = b;
+            window._relMesCurrencies = currencies;
+        }
+
+        function relMesUpdateSubtotal() {
+            const currencies = window._relMesCurrencies || [];
+            const checked = document.querySelectorAll('.relmes-cb:checked');
+            const subtotalRow = document.getElementById('relMesSubtotalRow');
+            if (checked.length === 0) { subtotalRow.style.display = 'none'; return; }
+            subtotalRow.style.display = '';
+            const subs = {};
+            currencies.forEach(m => { subs[m] = { usr1: 0, usr2: 0, total: 0 }; });
+            checked.forEach(cb => {
+                const row = cb.closest('tr');
+                try {
+                    const vals = JSON.parse(decodeURIComponent(row.dataset.vals || '{}'));
+                    currencies.forEach(m => {
+                        if (vals[m]) {
+                            subs[m].usr1  += vals[m].usr1  || 0;
+                            subs[m].usr2  += vals[m].usr2  || 0;
+                            subs[m].total += vals[m].total || 0;
+                        }
+                    });
+                } catch(e) {}
+            });
+            currencies.forEach(m => {
+                const e1 = document.getElementById(`relMesSub_${m}_u1`);
+                const e2 = document.getElementById(`relMesSub_${m}_u2`);
+                const et = document.getElementById(`relMesSub_${m}_t`);
+                if (e1) e1.textContent = formatCurrency(subs[m].usr1);
+                if (e2) e2.textContent = formatCurrency(subs[m].usr2);
+                if (et) et.textContent = formatCurrency(subs[m].total);
+            });
+        }
+
+        function relMesSelectAll(checked) {
+            document.querySelectorAll('.relmes-cb').forEach(cb => {
+                if (cb.closest('tr').style.display !== 'none') cb.checked = checked;
+            });
+            const allCb = document.getElementById('relMesCheckAll');
+            if (allCb) allCb.checked = checked;
+            relMesUpdateSubtotal();
+        }
+
+        function relMesApplyFilter() {
+            const tipo = document.getElementById('relMesTipoFilter').value;
+            document.querySelectorAll('.relmes-data-row').forEach(row => {
+                row.style.display = (!tipo || row.dataset.tipo === tipo) ? '' : 'none';
+            });
+            relMesUpdateSubtotal();
+        }
+
+        function relMesExportExcel() {
+            const mes = document.getElementById('relMesRef').value;
+            if (!mes) { alert('Selecione um mês primeiro.'); return; }
+            window.location.href = `/api/relatorio_mensal/exportar?mes=${mes}`;
         }
 
         // Run checkAuthStatus on mount

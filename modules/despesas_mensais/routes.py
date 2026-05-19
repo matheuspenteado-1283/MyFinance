@@ -366,3 +366,51 @@ def api_relatorio_mensal():
     except Exception:
         traceback.print_exc()
         return jsonify({'error': 'Erro interno'}), 500
+
+
+@bp.route('/api/relatorio_mensal/exportar', methods=['GET'])
+def api_relatorio_mensal_exportar():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    mes = request.args.get('mes', '')
+    if not mes:
+        return jsonify({'error': 'Mês não informado'}), 400
+    try:
+        data = get_relatorio_mensal_v2(session['user_email'], mes)
+        rows = data['rows']
+        currencies = data['currencies']
+        usr1_nome = data['usr1_nome']
+        usr2_nome = data['usr2_nome']
+
+        col_headers = ['Despesa', 'Tipo']
+        for m in currencies:
+            col_headers += [f'{m} {usr1_nome}', f'{m} {usr2_nome}', f'{m} Total']
+
+        excel_rows = []
+        for row in rows:
+            r = [row['categoria'], row['tipo_despesa']]
+            for m in currencies:
+                v = row['valores'].get(m, {'usr1': 0, 'usr2': 0, 'total': 0})
+                r += [v['usr1'], v['usr2'], v['total']]
+            excel_rows.append(r)
+
+        df = pd.DataFrame(excel_rows, columns=col_headers)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório Mensal')
+            ws = writer.sheets['Relatório Mensal']
+            num_cols = [c for c in col_headers if c not in ('Despesa', 'Tipo')]
+            for col_name in num_cols:
+                col_idx = col_headers.index(col_name) + 1
+                for row_idx in range(2, len(excel_rows) + 2):
+                    ws.cell(row=row_idx, column=col_idx).number_format = '#,##0.00'
+        output.seek(0)
+
+        ano, mes_num = mes.split('-')
+        filename = f'Relatorio_Mensal_{ano}_{mes_num}.xlsx'
+        return send_file(output,
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         as_attachment=True, download_name=filename)
+    except Exception:
+        traceback.print_exc()
+        return jsonify({'error': 'Erro ao gerar Excel'}), 500

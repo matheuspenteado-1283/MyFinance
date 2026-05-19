@@ -296,12 +296,12 @@ def get_relatorio_mensal_v2(user_email, mes_referencia):
     despesas_rows = [dict(r) for r in c.fetchall()]
 
     c.execute(
-        'SELECT chave_usr1, chave_usr2 FROM cad_usuarios WHERE user_email=%s LIMIT 1',
+        'SELECT chave_usr1, chave_usr2 FROM cad_usuarios WHERE user_email=%s ORDER BY id ASC',
         (user_email,)
     )
-    usr_row = c.fetchone()
-    usr1_nome = (usr_row['chave_usr1'] if usr_row else None) or 'USR1'
-    usr2_nome = (usr_row['chave_usr2'] if usr_row else None) or 'USR2'
+    all_users = [dict(r) for r in c.fetchall()]
+    usr1_nome = next((r['chave_usr1'] for r in all_users if r.get('chave_usr1')), 'USR1')
+    usr2_nome = next((r['chave_usr2'] for r in all_users if r.get('chave_usr2')), 'USR2')
 
     conn.close()
 
