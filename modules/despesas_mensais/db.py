@@ -1,4 +1,17 @@
+import math
+
 from db.connection import get_connection
+
+
+def _clean(row_dict):
+    """Converte NaN/Inf para None — evita JSON inválido na serialização Flask."""
+    result = {}
+    for k, v in row_dict.items():
+        if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+            result[k] = None
+        else:
+            result[k] = v
+    return result
 
 
 def init_tables():
@@ -55,7 +68,7 @@ def get_despesas_mensais(user_email, mes=None):
             (user_email,),
         ).fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return [_clean(dict(r)) for r in rows]
 
 
 def save_despesas_mensais_batch(user_email, rows_list):
@@ -151,7 +164,7 @@ def check_duplicates_with_data(user_email, candidates):
             LIMIT 1
         ''', (user_email, conta_bancaria, data, descricao, valor_original, moeda)).fetchone()
         if row:
-            matches[i] = dict(row)
+            matches[i] = _clean(dict(row))
     conn.close()
     return matches
 
@@ -260,7 +273,7 @@ def get_consolidacao_tipo_despesa(user_email, mes_referencia):
         ORDER BY cd.tipo_despesa, dm.moeda
     ''', (user_email, mes_referencia)).fetchall()
     conn.close()
-    return [dict(row) for row in rows]
+    return [_clean(dict(row)) for row in rows]
 
 
 def get_meses_disponiveis(user_email):
