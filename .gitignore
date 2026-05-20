@@ -41,3 +41,7 @@ MyFinance/
 .idea/
 .gemini/
 *.rtf
+
+# Claude Code / Cloudflare
+.claude/
+.wrangler/
