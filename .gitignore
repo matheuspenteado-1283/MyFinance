@@ -45,3 +45,6 @@ MyFinance/
 # Claude Code / Cloudflare
 .claude/
 .wrangler/
+
+# Amostras locais
+Samples/
