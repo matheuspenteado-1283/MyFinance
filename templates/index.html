@@ -1774,25 +1774,25 @@
 
         <!-- Barra de Filtro por Mês + Botões -->
         <div id="dmBotoesArea" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; overflow-x:auto; margin-bottom:1.5rem; position:relative; padding-bottom:2px;">
-                <input type="month" id="dmMesRef" class="auth-input" title="Selecione o Período" onchange="loadDespesasMensais()" style="min-width:150px; max-width:160px; height:34px; padding:0 0.6rem; font-size:0.875rem; flex-shrink:0; cursor:pointer;">
-                <div style="width:1px; height:22px; background:rgba(255,255,255,0.12); margin:0 2px; flex-shrink:0;"></div>
-                <button class="btn btn-xs secondary" id="dmManualLineBtn" onclick="openDmForm(null)" style="height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;"><i class="fa-solid fa-plus"></i> Nova Linha</button>
-                <button class="btn btn-xs secondary" id="dmExpandBtn" onclick="toggleDmExpanded()" style="background:#0ea5e9; height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
+                <input type="month" id="dmMesRef" class="auth-input" title="Selecione o Período" onchange="loadDespesasMensais()" oninput="loadDespesasMensais()" style="min-width:150px; max-width:160px; height:28px; padding:0 0.5rem; font-size:0.8rem; flex-shrink:0; cursor:pointer;">
+                <div style="width:1px; height:20px; background:rgba(255,255,255,0.12); margin:0 2px; flex-shrink:0;"></div>
+                <button class="btn btn-xs secondary" id="dmManualLineBtn" onclick="openDmForm(null)" style="min-width:0; padding:5px 10px; font-size:12px; height:28px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;"><i class="fa-solid fa-plus"></i> Nova Linha</button>
+                <button class="btn btn-xs secondary" id="dmExpandBtn" onclick="toggleDmExpanded()" style="min-width:0; padding:5px 10px; font-size:12px; background:#0ea5e9; height:28px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
                     <i class="fa-solid fa-expand"></i> Expandir
                 </button>
-                <button class="btn btn-xs secondary" onclick="toggleDmLayoutMenu()" style="background:#6366f1; height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
+                <button class="btn btn-xs secondary" onclick="toggleDmLayoutMenu()" style="min-width:0; padding:5px 10px; font-size:12px; background:#6366f1; height:28px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
                     <i class="fa-solid fa-table-columns"></i> Layout
                 </button>
-                <button class="btn btn-xs secondary" onclick="openDmDetalhes()" style="background:#8b5cf6; height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
+                <button class="btn btn-xs secondary" onclick="openDmDetalhes()" style="min-width:0; padding:5px 10px; font-size:12px; background:#8b5cf6; height:28px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
                     <i class="fa-solid fa-list-check"></i> Detalhe
                 </button>
-                <button class="btn btn-xs secondary" onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669); height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
+                <button class="btn btn-xs secondary" onclick="saveDespesasAnuais()" style="min-width:0; padding:5px 10px; font-size:12px; background:linear-gradient(135deg,#10b981,#059669); height:28px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
                     <i class="fa-solid fa-calendar-check"></i> Salvar Anuais
                 </button>
-                <button class="btn btn-xs" onclick="clearDmRegistros()" style="background:linear-gradient(135deg,#ef4444,#dc2626); height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s; margin-left:auto;">
+                <button class="btn btn-xs" onclick="clearDmRegistros()" style="min-width:0; padding:5px 10px; font-size:12px; background:linear-gradient(135deg,#ef4444,#dc2626); height:28px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s; margin-left:auto;">
                     <i class="fa-solid fa-trash"></i> Limpar
                 </button>
-                <div id="dmStatusMsg" style="font-size:13px; font-weight:bold; flex-shrink:0;"></div>
+                <div id="dmStatusMsg" style="font-size:12px; font-weight:bold; flex-shrink:0;"></div>
 
             <div id="dmLayoutMenu" style="display:none; position:absolute; right:20px; top:220px; background:#1e293b; border:1px solid #475569; border-radius:12px; padding:1rem; z-index:1000; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
                 <div style="font-weight:600; margin-bottom:0.75rem; color:#f8fafc;">Colunas a Exibir</div>
