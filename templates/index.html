@@ -1773,33 +1773,33 @@
         </div>
 
         <!-- Barra de Filtro por Mês + Botões -->
-        <div id="dmBotoesArea" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; position:relative;">
-                <input type="month" id="dmMesRef" class="auth-input" title="Selecione o Período" onchange="loadDespesasMensais()" oninput="loadDespesasMensais()" style="min-width:170px; height:36px; padding:0 0.75rem; font-size:0.875rem;">
-                <button class="btn btn-xs secondary" id="dmManualLineBtn" onclick="openDmForm(null)" style="height:36px; white-space:nowrap;"><i class="fa-solid fa-plus"></i> Nova Linha Manual</button>
-                <div style="width:1px; height:22px; background:rgba(255,255,255,0.12); margin:0 2px;"></div>
-                <button class="btn btn-xs secondary" id="dmExpandBtn" onclick="toggleDmExpanded()" style="background:#0ea5e9; height:36px; white-space:nowrap;">
+        <div id="dmBotoesArea" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; overflow-x:auto; margin-bottom:1.5rem; position:relative; padding-bottom:2px;">
+                <input type="month" id="dmMesRef" class="auth-input" title="Selecione o Período" onchange="loadDespesasMensais()" style="min-width:150px; max-width:160px; height:34px; padding:0 0.6rem; font-size:0.875rem; flex-shrink:0; cursor:pointer;">
+                <div style="width:1px; height:22px; background:rgba(255,255,255,0.12); margin:0 2px; flex-shrink:0;"></div>
+                <button class="btn btn-xs secondary" id="dmManualLineBtn" onclick="openDmForm(null)" style="height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;"><i class="fa-solid fa-plus"></i> Nova Linha</button>
+                <button class="btn btn-xs secondary" id="dmExpandBtn" onclick="toggleDmExpanded()" style="background:#0ea5e9; height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
                     <i class="fa-solid fa-expand"></i> Expandir
                 </button>
-                <button class="btn btn-xs secondary" onclick="toggleDmLayoutMenu()" style="background:#6366f1; height:36px; white-space:nowrap;">
+                <button class="btn btn-xs secondary" onclick="toggleDmLayoutMenu()" style="background:#6366f1; height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
                     <i class="fa-solid fa-table-columns"></i> Layout
                 </button>
-                <button class="btn btn-xs secondary" onclick="openDmDetalhes()" style="background:#8b5cf6; height:36px; white-space:nowrap;">
-                    <i class="fa-solid fa-list-check"></i> Detalhe de Lançamentos
+                <button class="btn btn-xs secondary" onclick="openDmDetalhes()" style="background:#8b5cf6; height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
+                    <i class="fa-solid fa-list-check"></i> Detalhe
                 </button>
-                <button class="btn btn-xs secondary" onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669); height:36px; white-space:nowrap;">
-                    <i class="fa-solid fa-calendar-check"></i> Salvar Despesas Anuais
+                <button class="btn btn-xs secondary" onclick="saveDespesasAnuais()" style="background:linear-gradient(135deg,#10b981,#059669); height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s;">
+                    <i class="fa-solid fa-calendar-check"></i> Salvar Anuais
                 </button>
-                <button class="btn btn-xs" onclick="clearDmRegistros()" style="background:linear-gradient(135deg,#ef4444,#dc2626); height:36px; white-space:nowrap; margin-left:auto;">
-                    <i class="fa-solid fa-trash"></i> Limpar Registros
+                <button class="btn btn-xs" onclick="clearDmRegistros()" style="background:linear-gradient(135deg,#ef4444,#dc2626); height:34px; white-space:nowrap; flex-shrink:0; cursor:pointer; transition:opacity .15s; margin-left:auto;">
+                    <i class="fa-solid fa-trash"></i> Limpar
                 </button>
-                <div id="dmStatusMsg" style="font-size:13px; font-weight:bold;"></div>
+                <div id="dmStatusMsg" style="font-size:13px; font-weight:bold; flex-shrink:0;"></div>
 
             <div id="dmLayoutMenu" style="display:none; position:absolute; right:20px; top:220px; background:#1e293b; border:1px solid #475569; border-radius:12px; padding:1rem; z-index:1000; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
                 <div style="font-weight:600; margin-bottom:0.75rem; color:#f8fafc;">Colunas a Exibir</div>
                 <div style="display:flex; flex-direction:column; gap:0.5rem; max-height:300px; overflow-y:auto;" id="dmLayoutCheckboxes"></div>
                 <div style="margin-top:1rem; display:flex; gap:0.5rem;">
-                    <button class="btn btn-xs" onclick="applyDmLayout()" style="background:#10b981; padding:6px 12px;">Aplicar</button>
-                    <button class="btn btn-xs" onclick="document.getElementById('dmLayoutMenu').style.display='none'" style="background:#64748b; padding:6px 12px;">Fechar</button>
+                    <button class="btn btn-xs" onclick="applyDmLayout()" style="background:#10b981; padding:6px 12px; cursor:pointer;">Aplicar</button>
+                    <button class="btn btn-xs" onclick="document.getElementById('dmLayoutMenu').style.display='none'" style="background:#64748b; padding:6px 12px; cursor:pointer;">Fechar</button>
                 </div>
             </div>
         </div>
@@ -5060,28 +5060,38 @@
             } catch(e) {}
         }
 
+        let _dmLoadController = null;
+
         async function loadDespesasMensais() {
             const mesValue = document.getElementById('dmMesRef').value;
             if(!mesValue) return;
-            
-            // Atualiza cabeçalhos de Mês e Ano
+
+            // Cancela requisição anterior para evitar race condition
+            if(_dmLoadController) _dmLoadController.abort();
+            _dmLoadController = new AbortController();
+
+            // Atualiza cabeçalhos imediatamente
             const [ano, mes] = mesValue.split('-');
             const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
             document.getElementById('dmHeaderMes').innerText = mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1);
             document.getElementById('dmHeaderAno').innerText = ano;
 
-            // Atualizar categorias carregadas
             refreshDmCategories();
 
-            const res = await fetch(`/api/despesas_mensais?mes=${mesValue}`);
-            const data = await res.json();
-            
-            window.dmDataOriginal = [...data];
-            window.dmData = [...data];
-            renderDmTable(data);
-            clearDmFilters();
-            updateDmSumTable(data);
-            updateDmCards();
+            try {
+                const res = await fetch(`/api/despesas_mensais?mes=${mesValue}`, { signal: _dmLoadController.signal });
+                const data = await res.json();
+
+                window.dmDataOriginal = [...data];
+                window.dmData = [...data];
+                renderDmTable(data);
+                clearDmFilters();
+                updateDmSumTable(data);
+                updateDmCards();
+            } catch(e) {
+                if(e.name === 'AbortError') return;
+                console.error('Erro ao carregar despesas:', e);
+            }
         }
 
         function renderDmTable(data) {
