@@ -64,6 +64,33 @@ def get_budget_summary(user_email: str, ano: int):
     return [dict(r) for r in rows]
 
 
+def get_budget_import_audit(user_email: str, ano: int, tipo: str):
+    conn = get_connection()
+    summary = conn.execute(
+        '''SELECT COUNT(*) AS count,
+            COALESCE(SUM(valor_jan+valor_fev+valor_mar+valor_abr+valor_mai+valor_jun+
+                valor_jul+valor_ago+valor_set+valor_out+valor_nov+valor_dez), 0) AS total_anual
+           FROM budget_items
+           WHERE user_email=%s AND ano=%s AND tipo=%s''',
+        (user_email, ano, tipo)
+    ).fetchone()
+    preview = conn.execute(
+        '''SELECT categoria_nome, tipo_categoria, valor_jan, valor_fev, valor_dez,
+                  variacao_mensal_pct, variacao_anual_pct, moeda
+           FROM budget_items
+           WHERE user_email=%s AND ano=%s AND tipo=%s
+           ORDER BY id
+           LIMIT 10''',
+        (user_email, ano, tipo)
+    ).fetchall()
+    conn.close()
+    return {
+        'count': summary['count'] or 0,
+        'total_anual': summary['total_anual'] or 0,
+        'preview': [dict(row) for row in preview],
+    }
+
+
 def upsert_budget_item(user_email, ano, tipo, categoria_id, categoria_nome,
                        tipo_categoria, moeda, valores_meses,
                        variacao_mensal_pct, variacao_anual_pct):

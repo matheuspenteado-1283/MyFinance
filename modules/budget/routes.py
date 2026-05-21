@@ -11,7 +11,7 @@ from . import bp
 from .db import (
     get_budget_items, get_budget_summary, upsert_budget_item,
     update_budget_item, delete_budget_item, delete_budget_year, bulk_replace_budget,
-    get_comparativo, MONTHS
+    get_budget_import_audit, get_comparativo, MONTHS
 )
 from config import allowed_file
 
@@ -117,6 +117,27 @@ def _budget_items_from_dataframe(df):
             item[f'valor_{m}'] = _parse_budget_number(row.get(f'valor_{m}'))
         items.append(item)
     return items
+
+
+def _budget_import_total(items):
+    return sum(sum(item.get(f'valor_{m}', 0) for m in MONTHS) for item in items)
+
+
+def _budget_rows_match_upload(saved_rows, items):
+    if len(saved_rows) != len(items):
+        return False
+    numeric_fields = [f'valor_{m}' for m in MONTHS] + ['variacao_mensal_pct', 'variacao_anual_pct']
+    for saved, item in zip(saved_rows, items):
+        if _clean_text(saved.get('categoria_nome')) != item.get('categoria_nome'):
+            return False
+        if _clean_text(saved.get('tipo_categoria')) != item.get('tipo_categoria'):
+            return False
+        if _clean_text(saved.get('moeda'), 'EUR') != item.get('moeda'):
+            return False
+        for field in numeric_fields:
+            if round(float(saved.get(field) or 0), 2) != round(float(item.get(field) or 0), 2):
+                return False
+    return True
 
 
 @bp.route('/api/budget', methods=['GET'])
@@ -242,7 +263,31 @@ def api_upload_budget():
 
         items = _budget_items_from_dataframe(df)
         bulk_replace_budget(user, ano, tipo, items)
-        return jsonify({'status': 'ok', 'importados': len(items)})
+        audit = get_budget_import_audit(user, ano, tipo)
+        saved_rows = get_budget_items(user, ano, tipo)
+        total_upload = _budget_import_total(items)
+        total_salvo = float(audit['total_anual'] or 0)
+
+        if (
+            audit['count'] != len(items)
+            or round(total_salvo, 2) != round(total_upload, 2)
+            or not _budget_rows_match_upload(saved_rows, items)
+        ):
+            return jsonify({
+                'error': 'Importação gravada com divergência. Tente importar novamente.',
+                'importados': len(items),
+                'total_upload': total_upload,
+                'total_salvo': total_salvo,
+                'audit': audit,
+            }), 500
+
+        return jsonify({
+            'status': 'ok',
+            'importados': len(items),
+            'total_upload': total_upload,
+            'total_salvo': total_salvo,
+            'preview': audit['preview'],
+        })
 
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
