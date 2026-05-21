@@ -649,27 +649,34 @@
 
         /* Toolbar compacta de Despesas Mensais */
         .dm-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            height: 28px;
-            padding: 0 10px;
-            font-size: 12px;
-            font-weight: 500;
-            font-family: inherit;
-            border: none;
-            border-radius: 6px;
-            white-space: nowrap;
-            flex-shrink: 0;
-            cursor: pointer;
-            color: #fff;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            height: 28px !important;
+            min-height: 28px !important;
+            max-height: 28px !important;
+            padding: 0 10px !important;
+            font-size: 12px !important;
+            line-height: 1 !important;
+            font-weight: 500 !important;
+            font-family: inherit !important;
+            border: none !important;
+            border-radius: 6px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            cursor: pointer !important;
+            color: #fff !important;
             background: var(--secondary-gradient);
             transition: opacity 0.15s, filter 0.15s;
-            text-decoration: none;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+            min-width: unset !important;
+            width: auto !important;
+            transform: none !important;
         }
-        .dm-btn:hover { filter: brightness(1.15); }
-        .dm-btn:active { filter: brightness(0.95); }
+        .dm-btn:hover { filter: brightness(1.15) !important; transform: none !important; }
+        .dm-btn:active { filter: brightness(0.95) !important; transform: none !important; }
 
         /* Module Container Full Screen */
         .module-fullscreen {
