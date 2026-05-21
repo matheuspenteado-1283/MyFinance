@@ -374,26 +374,27 @@
 
         /* ── Relatório Dinâmico ── */
         .rel-din-layout {
-            display: grid;
-            grid-template-columns: minmax(340px, 400px) 1fr;
+            display: flex;
             gap: 1.5rem;
-            align-items: start;
+            height: calc(100vh - 200px);
+            min-height: 500px;
+            /* align-items default=stretch → filhos herdam height do container */
         }
         .rel-din-sidebar {
-            position: sticky;
-            top: 0;
-            max-height: calc(100vh - 120px);
-            overflow-y: auto;
+            flex: 0 0 380px;
+            width: 380px;
+            overflow-y: scroll;
             overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: rgba(99,102,241,0.4) transparent;
             box-sizing: border-box;
         }
-        .rel-din-sidebar::-webkit-scrollbar { width: 5px; }
-        .rel-din-sidebar::-webkit-scrollbar-track { background: transparent; }
-        .rel-din-sidebar::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); border-radius: 4px; }
+        .rel-din-sidebar::-webkit-scrollbar { width: 6px; }
+        .rel-din-sidebar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+        .rel-din-sidebar::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.5); border-radius: 4px; }
         #relDinAreaResultado {
-            height: 100%;
+            flex: 1;
+            min-width: 0;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
@@ -8042,7 +8043,16 @@
             select.style.borderColor = visto.size > 0 ? 'rgba(99,102,241,0.6)' : '';
         }
 
+        function relDinAjustarAlturaSidebar() {
+            const sidebar = document.querySelector('#relatorioDinamicoModule .rel-din-sidebar');
+            if (!sidebar) return;
+            const top = sidebar.getBoundingClientRect().top;
+            sidebar.style.maxHeight = Math.max(300, window.innerHeight - top - 24) + 'px';
+        }
+
         async function initRelatorioDinamico() {
+            relDinAjustarAlturaSidebar();
+            window.addEventListener('resize', relDinAjustarAlturaSidebar);
             try {
                 const meRes = await fetch('/api/me');
                 const meData = await meRes.json();
