@@ -376,14 +376,14 @@
         .rel-din-layout {
             display: flex;
             gap: 1.5rem;
-            height: calc(100vh - 200px);
+            align-items: flex-start;
             min-height: 500px;
-            /* align-items default=stretch → filhos herdam height do container */
         }
         .rel-din-sidebar {
             flex: 0 0 380px;
             width: 380px;
-            overflow-y: scroll;
+            max-height: none !important;
+            overflow-y: visible;
             overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: rgba(99,102,241,0.4) transparent;
@@ -395,6 +395,7 @@
         #relDinAreaResultado {
             flex: 1;
             min-width: 0;
+            max-height: calc(100vh - 200px);
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
@@ -524,8 +525,20 @@
         }
 
         @media (max-width: 860px) {
-            .rel-din-layout { grid-template-columns: 1fr !important; }
-            .rel-din-sidebar { position: static; max-height: none; }
+            .rel-din-layout {
+                flex-direction: column;
+                min-height: 0;
+            }
+            .rel-din-sidebar {
+                flex: 0 0 auto;
+                width: 100%;
+                position: static;
+                max-height: none !important;
+            }
+            #relDinAreaResultado {
+                width: 100%;
+                max-height: none;
+            }
         }
 
         .val-badge {
@@ -8046,8 +8059,7 @@
         function relDinAjustarAlturaSidebar() {
             const sidebar = document.querySelector('#relatorioDinamicoModule .rel-din-sidebar');
             if (!sidebar) return;
-            const top = sidebar.getBoundingClientRect().top;
-            sidebar.style.maxHeight = Math.max(300, window.innerHeight - top - 24) + 'px';
+            sidebar.style.maxHeight = '';
         }
 
         async function initRelatorioDinamico() {
