@@ -377,7 +377,7 @@
             display: grid;
             grid-template-columns: minmax(340px, 400px) 1fr;
             gap: 1.5rem;
-            align-items: start;
+            align-items: stretch;
             height: calc(100vh - 200px);
             min-height: 500px;
         }
@@ -387,6 +387,7 @@
             overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: rgba(99,102,241,0.4) transparent;
+            box-sizing: border-box;
         }
         .rel-din-sidebar::-webkit-scrollbar { width: 5px; }
         .rel-din-sidebar::-webkit-scrollbar-track { background: transparent; }
@@ -2585,6 +2586,12 @@
                         </div>
                     </div>
                 </details>
+
+                <!-- Campos visíveis — dinâmico por tabela selecionada -->
+                <div id="relDinCamposWrap" style="display:none; margin-bottom:1.25rem;">
+                    <div class="rel-din-section-label"><i class="fa-solid fa-eye"></i> Campos Visíveis</div>
+                    <div id="relDinCamposLista" style="display:flex; flex-direction:column; gap:0.3rem; max-height:180px; overflow-y:auto; padding-right:2px;"></div>
+                </div>
 
                 <!-- Agrupador dinâmico -->
                 <div style="margin-bottom:1.25rem;">
@@ -7866,6 +7873,83 @@
             cad_usuarios:       [{ value: 'nome',             label: 'Nome (Usuários)' }],
             tb_tipo_imposto:    [{ value: 'tp_imposto',       label: 'Tipo Imposto (Config)' }],
         };
+        const REL_DIN_CAMPOS = {
+            despesas_mensais:   [
+                { value: 'data',           label: 'Data' },
+                { value: 'descricao',      label: 'Descrição' },
+                { value: 'valor_original', label: 'Valor Original' },
+                { value: 'moeda',          label: 'Moeda' },
+                { value: 'valor_eur',      label: 'Valor EUR' },
+                { value: 'categoria_final',label: 'Categoria' },
+                { value: 'status_pago',    label: 'Status Pago' },
+                { value: 'conta_bancaria', label: 'Conta Bancária' },
+                { value: 'mes_referencia', label: 'Mês Referência' },
+            ],
+            receitas_mensais:   [
+                { value: 'data',           label: 'Data' },
+                { value: 'tipo_receita',   label: 'Tipo Receita' },
+                { value: 'valor_original', label: 'Valor Original' },
+                { value: 'moeda_original', label: 'Moeda' },
+                { value: 'valor_eur',      label: 'Valor EUR' },
+                { value: 'valor_brl',      label: 'Valor BRL' },
+                { value: 'conta_bancaria', label: 'Conta Bancária' },
+                { value: 'mes_referencia', label: 'Mês Referência' },
+            ],
+            lcto_impostos:      [
+                { value: 'mes_ano',           label: 'Mês/Ano' },
+                { value: 'tp_imposto',        label: 'Tipo Imposto' },
+                { value: 'valor_faturado',    label: 'Valor Faturado' },
+                { value: 'moeda_faturado',    label: 'Moeda Faturado' },
+                { value: 'valor_imposto',     label: 'Valor Imposto' },
+                { value: 'moeda_pagamento',   label: 'Moeda Pagamento' },
+                { value: 'desconto_iva',      label: 'Desconto IVA' },
+                { value: 'pagamento_mes_ano', label: 'Mês Pagamento' },
+            ],
+            lcto_emprestimos:   [
+                { value: 'tipo',            label: 'Tipo' },
+                { value: 'beneficiario',    label: 'Beneficiário' },
+                { value: 'valor_operacao',  label: 'Valor Operação' },
+                { value: 'moeda_emp',       label: 'Moeda' },
+                { value: 'data_operacao',   label: 'Data Operação' },
+                { value: 'status',          label: 'Status' },
+                { value: 'obs',             label: 'Observação' },
+            ],
+            lcto_investimentos: [
+                { value: 'banco',           label: 'Banco' },
+                { value: 'tp_investimento', label: 'Tipo Investimento' },
+                { value: 'data_inv',        label: 'Data' },
+                { value: 'valor_inv',       label: 'Valor Investido' },
+                { value: 'moeda',           label: 'Moeda' },
+                { value: 'qtd',             label: 'Quantidade' },
+                { value: 'taxa',            label: 'Taxa' },
+                { value: 'valor_atual',     label: 'Valor Atual' },
+                { value: 'aporte',          label: 'Aporte' },
+            ],
+            cad_despesas:       [
+                { value: 'despesa',         label: 'Despesa' },
+                { value: 'tipo_despesa',    label: 'Tipo Despesa' },
+                { value: 'fator_divisao',   label: 'Fator Divisão' },
+                { value: 'prioridade',      label: 'Prioridade' },
+            ],
+            cad_contas:         [
+                { value: 'descricao', label: 'Descrição' },
+                { value: 'agencia',   label: 'Agência' },
+                { value: 'conta',     label: 'Conta' },
+            ],
+            cad_receitas:       [{ value: 'descricao', label: 'Descrição' }],
+            cad_investimentos:  [{ value: 'descricao', label: 'Descrição' }],
+            cad_usuarios:       [
+                { value: 'nome',             label: 'Nome' },
+                { value: 'chave_usr1',       label: 'Chave Usr1' },
+                { value: 'chave_usr2',       label: 'Chave Usr2' },
+                { value: 'fator_pagamento',  label: 'Fator Pagamento' },
+            ],
+            tb_tipo_imposto:    [
+                { value: 'tp_imposto',  label: 'Tipo Imposto' },
+                { value: 'alq_imposto', label: 'Alíquota' },
+                { value: 'pagamento',   label: 'Pagamento' },
+            ],
+        };
         const REL_DIN_MOEDA_COR = { EUR: '#fcd34d', BRL: '#86efac', USD: '#93c5fd', GBP: '#fca5a5' };
         let relDinMoedaAtiva = 'EUR';
 
@@ -7890,6 +7974,37 @@
         function relDinToggleTabela(card) {
             card.classList.toggle('ativo');
             relDinAtualizarAgrupador();
+            relDinAtualizarCampos();
+        }
+
+        function relDinAtualizarCampos() {
+            const tabelas = relDinGetTabelas();
+            const wrap = document.getElementById('relDinCamposWrap');
+            const lista = document.getElementById('relDinCamposLista');
+
+            if (tabelas.length === 0) {
+                wrap.style.display = 'none';
+                return;
+            }
+
+            const camposVistos = new Map();
+            tabelas.forEach(t => {
+                (REL_DIN_CAMPOS[t] || []).forEach(c => {
+                    if (!camposVistos.has(c.value)) camposVistos.set(c.value, c.label);
+                });
+            });
+
+            lista.innerHTML = '';
+            camposVistos.forEach((label, value) => {
+                const lbl = document.createElement('label');
+                lbl.style.cssText = 'display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; cursor:pointer; color:var(--text-light); padding:0.25rem 0.4rem; border-radius:6px; transition:background 0.15s;';
+                lbl.innerHTML = `<input type="checkbox" class="rel-din-campo" value="${value}" checked style="accent-color:#a5b4fc; cursor:pointer;"> ${label}`;
+                lbl.onmouseenter = () => lbl.style.background = 'rgba(255,255,255,0.04)';
+                lbl.onmouseleave = () => lbl.style.background = '';
+                lista.appendChild(lbl);
+            });
+
+            wrap.style.display = camposVistos.size > 0 ? 'block' : 'none';
         }
 
         function relDinAtualizarAgrupador() {
@@ -7963,10 +8078,11 @@
             document.getElementById('relDinSpinner').style.display = 'flex';
 
             try {
+                const campos = Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value);
                 const res = await fetch('/api/relatorio_dinamico/gerar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tabelas, campos: [], agrupador, mes_inicio, mes_fim, moedas }),
+                    body: JSON.stringify({ tabelas, campos, agrupador, mes_inicio, mes_fim, moedas }),
                 });
                 if (!res.ok) {
                     const err = await res.json();
@@ -8090,7 +8206,7 @@
                 const res = await fetch('/api/relatorio_dinamico', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome, tabelas, campos: [], agrupador, mes_inicio, mes_fim, moedas }),
+                    body: JSON.stringify({ nome, tabelas, campos: Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value), agrupador, mes_inicio, mes_fim, moedas }),
                 });
                 if (res.ok) relDinToast('Relatório salvo!');
                 else relDinToast('Erro ao salvar', 'erro');
@@ -8182,7 +8298,7 @@
                 const res = await fetch('/api/relatorio_dinamico/exportar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tabelas, campos: [], agrupador, mes_inicio, mes_fim, moedas, nome }),
+                    body: JSON.stringify({ tabelas, campos: Array.from(document.querySelectorAll('.rel-din-campo:checked')).map(cb => cb.value), agrupador, mes_inicio, mes_fim, moedas, nome }),
                 });
                 if (res.ok) {
                     const blob = await res.blob();
