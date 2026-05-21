@@ -1170,12 +1170,6 @@ input[type="checkbox"] {
     max-width: 200px !important;
 }
 
-#despesasMensaisModule #dmExpandBtn,
-#despesasMensaisModule button[onclick="toggleDmLayoutMenu()"] {
-    width: 100% !important;
-    max-width: none !important;
-}
-
 #despesasMensaisModule #dmStatusMsg {
     grid-column: 1 / -1;
 }
