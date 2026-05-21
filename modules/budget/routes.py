@@ -1,13 +1,16 @@
 import io
+import math
 import os
 import pandas as pd
+import re
+import unicodedata
 from flask import request, jsonify, send_file, session
 from werkzeug.utils import secure_filename
 
 from . import bp
 from .db import (
     get_budget_items, get_budget_summary, upsert_budget_item,
-    update_budget_item, delete_budget_item, delete_budget_year, bulk_upsert_budget,
+    update_budget_item, delete_budget_item, delete_budget_year, bulk_replace_budget,
     get_comparativo, MONTHS
 )
 from config import allowed_file
@@ -20,6 +23,100 @@ def _auth():
     if 'user_email' not in session:
         return None
     return session['user_email']
+
+
+def _normalize_header(value):
+    text = str(value).strip().lower()
+    text = unicodedata.normalize('NFKD', text)
+    text = ''.join(ch for ch in text if not unicodedata.combining(ch))
+    text = re.sub(r'[\s\-]+', '_', text)
+    return re.sub(r'[^a-z0-9_%]+', '', text)
+
+
+def _clean_text(value, default=''):
+    if pd.isna(value):
+        return default
+    text = str(value).strip()
+    return re.sub(r'\s+', ' ', text) or default
+
+
+def _parse_budget_number(value):
+    if value is None or pd.isna(value):
+        return 0.0
+    if isinstance(value, (int, float)):
+        return 0.0 if math.isnan(value) else float(value)
+
+    text = str(value).strip()
+    if not text or text.lower() in ('nan', 'none', '-'):
+        return 0.0
+
+    text = text.replace('€', '').replace('R$', '').replace('$', '')
+    text = text.replace('%', '').replace('\xa0', '').strip()
+
+    if ',' in text and '.' in text:
+        if text.rfind(',') > text.rfind('.'):
+            text = text.replace('.', '').replace(',', '.')
+        else:
+            text = text.replace(',', '')
+    elif ',' in text:
+        text = text.replace(',', '.')
+
+    try:
+        return float(text)
+    except ValueError:
+        return 0.0
+
+
+def _budget_items_from_dataframe(df):
+    df.columns = [_normalize_header(c) for c in df.columns]
+
+    col_map = {
+        'categoria': 'categoria_nome', 'category': 'categoria_nome',
+        'despesa': 'categoria_nome', 'receita': 'categoria_nome',
+        'janeiro': 'valor_jan', 'jan': 'valor_jan',
+        'fevereiro': 'valor_fev', 'fev': 'valor_fev',
+        'marco': 'valor_mar', 'mar': 'valor_mar',
+        'abril': 'valor_abr', 'abr': 'valor_abr',
+        'maio': 'valor_mai', 'mai': 'valor_mai',
+        'junho': 'valor_jun', 'jun': 'valor_jun',
+        'julho': 'valor_jul', 'jul': 'valor_jul',
+        'agosto': 'valor_ago', 'ago': 'valor_ago',
+        'setembro': 'valor_set', 'set': 'valor_set',
+        'outubro': 'valor_out', 'out': 'valor_out',
+        'novembro': 'valor_nov', 'nov': 'valor_nov',
+        'dezembro': 'valor_dez', 'dez': 'valor_dez',
+        'variacao_mensal_%': 'variacao_mensal_pct',
+        'variacao_mensal': 'variacao_mensal_pct',
+        'var_mensal_%': 'variacao_mensal_pct',
+        'variacao_mensal_pct': 'variacao_mensal_pct',
+        'variacao_anual_%': 'variacao_anual_pct',
+        'variacao_anual': 'variacao_anual_pct',
+        'var_anual_%': 'variacao_anual_pct',
+        'variacao_anual_pct': 'variacao_anual_pct',
+        'moeda': 'moeda', 'tipo': 'tipo_categoria', 'tipo_categoria': 'tipo_categoria',
+    }
+    df.rename(columns=col_map, inplace=True)
+
+    if 'categoria_nome' not in df.columns:
+        raise ValueError('Coluna "Categoria" não encontrada na planilha')
+
+    items = []
+    for _, row in df.iterrows():
+        cat = _clean_text(row.get('categoria_nome'))
+        if not cat or cat.lower() in ('nan', 'none') or cat.upper() == 'TOTAL':
+            continue
+
+        item = {
+            'categoria_nome': cat,
+            'tipo_categoria': _clean_text(row.get('tipo_categoria')),
+            'moeda': _clean_text(row.get('moeda'), 'EUR'),
+            'variacao_mensal_pct': _parse_budget_number(row.get('variacao_mensal_pct')),
+            'variacao_anual_pct': _parse_budget_number(row.get('variacao_anual_pct')),
+        }
+        for m in MONTHS:
+            item[f'valor_{m}'] = _parse_budget_number(row.get(f'valor_{m}'))
+        items.append(item)
+    return items
 
 
 @bp.route('/api/budget', methods=['GET'])
@@ -130,71 +227,25 @@ def api_upload_budget():
         return jsonify({'error': 'Arquivo e ano são obrigatórios'}), 400
 
     filename = secure_filename(file.filename)
-    if not allowed_file(filename):
+    file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    if not allowed_file(filename) or file_ext not in {'csv', 'xls', 'xlsx'}:
         return jsonify({'error': 'Formato inválido. Use .xlsx ou .csv'}), 400
 
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
 
     try:
-        if filename.endswith('.csv'):
+        if file_ext == 'csv':
             df = pd.read_csv(filepath)
         else:
             df = pd.read_excel(filepath)
 
-        df.columns = [str(c).strip().lower() for c in df.columns]
-
-        col_map = {
-            'categoria': 'categoria_nome', 'category': 'categoria_nome',
-            'despesa': 'categoria_nome', 'receita': 'categoria_nome',
-            'janeiro': 'valor_jan', 'jan': 'valor_jan',
-            'fevereiro': 'valor_fev', 'fev': 'valor_fev',
-            'março': 'valor_mar', 'mar': 'valor_mar', 'marco': 'valor_mar',
-            'abril': 'valor_abr', 'abr': 'valor_abr',
-            'maio': 'valor_mai', 'mai': 'valor_mai',
-            'junho': 'valor_jun', 'jun': 'valor_jun',
-            'julho': 'valor_jul', 'jul': 'valor_jul',
-            'agosto': 'valor_ago', 'ago': 'valor_ago',
-            'setembro': 'valor_set', 'set': 'valor_set',
-            'outubro': 'valor_out', 'out': 'valor_out',
-            'novembro': 'valor_nov', 'nov': 'valor_nov',
-            'dezembro': 'valor_dez', 'dez': 'valor_dez',
-            'variacao_mensal_%': 'variacao_mensal_pct', 'variação_mensal_%': 'variacao_mensal_pct',
-            'variação mensal %': 'variacao_mensal_pct', 'variacao mensal %': 'variacao_mensal_pct',
-            'var_mensal_%': 'variacao_mensal_pct', 'variacao_mensal_pct': 'variacao_mensal_pct',
-            'variacao_anual_%': 'variacao_anual_pct', 'variação_anual_%': 'variacao_anual_pct',
-            'variação anual %': 'variacao_anual_pct', 'variacao anual %': 'variacao_anual_pct',
-            'var_anual_%': 'variacao_anual_pct', 'variacao_anual_pct': 'variacao_anual_pct',
-            'moeda': 'moeda', 'tipo': 'tipo_categoria', 'tipo_categoria': 'tipo_categoria',
-        }
-        df.rename(columns=col_map, inplace=True)
-
-        if 'categoria_nome' not in df.columns:
-            return jsonify({'error': 'Coluna "Categoria" não encontrada na planilha'}), 400
-
-        items = []
-        for _, row in df.iterrows():
-            cat = str(row.get('categoria_nome', '')).strip()
-            if not cat or cat.lower() in ('nan', 'none', '') or cat.upper() == 'TOTAL':
-                continue
-            item = {
-                'categoria_nome': cat,
-                'tipo_categoria': str(row.get('tipo_categoria', '')),
-                'moeda': str(row.get('moeda', 'EUR')),
-                'variacao_mensal_pct': float(row.get('variacao_mensal_pct', 0) or 0),
-                'variacao_anual_pct': float(row.get('variacao_anual_pct', 0) or 0),
-            }
-            for m in MONTHS:
-                val = row.get(f'valor_{m}', 0)
-                try:
-                    item[f'valor_{m}'] = float(val) if val and str(val).lower() not in ('nan', '') else 0.0
-                except (ValueError, TypeError):
-                    item[f'valor_{m}'] = 0.0
-            items.append(item)
-
-        bulk_upsert_budget(user, ano, tipo, items)
+        items = _budget_items_from_dataframe(df)
+        bulk_replace_budget(user, ano, tipo, items)
         return jsonify({'status': 'ok', 'importados': len(items)})
 
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:

@@ -42,7 +42,7 @@ def get_budget_items(user_email: str, ano: int, tipo: str):
     rows = conn.execute(
         '''SELECT * FROM budget_items
            WHERE user_email=%s AND ano=%s AND tipo=%s
-           ORDER BY categoria_nome''',
+           ORDER BY id''',
         (user_email, ano, tipo)
     ).fetchall()
     conn.close()
@@ -221,3 +221,37 @@ def bulk_upsert_budget(user_email, ano, tipo, items):
             variacao_mensal_pct=item.get('variacao_mensal_pct', 0),
             variacao_anual_pct=item.get('variacao_anual_pct', 0),
         )
+
+
+def bulk_replace_budget(user_email, ano, tipo, items):
+    conn = get_connection()
+    try:
+        conn.execute(
+            'DELETE FROM budget_items WHERE user_email=%s AND ano=%s AND tipo=%s',
+            (user_email, ano, tipo)
+        )
+
+        if items:
+            month_cols = ', '.join([f'valor_{m}' for m in MONTHS])
+            month_phs = ', '.join(['%s'] * len(MONTHS))
+            sql = f'''INSERT INTO budget_items
+                (user_email, ano, tipo, categoria_id, categoria_nome, tipo_categoria, moeda,
+                 {month_cols}, variacao_mensal_pct, variacao_anual_pct)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,{month_phs},%s,%s)'''
+
+            for item in items:
+                conn.execute(
+                    sql,
+                    [user_email, ano, tipo, item.get('categoria_id'),
+                     item.get('categoria_nome', ''), item.get('tipo_categoria', ''),
+                     item.get('moeda', 'EUR')] +
+                    [item.get(f'valor_{m}', 0) for m in MONTHS] +
+                    [item.get('variacao_mensal_pct', 0), item.get('variacao_anual_pct', 0)]
+                )
+
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
