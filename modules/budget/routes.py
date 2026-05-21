@@ -160,10 +160,12 @@ def api_upload_budget():
             'novembro': 'valor_nov', 'nov': 'valor_nov',
             'dezembro': 'valor_dez', 'dez': 'valor_dez',
             'variacao_mensal_%': 'variacao_mensal_pct', 'variação_mensal_%': 'variacao_mensal_pct',
+            'variação mensal %': 'variacao_mensal_pct', 'variacao mensal %': 'variacao_mensal_pct',
             'var_mensal_%': 'variacao_mensal_pct', 'variacao_mensal_pct': 'variacao_mensal_pct',
             'variacao_anual_%': 'variacao_anual_pct', 'variação_anual_%': 'variacao_anual_pct',
+            'variação anual %': 'variacao_anual_pct', 'variacao anual %': 'variacao_anual_pct',
             'var_anual_%': 'variacao_anual_pct', 'variacao_anual_pct': 'variacao_anual_pct',
-            'moeda': 'moeda', 'tipo_categoria': 'tipo_categoria',
+            'moeda': 'moeda', 'tipo': 'tipo_categoria', 'tipo_categoria': 'tipo_categoria',
         }
         df.rename(columns=col_map, inplace=True)
 
@@ -173,7 +175,7 @@ def api_upload_budget():
         items = []
         for _, row in df.iterrows():
             cat = str(row.get('categoria_nome', '')).strip()
-            if not cat or cat.lower() in ('nan', 'none', ''):
+            if not cat or cat.lower() in ('nan', 'none', '') or cat.upper() == 'TOTAL':
                 continue
             item = {
                 'categoria_nome': cat,
