@@ -2414,26 +2414,34 @@
 
     <!-- Módulo Dashboard -->
     <div class="container module-container module-fullscreen" id="dashboardModule">
-        <h1 style="text-align:center;"><i class="fa-solid fa-chart-line"></i> Dashboard Inicial</h1>
-        
-        <div style="display:flex; gap:12px; align-items:center; margin-bottom:2rem; justify-content:center;">
-            <label style="font-size:0.9rem; color:var(--text-muted);">Mês de Referência:</label>
-            <input type="month" id="dashMesRef" class="auth-input" style="width:200px;" onchange="loadDashboard()">
-        </div>
+        <div class="dash-shell">
+            <div class="dash-hero-summary">
+                <div>
+                    <span class="dash-eyebrow">Centro financeiro</span>
+                    <h1><i class="fa-solid fa-chart-line"></i> Visão Geral Financeira</h1>
+                    <p>Resumo executivo com acesso rápido às análises de despesas, receitas, budget, investimentos, P&amp;L, fluxo de caixa e patrimônio.</p>
+                </div>
+                <div class="dash-controls">
+                    <label for="dashMesRef">Mês</label>
+                    <input type="month" id="dashMesRef" class="auth-input" onchange="loadDashboard()">
+                    <button class="btn btn-xs secondary" onclick="loadDashboard()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                </div>
+            </div>
 
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:2rem;">
-            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:16px; padding:1.5rem; display:flex; flex-direction:column; align-items:center;">
-                <h3 style="margin-bottom:1.5rem; color:var(--primary);">Despesas por Categoria</h3>
-                <div style="width:100%; height:350px;"><canvas id="chartDespesas"></canvas></div>
+            <div class="dash-tabbar" role="tablist" aria-label="Dashboards financeiros">
+                <button class="dash-tab active" data-dash-view="overview" onclick="dashSetView('overview')"><i class="fa-solid fa-gauge-high"></i><span>Visão Geral</span></button>
+                <button class="dash-tab" data-dash-view="expenses" onclick="dashSetView('expenses')"><i class="fa-solid fa-receipt"></i><span>Despesas</span></button>
+                <button class="dash-tab" data-dash-view="revenues" onclick="dashSetView('revenues')"><i class="fa-solid fa-coins"></i><span>Receitas</span></button>
+                <button class="dash-tab" data-dash-view="budget" onclick="dashSetView('budget')"><i class="fa-solid fa-bullseye"></i><span>Budget</span></button>
+                <button class="dash-tab" data-dash-view="investments" onclick="dashSetView('investments')"><i class="fa-solid fa-chart-pie"></i><span>Investimentos</span></button>
+                <button class="dash-tab" data-dash-view="pnl" onclick="dashSetView('pnl')"><i class="fa-solid fa-arrow-trend-up"></i><span>P&amp;L</span></button>
+                <button class="dash-tab" data-dash-view="cashflow" onclick="dashSetView('cashflow')"><i class="fa-solid fa-water"></i><span>Fluxo de Caixa</span></button>
+                <button class="dash-tab" data-dash-view="networth" onclick="dashSetView('networth')"><i class="fa-solid fa-landmark"></i><span>Patrimônio</span></button>
+                <button class="dash-tab" data-dash-view="debt" onclick="dashSetView('debt')"><i class="fa-solid fa-money-bill-transfer"></i><span>Dívidas</span></button>
             </div>
-            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:16px; padding:1.5rem; display:flex; flex-direction:column; align-items:center;">
-                <h3 style="margin-bottom:1.5rem; color:var(--success);">Receitas Mensais</h3>
-                <div style="width:100%; height:350px;"><canvas id="chartReceitas"></canvas></div>
-            </div>
-            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:16px; padding:1.5rem; display:flex; flex-direction:column; align-items:center;">
-                <h3 style="margin-bottom:1.5rem; color:var(--secondary);">Resultado Acumulado (Ano)</h3>
-                <div style="width:100%; height:350px;"><canvas id="chartNet"></canvas></div>
-            </div>
+
+            <div id="dashStatus" class="dash-state">Carregando dashboard...</div>
+            <div id="dashContent"></div>
         </div>
     </div>
 
@@ -3869,7 +3877,7 @@
                 'cad_usuarios':      () => { document.getElementById('cadUsuariosModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadUsuarios(); },
                 'despesas_mensais':  () => { document.getElementById('despesasMensaisModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initDespesasMensais(); },
                 'receitas_mensais':  () => { document.getElementById('receitasMensaisModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initReceitasMensais(); },
-                'dashboard':         () => { document.getElementById('dashboardModule').style.display = 'block'; nav.style.maxWidth = '1400px'; loadDashboard(); },
+                'dashboard':         () => { document.getElementById('dashboardModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadDashboard(true); },
                 'relatorio_ano':     () => { document.getElementById('relatorioAnoModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadRelatorioAnual(); },
                 'relatorio_mes':     () => { document.getElementById('relatorioMesModule').style.display = 'block'; nav.style.maxWidth = '1100px'; loadRelatorioMensal(); },
                 'relatorio_dinamico': () => { document.getElementById('relatorioDinamicoModule').style.display = 'block'; nav.style.maxWidth = '1400px'; initRelatorioDinamico(); },
@@ -6379,72 +6387,416 @@
 
         // ── Dashboard e Gráficos ───────────────────────────────────────────────
         let chartInstances = {};
+        let dashCurrentView = 'overview';
 
-        async function loadDashboard() {
+        async function loadDashboard(resetView = false) {
             const mesInput = document.getElementById('dashMesRef');
             if(!mesInput.value) {
                 mesInput.value = new Date().toISOString().substring(0, 7);
             }
-            const mes = mesInput.value;
-            
-            try {
-                const res = await fetch(`/api/dashboard_data?mes=${mes}`);
-                const data = await res.json();
-                renderCharts(data);
-            } catch(e) { console.error("Erro dashboard:", e); }
+            if (resetView) dashCurrentView = 'overview';
+            await dashSetView(dashCurrentView, true);
         }
 
-        function renderCharts(data) {
-            // Cores padrão MyFinance
-            const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#6366f1', '#ec4899'];
-            
-            // 1. Gráfico de Despesas (Doughnut)
-            updateOrCreateChart('chartDespesas', 'doughnut', {
-                labels: data.expenses_by_category.map(x => x.categoria_final),
-                datasets: [{
-                    label: 'Despesas',
-                    data: data.expenses_by_category.map(x => x.total),
-                    backgroundColor: colors,
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1
-                }]
-            }, { 
-                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
+        async function dashSetView(view, silent = false) {
+            dashCurrentView = view;
+            document.querySelectorAll('.dash-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.dashView === view);
             });
-
-            // 2. Gráfico de Receitas (Bar)
-            updateOrCreateChart('chartReceitas', 'bar', {
-                labels: data.revenues_by_category.map(x => x.categoria_final),
-                datasets: [{
-                    label: 'Receitas',
-                    data: data.revenues_by_category.map(x => x.total),
-                    backgroundColor: '#10b981',
-                    borderRadius: 6
-                }]
-            }, {
-                scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }
-            });
-
-            // 3. Gráfico Resultado Anual (Line/Area)
-            updateOrCreateChart('chartNet', 'line', {
-                labels: [data.ano],
-                datasets: [{
-                    label: 'Saldo Acumulado (EUR)',
-                    data: [data.annual_net],
-                    fill: true,
-                    backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                    borderColor: '#8b5cf6',
-                    tension: 0.4
-                }]
-            }, {
-                scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }
-            });
+            const loaders = {
+                overview: dashLoadOverview,
+                expenses: dashLoadExpenses,
+                revenues: dashLoadRevenues,
+                budget: dashLoadBudget,
+                investments: dashLoadInvestments,
+                pnl: dashLoadPnl,
+                cashflow: dashLoadCashflow,
+                networth: dashLoadNetWorth,
+                debt: dashLoadDebt,
+            };
+            if (!silent) dashClearCharts();
+            await (loaders[view] || dashLoadOverview)();
         }
 
         function updateOrCreateChart(id, type, data, options) {
             if (chartInstances[id]) chartInstances[id].destroy();
-            const ctx = document.getElementById(id).getContext('2d');
+            const el = document.getElementById(id);
+            if (!el) return;
+            const ctx = el.getContext('2d');
             chartInstances[id] = new Chart(ctx, { type, data, options });
+        }
+
+        function dashClearCharts() {
+            Object.keys(chartInstances).forEach(id => {
+                if (chartInstances[id]) chartInstances[id].destroy();
+            });
+            chartInstances = {};
+        }
+
+        function dashPeriod() {
+            const mes = document.getElementById('dashMesRef').value || new Date().toISOString().substring(0, 7);
+            return { mes, ano: mes.substring(0, 4) };
+        }
+
+        async function dashFetch(endpoint) {
+            const { mes, ano } = dashPeriod();
+            const res = await fetch(`${endpoint}?mes=${mes}&ano=${ano}`);
+            const data = await res.json();
+            if (!res.ok || data.error) throw new Error(data.error || 'Erro ao carregar dados');
+            return data;
+        }
+
+        function dashSetLoading(message = 'Carregando dashboard...') {
+            document.getElementById('dashStatus').style.display = 'block';
+            document.getElementById('dashStatus').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${message}`;
+            document.getElementById('dashContent').innerHTML = '';
+        }
+
+        function dashSetError(error) {
+            document.getElementById('dashStatus').style.display = 'block';
+            document.getElementById('dashStatus').innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${error.message || error}`;
+        }
+
+        function dashRender(html) {
+            document.getElementById('dashStatus').style.display = 'none';
+            document.getElementById('dashContent').innerHTML = html;
+        }
+
+        function dashMoney(value) {
+            return formatCurrency(value, 'EUR');
+        }
+
+        function dashPct(value) {
+            const n = parseFloat(value) || 0;
+            return `${n.toFixed(1).replace('.', ',')}%`;
+        }
+
+        function dashTone(value, positiveGood = true) {
+            const n = parseFloat(value) || 0;
+            if (n === 0) return 'neutral';
+            return (positiveGood ? n > 0 : n <= 0) ? 'positive' : 'negative';
+        }
+
+        function dashKpi(icon, label, value, hint, tone = 'neutral', view = null) {
+            const click = view ? `onclick="dashSetView('${view}')"` : '';
+            return `
+                <div class="dash-kpi-card dash-status-${tone}" ${click}>
+                    <div class="dash-kpi-icon"><i class="${icon}"></i></div>
+                    <span>${label}</span>
+                    <strong>${value}</strong>
+                    <small>${hint || '&nbsp;'}</small>
+                </div>`;
+        }
+
+        function dashPanel(title, icon, body, className = '') {
+            return `
+                <section class="dash-chart-panel ${className}">
+                    <div class="dash-panel-title"><span><i class="${icon}"></i> ${title}</span></div>
+                    ${body}
+                </section>`;
+        }
+
+        function dashEmpty(text) {
+            return `<div class="dash-empty"><i class="fa-solid fa-circle-info"></i><span>${text}</span></div>`;
+        }
+
+        function dashTable(headers, rows) {
+            if (!rows.length) return dashEmpty('Nenhum dado encontrado para este período.');
+            return `
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                        <tbody>${rows.join('')}</tbody>
+                    </table>
+                </div>`;
+        }
+
+        function dashChartOptions(extra = {}) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 10, usePointStyle: true } },
+                    tooltip: { backgroundColor: '#0f172a', borderColor: 'rgba(226,232,240,0.18)', borderWidth: 1 }
+                },
+                scales: extra.scales || {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                },
+                ...extra
+            };
+        }
+
+        async function dashLoadOverview() {
+            dashSetLoading('Carregando visão geral...');
+            try {
+                const data = await dashFetch('/api/dashboard/overview');
+                const k = data.kpis || {};
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-coins', 'Receitas do mês', dashMoney(k.receitas), 'Entradas consolidadas', 'positive', 'revenues')}
+                        ${dashKpi('fa-solid fa-receipt', 'Despesas do mês', dashMoney(k.despesas), `${dashPct(k.budget_usado_pct)} do budget`, dashTone((k.budget_despesas || 0) - (k.despesas || 0)), 'expenses')}
+                        ${dashKpi('fa-solid fa-scale-balanced', 'Saldo do mês', dashMoney(k.saldo), 'Receitas - despesas', dashTone(k.saldo), 'cashflow')}
+                        ${dashKpi('fa-solid fa-bullseye', 'Budget usado', dashPct(k.budget_usado_pct), dashMoney(k.budget_despesas || 0), (k.budget_usado_pct || 0) <= 100 ? 'positive' : 'negative', 'budget')}
+                        ${dashKpi('fa-solid fa-chart-pie', 'Investimentos', dashMoney(k.investimentos), 'Valor atual da carteira', 'neutral', 'investments')}
+                        ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L investimentos', dashMoney(k.pnl), 'Resultado estimado', dashTone(k.pnl), 'pnl')}
+                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio líquido', dashMoney(k.patrimonio_liquido), 'Estimativa consolidada', dashTone(k.patrimonio_liquido), 'networth')}
+                        ${dashKpi('fa-solid fa-money-bill-transfer', 'Dívidas', dashMoney(k.dividas), 'Saldo de empréstimos', k.dividas > 0 ? 'warning' : 'positive', 'debt')}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('Evolução do ano', 'fa-solid fa-chart-area', '<div class="dash-chart-box"><canvas id="dashOverviewFlow"></canvas></div>', 'dash-panel-wide')}
+                        ${dashPanel('Insights', 'fa-solid fa-lightbulb', `
+                            <div class="dash-insight-list">
+                                ${(data.insights || []).map(i => `<div class="dash-insight dash-status-${i.tone || 'neutral'}"><i class="fa-solid fa-circle"></i><span>${i.text}</span></div>`).join('')}
+                            </div>`)}
+                    </div>
+                `);
+                const rows = data.cashflow || [];
+                updateOrCreateChart('dashOverviewFlow', 'line', {
+                    labels: rows.map(r => r.label),
+                    datasets: [
+                        { label: 'Receitas', data: rows.map(r => r.receitas), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.12)', tension: 0.35, fill: true },
+                        { label: 'Despesas', data: rows.map(r => r.despesas), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.35, fill: true },
+                        { label: 'Saldo', data: rows.map(r => r.saldo_mes), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', tension: 0.35, fill: false }
+                    ]
+                }, dashChartOptions());
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        async function dashLoadExpenses() {
+            dashSetLoading('Carregando despesas...');
+            try {
+                const data = await dashFetch('/api/dashboard/despesas');
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-receipt', 'Total despesas', dashMoney(data.total), 'Mês selecionado', 'negative')}
+                        ${dashKpi('fa-solid fa-layer-group', 'Categorias', (data.by_category || []).length, 'Com movimentação', 'neutral')}
+                        ${dashKpi('fa-solid fa-building-columns', 'Contas', (data.by_account || []).length, 'Bancos/cartões', 'neutral')}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('Despesas por categoria', 'fa-solid fa-chart-pie', '<div class="dash-chart-box"><canvas id="dashExpensesCategory"></canvas></div>')}
+                        ${dashPanel('Evolução mensal', 'fa-solid fa-chart-line', '<div class="dash-chart-box"><canvas id="dashExpensesMonthly"></canvas></div>')}
+                        ${dashPanel('Maiores lançamentos', 'fa-solid fa-list-ol', dashTable(['Data', 'Descrição', 'Categoria', 'Valor'], (data.top_transactions || []).map(r => `
+                            <tr><td>${r.data || '-'}</td><td>${r.descricao || '-'}</td><td>${r.categoria || '-'}</td><td>${dashMoney(r.valor_eur)}</td></tr>`)), 'dash-panel-wide')}
+                    </div>
+                `);
+                const cats = data.by_category || [];
+                updateOrCreateChart('dashExpensesCategory', 'doughnut', {
+                    labels: cats.map(r => r.categoria),
+                    datasets: [{ data: cats.map(r => r.total), backgroundColor: dashColors(), borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 }]
+                }, dashChartOptions({ scales: {} }));
+                const monthly = data.monthly || [];
+                updateOrCreateChart('dashExpensesMonthly', 'bar', {
+                    labels: monthly.map(r => r.label),
+                    datasets: [{ label: 'Despesas', data: monthly.map(r => r.total), backgroundColor: '#dc2626', borderRadius: 7 }]
+                }, dashChartOptions());
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        async function dashLoadRevenues() {
+            dashSetLoading('Carregando receitas...');
+            try {
+                const data = await dashFetch('/api/dashboard/receitas');
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-coins', 'Total receitas', dashMoney(data.total), 'Mês selecionado', 'positive')}
+                        ${dashKpi('fa-solid fa-chart-simple', 'Média mensal', dashMoney(data.media_mensal), 'Meses com dados', 'neutral')}
+                        ${dashKpi('fa-solid fa-layer-group', 'Fontes', (data.by_type || []).length, 'Tipos de receita', 'neutral')}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('Receitas por tipo', 'fa-solid fa-chart-column', '<div class="dash-chart-box"><canvas id="dashRevenuesType"></canvas></div>')}
+                        ${dashPanel('Tendência anual', 'fa-solid fa-chart-line', '<div class="dash-chart-box"><canvas id="dashRevenuesMonthly"></canvas></div>')}
+                        ${dashPanel('Maiores receitas', 'fa-solid fa-ranking-star', dashTable(['Data', 'Tipo', 'Conta', 'Valor'], (data.top_transactions || []).map(r => `
+                            <tr><td>${r.data || '-'}</td><td>${r.tipo || '-'}</td><td>${r.conta || '-'}</td><td>${dashMoney(r.valor_eur)}</td></tr>`)), 'dash-panel-wide')}
+                    </div>
+                `);
+                const types = data.by_type || [];
+                updateOrCreateChart('dashRevenuesType', 'bar', {
+                    labels: types.map(r => r.tipo),
+                    datasets: [{ label: 'Receitas', data: types.map(r => r.total), backgroundColor: '#16a34a', borderRadius: 7 }]
+                }, dashChartOptions());
+                const monthly = data.monthly || [];
+                updateOrCreateChart('dashRevenuesMonthly', 'line', {
+                    labels: monthly.map(r => r.label),
+                    datasets: [{ label: 'Receitas', data: monthly.map(r => r.total), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.14)', tension: 0.35, fill: true }]
+                }, dashChartOptions());
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        async function dashLoadBudget() {
+            dashSetLoading('Carregando budget...');
+            try {
+                const data = await dashFetch('/api/dashboard/budget');
+                const s = data.summary || {};
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-bullseye', 'Budget despesas', dashMoney(s.despesas_budget), `${dashPct(s.despesas_used_pct)} usado`, (s.despesas_used_pct || 0) <= 100 ? 'positive' : 'negative')}
+                        ${dashKpi('fa-solid fa-receipt', 'Real despesas', dashMoney(s.despesas_real), dashMoney((s.despesas_real || 0) - (s.despesas_budget || 0)), (s.despesas_real || 0) <= (s.despesas_budget || 0) ? 'positive' : 'negative')}
+                        ${dashKpi('fa-solid fa-coins', 'Real receitas', dashMoney(s.receitas_real), `Previsto ${dashMoney(s.receitas_budget)}`, 'positive')}
+                        ${dashKpi('fa-solid fa-scale-balanced', 'Saldo real', dashMoney(s.saldo_real), `Previsto ${dashMoney(s.saldo_budget)}`, dashTone(s.saldo_real))}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('Previsto x realizado', 'fa-solid fa-chart-column', '<div class="dash-chart-box"><canvas id="dashBudgetCompare"></canvas></div>')}
+                        ${dashPanel('Categorias acima do previsto', 'fa-solid fa-triangle-exclamation', dashTable(['Categoria', 'Budget', 'Real', 'Desvio'], (data.top_over || []).map(r => `
+                            <tr><td>${r.categoria}</td><td>${dashMoney(r.budget)}</td><td>${dashMoney(r.real)}</td><td class="${r.diff > 0 ? 'dash-text-negative' : 'dash-text-positive'}">${dashMoney(r.diff)}</td></tr>`)))}
+                    </div>
+                `);
+                updateOrCreateChart('dashBudgetCompare', 'bar', {
+                    labels: ['Despesas', 'Receitas', 'Saldo'],
+                    datasets: [
+                        { label: 'Previsto', data: [s.despesas_budget, s.receitas_budget, s.saldo_budget], backgroundColor: '#3b82f6', borderRadius: 7 },
+                        { label: 'Realizado', data: [s.despesas_real, s.receitas_real, s.saldo_real], backgroundColor: '#14b8a6', borderRadius: 7 }
+                    ]
+                }, dashChartOptions());
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        async function dashLoadInvestments() {
+            dashSetLoading('Carregando investimentos...');
+            try {
+                const data = await dashFetch('/api/dashboard/investimentos');
+                const s = data.summary || {};
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-chart-pie', 'Valor atual', dashMoney(s.valor_atual), 'Carteira consolidada', 'neutral')}
+                        ${dashKpi('fa-solid fa-wallet', 'Valor investido', dashMoney(s.valor_investido), 'Base de custo', 'neutral')}
+                        ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L', dashMoney(s.pnl), dashPct(s.pnl_pct), dashTone(s.pnl))}
+                        ${dashKpi('fa-solid fa-plus', 'Aportes', dashMoney(s.aportes), 'Total informado', 'positive')}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('Alocação por tipo', 'fa-solid fa-chart-pie', '<div class="dash-chart-box"><canvas id="dashInvestType"></canvas></div>')}
+                        ${dashPanel('Por instituição', 'fa-solid fa-building-columns', '<div class="dash-chart-box"><canvas id="dashInvestBank"></canvas></div>')}
+                        ${dashPanel('Principais posições', 'fa-solid fa-list', dashTable(['Tipo', 'Banco', 'Moeda', 'Atual', 'P&L'], (data.positions || []).map(r => `
+                            <tr><td>${r.tp_investimento || '-'}</td><td>${r.banco || '-'}</td><td>${r.moeda || '-'}</td><td>${dashMoney(r.valor_atual)}</td><td class="${(r.pnl || 0) >= 0 ? 'dash-text-positive' : 'dash-text-negative'}">${dashMoney(r.pnl)}</td></tr>`)), 'dash-panel-wide')}
+                    </div>
+                `);
+                const byType = data.by_type || [];
+                updateOrCreateChart('dashInvestType', 'doughnut', {
+                    labels: byType.map(r => r.tipo),
+                    datasets: [{ data: byType.map(r => r.valor_atual), backgroundColor: dashColors(), borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 }]
+                }, dashChartOptions({ scales: {} }));
+                const byBank = data.by_bank || [];
+                updateOrCreateChart('dashInvestBank', 'bar', {
+                    labels: byBank.map(r => r.banco),
+                    datasets: [{ label: 'Valor atual', data: byBank.map(r => r.valor_atual), backgroundColor: '#14b8a6', borderRadius: 7 }]
+                }, dashChartOptions());
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        async function dashLoadPnl() {
+            dashSetLoading('Carregando P&L...');
+            try {
+                const data = await dashFetch('/api/dashboard/pnl');
+                const s = data.summary || {};
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-scale-balanced', 'P&L total', dashMoney(s.pnl_total), 'Investimentos + trader', dashTone(s.pnl_total))}
+                        ${dashKpi('fa-solid fa-chart-line', 'Investimentos', dashMoney(s.pnl_investimentos), 'Resultado da carteira', dashTone(s.pnl_investimentos))}
+                        ${dashKpi('fa-solid fa-arrow-trend-up', 'Trader', dashMoney(s.pnl_trader), 'Período selecionado', dashTone(s.pnl_trader))}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('P&L por grupo', 'fa-solid fa-chart-bar', '<div class="dash-chart-box"><canvas id="dashPnlGroup"></canvas></div>', 'dash-panel-wide')}
+                        ${dashPanel('Top ganhos', 'fa-solid fa-ranking-star', dashTable(['Origem', 'Grupo', 'P&L'], (data.top_gains || []).map(r => `
+                            <tr><td>${r.origem}</td><td>${r.grupo}</td><td class="dash-text-positive">${dashMoney(r.pnl)}</td></tr>`)))}
+                        ${dashPanel('Top perdas', 'fa-solid fa-arrow-trend-down', dashTable(['Origem', 'Grupo', 'P&L'], (data.top_losses || []).map(r => `
+                            <tr><td>${r.origem}</td><td>${r.grupo}</td><td class="dash-text-negative">${dashMoney(r.pnl)}</td></tr>`)))}
+                    </div>
+                `);
+                const groups = data.by_group || [];
+                updateOrCreateChart('dashPnlGroup', 'bar', {
+                    labels: groups.map(r => `${r.origem}: ${r.grupo}`),
+                    datasets: [{ label: 'P&L', data: groups.map(r => r.pnl), backgroundColor: groups.map(r => (r.pnl || 0) >= 0 ? '#16a34a' : '#dc2626'), borderRadius: 7 }]
+                }, dashChartOptions());
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        async function dashLoadCashflow() {
+            dashSetLoading('Carregando fluxo de caixa...');
+            try {
+                const data = await dashFetch('/api/dashboard/fluxo-caixa');
+                const s = data.summary || {};
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-coins', 'Receitas ano', dashMoney(s.receitas), 'Entradas', 'positive')}
+                        ${dashKpi('fa-solid fa-receipt', 'Despesas ano', dashMoney(s.despesas), 'Saídas', 'negative')}
+                        ${dashKpi('fa-solid fa-scale-balanced', 'Saldo ano', dashMoney(s.saldo), 'Receitas - despesas', dashTone(s.saldo))}
+                        ${dashKpi('fa-solid fa-arrow-down', 'Menor saldo', dashMoney(s.menor_saldo), 'Acumulado anual', dashTone(s.menor_saldo))}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('Fluxo mensal', 'fa-solid fa-chart-area', '<div class="dash-chart-box"><canvas id="dashCashflow"></canvas></div>', 'dash-panel-wide')}
+                    </div>
+                `);
+                const rows = data.rows || [];
+                updateOrCreateChart('dashCashflow', 'bar', {
+                    labels: rows.map(r => r.label),
+                    datasets: [
+                        { label: 'Receitas', data: rows.map(r => r.receitas), backgroundColor: '#16a34a', borderRadius: 7 },
+                        { label: 'Despesas', data: rows.map(r => r.despesas), backgroundColor: '#dc2626', borderRadius: 7 },
+                        { label: 'Saldo acumulado', data: rows.map(r => r.saldo_acumulado), type: 'line', borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.35 }
+                    ]
+                }, dashChartOptions());
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        async function dashLoadNetWorth() {
+            dashSetLoading('Carregando patrimônio...');
+            try {
+                const data = await dashFetch('/api/dashboard/patrimonio');
+                const s = data.summary || {};
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio líquido', dashMoney(s.patrimonio_liquido), 'Estimativa atual', dashTone(s.patrimonio_liquido))}
+                        ${dashKpi('fa-solid fa-chart-pie', 'Investimentos', dashMoney(s.investimentos), 'Ativos financeiros', 'neutral')}
+                        ${dashKpi('fa-solid fa-wallet', 'Caixa estimado', dashMoney(s.caixa_estimado), 'Saldo acumulado', dashTone(s.caixa_estimado))}
+                        ${dashKpi('fa-solid fa-money-bill-transfer', 'Dívidas', dashMoney(s.dividas), 'Passivos', s.dividas > 0 ? 'warning' : 'positive')}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('Composição patrimonial', 'fa-solid fa-chart-pie', '<div class="dash-chart-box"><canvas id="dashNetComposition"></canvas></div>')}
+                        ${dashPanel('Evolução estimada', 'fa-solid fa-chart-line', '<div class="dash-chart-box"><canvas id="dashNetMonthly"></canvas></div>')}
+                    </div>
+                `);
+                const comp = (data.composition || []).filter(r => Math.abs(r.value || 0) > 0);
+                updateOrCreateChart('dashNetComposition', 'doughnut', {
+                    labels: comp.map(r => r.label),
+                    datasets: [{ data: comp.map(r => Math.abs(r.value)), backgroundColor: ['#14b8a6', '#3b82f6', '#dc2626'], borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 }]
+                }, dashChartOptions({ scales: {} }));
+                const monthly = data.monthly || [];
+                updateOrCreateChart('dashNetMonthly', 'line', {
+                    labels: monthly.map(r => r.label),
+                    datasets: [{ label: 'Patrimônio estimado', data: monthly.map(r => r.patrimonio_estimado), borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.12)', tension: 0.35, fill: true }]
+                }, dashChartOptions());
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        async function dashLoadDebt() {
+            dashSetLoading('Carregando dívidas...');
+            try {
+                const data = await dashFetch('/api/dashboard/patrimonio');
+                const s = data.summary || {};
+                dashRender(`
+                    <div class="dash-kpi-grid">
+                        ${dashKpi('fa-solid fa-money-bill-transfer', 'Saldo de dívidas', dashMoney(s.dividas), 'Empréstimos em aberto', s.dividas > 0 ? 'warning' : 'positive')}
+                        ${dashKpi('fa-solid fa-scale-balanced', 'Impacto no patrimônio', dashMoney(-(s.dividas || 0)), 'Passivo líquido', s.dividas > 0 ? 'negative' : 'positive')}
+                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio após dívidas', dashMoney(s.patrimonio_liquido), 'Visão consolidada', dashTone(s.patrimonio_liquido))}
+                    </div>
+                    <div class="dash-panel-grid">
+                        ${dashPanel('Dívidas no patrimônio', 'fa-solid fa-chart-pie', '<div class="dash-chart-box"><canvas id="dashDebtComposition"></canvas></div>')}
+                        ${dashPanel('Leitura executiva', 'fa-solid fa-lightbulb', `
+                            <div class="dash-insight-list">
+                                <div class="dash-insight dash-status-${s.dividas > 0 ? 'warning' : 'positive'}"><i class="fa-solid fa-circle"></i><span>${s.dividas > 0 ? 'Há saldo de empréstimos abatendo o patrimônio líquido.' : 'Não há saldo de empréstimos em aberto nos dados atuais.'}</span></div>
+                                <div class="dash-insight dash-status-neutral"><i class="fa-solid fa-circle"></i><span>Use a aba Empréstimos para revisar credores, pagamentos e abatimentos.</span></div>
+                            </div>`)}
+                    </div>
+                `);
+                updateOrCreateChart('dashDebtComposition', 'doughnut', {
+                    labels: ['Investimentos', 'Caixa estimado', 'Dívidas'],
+                    datasets: [{ data: [Math.abs(s.investimentos || 0), Math.abs(s.caixa_estimado || 0), Math.abs(s.dividas || 0)], backgroundColor: ['#14b8a6', '#3b82f6', '#dc2626'], borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 }]
+                }, dashChartOptions({ scales: {} }));
+            } catch (e) { console.error(e); dashSetError(e); }
+        }
+
+        function dashColors() {
+            return ['#3b82f6', '#14b8a6', '#16a34a', '#f59e0b', '#dc2626', '#06b6d4', '#8b5cf6', '#ec4899', '#64748b', '#f97316'];
         }
 
         // ── Relatório Anual ───────────────────────────────────────────────────

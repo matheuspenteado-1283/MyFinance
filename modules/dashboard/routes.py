@@ -7,6 +7,9 @@ from flask import request, jsonify, send_file, session
 from . import bp
 from .db import (
     get_dashboard_data, get_annual_report,
+    get_dashboard_overview, get_dashboard_expenses, get_dashboard_revenues,
+    get_dashboard_budget, get_dashboard_investments, get_dashboard_pnl,
+    get_dashboard_cashflow, get_dashboard_net_worth,
     get_relatorio_anual_despesas, get_relatorio_anual_receitas,
     MONTH_LABELS,
 )
@@ -21,6 +24,72 @@ def api_get_dashboard_data():
         return jsonify({'error': 'Mês não informado'}), 400
     data = get_dashboard_data(session['user_email'], mes)
     return jsonify(data)
+
+
+def _dashboard_params():
+    from datetime import datetime
+    today = datetime.now()
+    mes = request.args.get('mes') or today.strftime('%Y-%m')
+    ano = request.args.get('ano', type=int) or int(mes[:4])
+    return mes, ano
+
+
+def _json_dashboard(loader):
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    mes, ano = _dashboard_params()
+    try:
+        return jsonify(loader(session['user_email'], mes, ano))
+    except Exception:
+        traceback.print_exc()
+        return jsonify({'error': 'Erro interno'}), 500
+
+
+@bp.route('/api/dashboard/overview', methods=['GET'])
+def api_dashboard_overview():
+    return _json_dashboard(get_dashboard_overview)
+
+
+@bp.route('/api/dashboard/despesas', methods=['GET'])
+def api_dashboard_despesas():
+    return _json_dashboard(get_dashboard_expenses)
+
+
+@bp.route('/api/dashboard/receitas', methods=['GET'])
+def api_dashboard_receitas():
+    return _json_dashboard(get_dashboard_revenues)
+
+
+@bp.route('/api/dashboard/budget', methods=['GET'])
+def api_dashboard_budget():
+    return _json_dashboard(get_dashboard_budget)
+
+
+@bp.route('/api/dashboard/investimentos', methods=['GET'])
+def api_dashboard_investimentos():
+    return _json_dashboard(get_dashboard_investments)
+
+
+@bp.route('/api/dashboard/pnl', methods=['GET'])
+def api_dashboard_pnl():
+    return _json_dashboard(get_dashboard_pnl)
+
+
+@bp.route('/api/dashboard/fluxo-caixa', methods=['GET'])
+def api_dashboard_fluxo_caixa():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    _, ano = _dashboard_params()
+    try:
+        return jsonify(get_dashboard_cashflow(session['user_email'], ano))
+    except Exception:
+        traceback.print_exc()
+        return jsonify({'error': 'Erro interno'}), 500
+
+
+@bp.route('/api/dashboard/patrimonio', methods=['GET'])
+def api_dashboard_patrimonio():
+    return _json_dashboard(get_dashboard_net_worth)
 
 
 @bp.route('/api/relatorio_anual', methods=['GET'])

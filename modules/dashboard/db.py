@@ -1,6 +1,7 @@
 from db.connection import get_connection
 
 MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+MONTH_KEYS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
 
 def init_tables():
@@ -45,6 +46,491 @@ def get_dashboard_data(user_email: str, mes_referencia: str):
         'annual_net': annual_net,
         'ano': ano,
         'mes': mes_referencia,
+    }
+
+
+def _to_float(value):
+    return float(value or 0)
+
+
+def _months_for_year(ano):
+    return [f'{ano}-{m:02d}' for m in range(1, 13)]
+
+
+def _budget_month_col(mes):
+    try:
+        return f"valor_{MONTH_KEYS[int(mes.split('-')[1]) - 1]}"
+    except Exception:
+        return 'valor_jan'
+
+
+def _monthly_expenses(conn, user_email, mes):
+    row = conn.execute('''
+        SELECT COALESCE(SUM(valor_eur), 0) AS total
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
+    ''', (user_email, mes)).fetchone()
+    return _to_float(row['total'])
+
+
+def _monthly_revenues(conn, user_email, mes):
+    row = conn.execute('''
+        SELECT
+            COALESCE((
+                SELECT SUM(valor_eur)
+                FROM receitas_mensais
+                WHERE user_email=%s AND mes_referencia=%s
+            ), 0) +
+            COALESCE((
+                SELECT SUM(d.valor_eur)
+                FROM despesas_mensais d
+                WHERE d.user_email=%s
+                  AND d.mes_referencia=%s
+                  AND d.receita=1
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM receitas_mensais r
+                      WHERE r.user_email=d.user_email
+                        AND r.despesa_mensal_id=d.id
+                  )
+            ), 0) AS total
+    ''', (user_email, mes, user_email, mes)).fetchone()
+    return _to_float(row['total'])
+
+
+def _investment_summary(conn, user_email):
+    row = conn.execute('''
+        SELECT
+            COALESCE(SUM(COALESCE(valor_atual, 0)), 0) AS valor_atual,
+            COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) AS valor_investido,
+            COALESCE(SUM(COALESCE(taxa, 0)), 0) AS taxas,
+            COALESCE(SUM(COALESCE(aporte, 0)), 0) AS aportes
+        FROM lcto_investimentos
+        WHERE user_email=%s
+    ''', (user_email,)).fetchone()
+    valor_atual = _to_float(row['valor_atual'])
+    valor_investido = _to_float(row['valor_investido'])
+    taxas = _to_float(row['taxas'])
+    pnl = valor_atual - valor_investido - taxas
+    return {
+        'valor_atual': valor_atual,
+        'valor_investido': valor_investido,
+        'taxas': taxas,
+        'aportes': _to_float(row['aportes']),
+        'pnl': pnl,
+        'pnl_pct': (pnl / valor_investido * 100) if valor_investido else 0,
+    }
+
+
+def _debt_summary(conn, user_email):
+    row = conn.execute('''
+        SELECT
+            COALESCE(SUM(CASE WHEN tipo = 'Empréstimo' THEN valor_operacao ELSE 0 END), 0) AS total_emprestado,
+            COALESCE(SUM(CASE WHEN tipo IN ('Pagamento', 'Abatimento') THEN valor_operacao ELSE 0 END), 0) AS total_pago
+        FROM lcto_emprestimos
+        WHERE user_email=%s
+    ''', (user_email,)).fetchone()
+    total_emprestado = _to_float(row['total_emprestado'])
+    total_pago = _to_float(row['total_pago'])
+    return {
+        'total_emprestado': total_emprestado,
+        'total_pago': total_pago,
+        'saldo': total_emprestado - total_pago,
+    }
+
+
+def _cash_balance_until(conn, user_email, mes):
+    row = conn.execute('''
+        SELECT COALESCE(SUM(CASE WHEN receita=0 OR receita IS NULL THEN valor_eur ELSE 0 END), 0) AS despesas
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia <= %s
+    ''', (user_email, mes)).fetchone()
+    rec_row = conn.execute('''
+        SELECT
+            COALESCE((
+                SELECT SUM(valor_eur)
+                FROM receitas_mensais
+                WHERE user_email=%s AND mes_referencia <= %s
+            ), 0) +
+            COALESCE((
+                SELECT SUM(d.valor_eur)
+                FROM despesas_mensais d
+                WHERE d.user_email=%s
+                  AND d.mes_referencia <= %s
+                  AND d.receita=1
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM receitas_mensais r
+                      WHERE r.user_email=d.user_email
+                        AND r.despesa_mensal_id=d.id
+                  )
+            ), 0) AS total
+    ''', (user_email, mes, user_email, mes)).fetchone()
+    return _to_float(rec_row['total']) - _to_float(row['despesas'])
+
+
+def get_dashboard_expenses(user_email: str, mes: str, ano: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        SELECT COALESCE(categoria_final, 'Sem Categoria') AS categoria, COALESCE(SUM(valor_eur), 0) AS total
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
+        GROUP BY COALESCE(categoria_final, 'Sem Categoria')
+        ORDER BY total DESC
+    ''', (user_email, mes))
+    by_category = [dict(r) for r in c.fetchall()]
+
+    c.execute('''
+        SELECT COALESCE(conta_bancaria, 'Sem Conta') AS conta, COALESCE(SUM(valor_eur), 0) AS total
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
+        GROUP BY COALESCE(conta_bancaria, 'Sem Conta')
+        ORDER BY total DESC
+    ''', (user_email, mes))
+    by_account = [dict(r) for r in c.fetchall()]
+
+    c.execute('''
+        SELECT mes_referencia AS mes, COALESCE(SUM(valor_eur), 0) AS total
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia LIKE %s AND (receita IS NULL OR receita=0)
+        GROUP BY mes_referencia
+        ORDER BY mes_referencia
+    ''', (user_email, f'{ano}-%'))
+    monthly_map = {r['mes']: _to_float(r['total']) for r in c.fetchall()}
+
+    c.execute('''
+        SELECT data, descricao, COALESCE(categoria_final, 'Sem Categoria') AS categoria,
+               COALESCE(conta_bancaria, 'Sem Conta') AS conta, valor_eur
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
+        ORDER BY valor_eur DESC
+        LIMIT 8
+    ''', (user_email, mes))
+    top_transactions = [dict(r) for r in c.fetchall()]
+    conn.close()
+
+    total = sum(_to_float(r['total']) for r in by_category)
+    return {
+        'mes': mes,
+        'ano': ano,
+        'total': total,
+        'by_category': by_category,
+        'by_account': by_account,
+        'monthly': [{'mes': m, 'label': MONTH_LABELS[i], 'total': monthly_map.get(m, 0)} for i, m in enumerate(_months_for_year(ano))],
+        'top_transactions': top_transactions,
+    }
+
+
+def get_dashboard_revenues(user_email: str, mes: str, ano: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        SELECT COALESCE(tipo_receita, 'Sem Tipo') AS tipo, COALESCE(SUM(valor_eur), 0) AS total
+        FROM receitas_mensais
+        WHERE user_email=%s AND mes_referencia=%s
+        GROUP BY COALESCE(tipo_receita, 'Sem Tipo')
+        ORDER BY total DESC
+    ''', (user_email, mes))
+    by_type = [dict(r) for r in c.fetchall()]
+
+    c.execute('''
+        SELECT mes_referencia AS mes, COALESCE(SUM(valor_eur), 0) AS total
+        FROM receitas_mensais
+        WHERE user_email=%s AND mes_referencia LIKE %s
+        GROUP BY mes_referencia
+        ORDER BY mes_referencia
+    ''', (user_email, f'{ano}-%'))
+    monthly_map = {r['mes']: _to_float(r['total']) for r in c.fetchall()}
+
+    c.execute('''
+        SELECT data, COALESCE(tipo_receita, 'Sem Tipo') AS tipo, COALESCE(conta_bancaria, 'Sem Conta') AS conta,
+               valor_eur, moeda_original
+        FROM receitas_mensais
+        WHERE user_email=%s AND mes_referencia=%s
+        ORDER BY valor_eur DESC
+        LIMIT 8
+    ''', (user_email, mes))
+    top_transactions = [dict(r) for r in c.fetchall()]
+    conn.close()
+
+    total = sum(_to_float(r['total']) for r in by_type)
+    months = _months_for_year(ano)
+    non_zero = [monthly_map.get(m, 0) for m in months if monthly_map.get(m, 0) > 0]
+    return {
+        'mes': mes,
+        'ano': ano,
+        'total': total,
+        'media_mensal': sum(non_zero) / len(non_zero) if non_zero else 0,
+        'by_type': by_type,
+        'monthly': [{'mes': m, 'label': MONTH_LABELS[i], 'total': monthly_map.get(m, 0)} for i, m in enumerate(months)],
+        'top_transactions': top_transactions,
+    }
+
+
+def get_dashboard_budget(user_email: str, mes: str, ano: int):
+    conn = get_connection()
+    month_col = _budget_month_col(mes)
+    budget_rows = conn.execute(f'''
+        SELECT tipo, categoria_nome, tipo_categoria, COALESCE({month_col}, 0) AS valor_budget
+        FROM budget_items
+        WHERE user_email=%s AND ano=%s
+        ORDER BY tipo, categoria_nome
+    ''', (user_email, ano)).fetchall()
+
+    desp_rows = conn.execute('''
+        SELECT LOWER(TRIM(COALESCE(categoria_final, ''))) AS key, COALESCE(SUM(valor_eur), 0) AS total
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
+        GROUP BY LOWER(TRIM(COALESCE(categoria_final, '')))
+    ''', (user_email, mes)).fetchall()
+    rec_rows = conn.execute('''
+        SELECT LOWER(TRIM(COALESCE(tipo_receita, ''))) AS key, COALESCE(SUM(valor_eur), 0) AS total
+        FROM receitas_mensais
+        WHERE user_email=%s AND mes_referencia=%s
+        GROUP BY LOWER(TRIM(COALESCE(tipo_receita, '')))
+    ''', (user_email, mes)).fetchall()
+    conn.close()
+
+    desp_map = {r['key']: _to_float(r['total']) for r in desp_rows}
+    rec_map = {r['key']: _to_float(r['total']) for r in rec_rows}
+
+    rows = []
+    for row in budget_rows:
+        b = dict(row)
+        key = (b['categoria_nome'] or '').strip().lower()
+        real = rec_map.get(key, 0) if b['tipo'] == 'receita' else desp_map.get(key, 0)
+        budget = _to_float(b['valor_budget'])
+        diff = real - budget
+        rows.append({
+            'tipo': b['tipo'],
+            'categoria': b['categoria_nome'],
+            'grupo': b['tipo_categoria'] or '',
+            'budget': budget,
+            'real': real,
+            'diff': diff,
+            'used_pct': (real / budget * 100) if budget else 0,
+        })
+
+    desp_budget = sum(r['budget'] for r in rows if r['tipo'] == 'despesa')
+    desp_real = sum(r['real'] for r in rows if r['tipo'] == 'despesa')
+    rec_budget = sum(r['budget'] for r in rows if r['tipo'] == 'receita')
+    rec_real = sum(r['real'] for r in rows if r['tipo'] == 'receita')
+    return {
+        'mes': mes,
+        'ano': ano,
+        'summary': {
+            'despesas_budget': desp_budget,
+            'despesas_real': desp_real,
+            'receitas_budget': rec_budget,
+            'receitas_real': rec_real,
+            'saldo_budget': rec_budget - desp_budget,
+            'saldo_real': rec_real - desp_real,
+            'despesas_used_pct': (desp_real / desp_budget * 100) if desp_budget else 0,
+        },
+        'rows': rows,
+        'top_over': sorted([r for r in rows if r['tipo'] == 'despesa'], key=lambda x: x['diff'], reverse=True)[:8],
+    }
+
+
+def get_dashboard_investments(user_email: str, mes: str, ano: int):
+    conn = get_connection()
+    c = conn.cursor()
+    summary = _investment_summary(conn, user_email)
+
+    c.execute('''
+        SELECT COALESCE(tp_investimento, 'Sem Tipo') AS tipo,
+               COALESCE(SUM(valor_atual), 0) AS valor_atual,
+               COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) AS valor_investido
+        FROM lcto_investimentos
+        WHERE user_email=%s
+        GROUP BY COALESCE(tp_investimento, 'Sem Tipo')
+        ORDER BY valor_atual DESC
+    ''', (user_email,))
+    by_type = [dict(r) for r in c.fetchall()]
+
+    c.execute('''
+        SELECT COALESCE(banco, 'Sem Banco') AS banco, COALESCE(SUM(valor_atual), 0) AS valor_atual
+        FROM lcto_investimentos
+        WHERE user_email=%s
+        GROUP BY COALESCE(banco, 'Sem Banco')
+        ORDER BY valor_atual DESC
+    ''', (user_email,))
+    by_bank = [dict(r) for r in c.fetchall()]
+
+    c.execute('''
+        SELECT tp_investimento, banco, moeda, valor_atual,
+               COALESCE(valor_inv, 0) * COALESCE(qtd, 0) AS valor_investido,
+               COALESCE(valor_atual, 0) - (COALESCE(valor_inv, 0) * COALESCE(qtd, 0)) - COALESCE(taxa, 0) AS pnl
+        FROM lcto_investimentos
+        WHERE user_email=%s
+        ORDER BY valor_atual DESC
+        LIMIT 10
+    ''', (user_email,))
+    positions = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return {'mes': mes, 'ano': ano, 'summary': summary, 'by_type': by_type, 'by_bank': by_bank, 'positions': positions}
+
+
+def get_dashboard_pnl(user_email: str, mes: str, ano: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        SELECT COALESCE(tp_investimento, 'Investimentos') AS grupo,
+               COALESCE(SUM(valor_atual), 0) - COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) - COALESCE(SUM(taxa), 0) AS pnl
+        FROM lcto_investimentos
+        WHERE user_email=%s
+        GROUP BY COALESCE(tp_investimento, 'Investimentos')
+        ORDER BY pnl DESC
+    ''', (user_email,))
+    investment_pnl = [dict(r) for r in c.fetchall()]
+
+    c.execute('''
+        SELECT COALESCE(symbol, 'Sem Ativo') AS grupo, COALESCE(SUM(gross_pl), 0) AS pnl
+        FROM trader_positions
+        WHERE user_email=%s AND (periodo=%s OR open_time LIKE %s OR close_time LIKE %s)
+        GROUP BY COALESCE(symbol, 'Sem Ativo')
+        ORDER BY pnl DESC
+    ''', (user_email, mes, f'{mes}%', f'{mes}%'))
+    trader_pnl = [dict(r) for r in c.fetchall()]
+    conn.close()
+
+    total_investments = sum(_to_float(r['pnl']) for r in investment_pnl)
+    total_trader = sum(_to_float(r['pnl']) for r in trader_pnl)
+    combined = [{'origem': 'Investimentos', **r} for r in investment_pnl] + [{'origem': 'Trader', **r} for r in trader_pnl]
+    return {
+        'mes': mes,
+        'ano': ano,
+        'summary': {
+            'pnl_investimentos': total_investments,
+            'pnl_trader': total_trader,
+            'pnl_total': total_investments + total_trader,
+        },
+        'by_group': combined,
+        'top_gains': sorted(combined, key=lambda x: _to_float(x['pnl']), reverse=True)[:5],
+        'top_losses': sorted(combined, key=lambda x: _to_float(x['pnl']))[:5],
+    }
+
+
+def get_dashboard_cashflow(user_email: str, ano: int):
+    conn = get_connection()
+    months = _months_for_year(ano)
+    rows = []
+    saldo = 0
+    for i, mes in enumerate(months):
+        receitas = _monthly_revenues(conn, user_email, mes)
+        despesas = _monthly_expenses(conn, user_email, mes)
+        net = receitas - despesas
+        saldo += net
+        rows.append({
+            'mes': mes,
+            'label': MONTH_LABELS[i],
+            'receitas': receitas,
+            'despesas': despesas,
+            'saldo_mes': net,
+            'saldo_acumulado': saldo,
+        })
+    conn.close()
+    return {
+        'ano': ano,
+        'rows': rows,
+        'summary': {
+            'receitas': sum(r['receitas'] for r in rows),
+            'despesas': sum(r['despesas'] for r in rows),
+            'saldo': sum(r['saldo_mes'] for r in rows),
+            'menor_saldo': min([r['saldo_acumulado'] for r in rows], default=0),
+        },
+    }
+
+
+def get_dashboard_net_worth(user_email: str, mes: str, ano: int):
+    conn = get_connection()
+    investimentos = _investment_summary(conn, user_email)
+    dividas = _debt_summary(conn, user_email)
+    caixa = _cash_balance_until(conn, user_email, mes)
+    patrimonio = investimentos['valor_atual'] + caixa - dividas['saldo']
+
+    cashflow = []
+    saldo = 0
+    for i, month in enumerate(_months_for_year(ano)):
+        saldo += _monthly_revenues(conn, user_email, month) - _monthly_expenses(conn, user_email, month)
+        cashflow.append({
+            'mes': month,
+            'label': MONTH_LABELS[i],
+            'patrimonio_estimado': investimentos['valor_atual'] + saldo - dividas['saldo'],
+        })
+    conn.close()
+    return {
+        'mes': mes,
+        'ano': ano,
+        'summary': {
+            'investimentos': investimentos['valor_atual'],
+            'caixa_estimado': caixa,
+            'dividas': dividas['saldo'],
+            'patrimonio_liquido': patrimonio,
+        },
+        'composition': [
+            {'label': 'Investimentos', 'value': investimentos['valor_atual']},
+            {'label': 'Caixa estimado', 'value': caixa},
+            {'label': 'Dívidas', 'value': -dividas['saldo']},
+        ],
+        'monthly': cashflow,
+    }
+
+
+def get_dashboard_overview(user_email: str, mes: str, ano: int):
+    conn = get_connection()
+    receitas = _monthly_revenues(conn, user_email, mes)
+    despesas = _monthly_expenses(conn, user_email, mes)
+    investimentos = _investment_summary(conn, user_email)
+    dividas = _debt_summary(conn, user_email)
+    caixa = _cash_balance_until(conn, user_email, mes)
+    budget_col = _budget_month_col(mes)
+    row = conn.execute(f'''
+        SELECT
+            COALESCE(SUM(CASE WHEN tipo='despesa' THEN {budget_col} ELSE 0 END), 0) AS budget_despesas,
+            COALESCE(SUM(CASE WHEN tipo='receita' THEN {budget_col} ELSE 0 END), 0) AS budget_receitas
+        FROM budget_items
+        WHERE user_email=%s AND ano=%s
+    ''', (user_email, ano)).fetchone()
+    conn.close()
+
+    cashflow = get_dashboard_cashflow(user_email, ano)
+    patrimonio = investimentos['valor_atual'] + caixa - dividas['saldo']
+    budget_despesas = _to_float(row['budget_despesas'])
+    budget_receitas = _to_float(row['budget_receitas'])
+    saldo = receitas - despesas
+    insights = []
+    if budget_despesas and despesas > budget_despesas:
+        insights.append({'tone': 'negative', 'text': 'Despesas acima do budget mensal.'})
+    elif budget_despesas:
+        insights.append({'tone': 'positive', 'text': 'Despesas dentro do budget mensal.'})
+    if investimentos['pnl'] < 0:
+        insights.append({'tone': 'negative', 'text': 'P&L de investimentos está negativo.'})
+    elif investimentos['valor_investido']:
+        insights.append({'tone': 'positive', 'text': 'Carteira de investimentos com P&L positivo.'})
+    if saldo < 0:
+        insights.append({'tone': 'warning', 'text': 'Saldo do mês está negativo; revise despesas variáveis.'})
+    if not insights:
+        insights.append({'tone': 'neutral', 'text': 'Ainda não há dados suficientes para insights automáticos.'})
+
+    return {
+        'mes': mes,
+        'ano': ano,
+        'kpis': {
+            'receitas': receitas,
+            'despesas': despesas,
+            'saldo': saldo,
+            'budget_usado_pct': (despesas / budget_despesas * 100) if budget_despesas else 0,
+            'budget_despesas': budget_despesas,
+            'budget_receitas': budget_receitas,
+            'investimentos': investimentos['valor_atual'],
+            'pnl': investimentos['pnl'],
+            'patrimonio_liquido': patrimonio,
+            'dividas': dividas['saldo'],
+        },
+        'cashflow': cashflow['rows'],
+        'insights': insights,
     }
 
 
