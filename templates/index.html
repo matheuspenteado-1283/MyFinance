@@ -377,12 +377,12 @@
             display: grid;
             grid-template-columns: minmax(340px, 400px) 1fr;
             gap: 1.5rem;
-            align-items: stretch;
-            height: calc(100vh - 200px);
-            min-height: 500px;
+            align-items: start;
         }
         .rel-din-sidebar {
-            height: 100%;
+            position: sticky;
+            top: 0;
+            max-height: calc(100vh - 120px);
             overflow-y: auto;
             overflow-x: hidden;
             scrollbar-width: thin;
