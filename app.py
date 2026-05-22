@@ -19,6 +19,7 @@ from modules.trader import bp as trader_bp
 from modules.dashboard import bp as dashboard_bp
 from modules.relatorios import bp as relatorios_bp
 from modules.budget import bp as budget_bp
+from modules.ai_agent import bp as ai_agent_bp
 
 
 def _start_keep_alive():
@@ -82,6 +83,7 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(relatorios_bp)
     app.register_blueprint(budget_bp)
+    app.register_blueprint(ai_agent_bp)
 
     return app
 

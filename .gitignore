@@ -48,3 +48,9 @@ MyFinance/
 
 # Amostras locais
 Samples/
+
+# Documentos e apresentações (binários)
+*.pptx
+*.docx
+*.xlsx
+slide-*.jpg

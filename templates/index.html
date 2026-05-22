@@ -1044,6 +1044,147 @@
             transform: translateY(-50%) scale(1.1);
         }
 
+        /* ── Assistente IA ──────────────────────────── */
+        .ai-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.25rem; }
+        .ai-tab {
+            padding:7px 14px; border-radius:8px; border:1px solid var(--glass-border);
+            background:var(--glass-bg); color:var(--text-muted); font-size:0.82rem;
+            font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+        }
+        .ai-tab:hover { border-color:var(--primary); color:var(--text-light); }
+        .ai-tab.active {
+            background:var(--primary-gradient); color:#fff;
+            border-color:transparent; box-shadow:0 2px 12px rgba(59,130,246,0.4);
+        }
+        .ai-tab-content { display:none; }
+        .ai-tab-content.active { display:block; }
+        .ai-analysis-btn {
+            display:inline-flex; align-items:center; gap:8px;
+            padding:10px 22px; border-radius:10px; border:none; cursor:pointer;
+            background:var(--primary-gradient); color:#fff; font-size:0.9rem;
+            font-weight:600; transition:all 0.2s; margin-bottom:1.25rem;
+        }
+        .ai-analysis-btn:hover { opacity:0.88; transform:translateY(-1px); }
+        .ai-analysis-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .ai-result-area { min-height:80px; }
+        .ai-spinner {
+            display:flex; align-items:center; gap:10px; color:var(--text-muted);
+            padding:1.5rem; font-size:0.9rem;
+        }
+        .ai-spinner i { animation:spin 1s linear infinite; color:var(--primary); }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .ai-alert-card {
+            background:var(--glass-bg); border:1px solid var(--glass-border);
+            border-radius:12px; padding:14px 18px; margin-bottom:10px;
+            border-left:4px solid var(--primary);
+        }
+        .ai-alert-card.high { border-left-color:var(--error); }
+        .ai-alert-card.medium { border-left-color:var(--warning); }
+        .ai-alert-card.low { border-left-color:var(--success); }
+        .ai-alert-title { font-weight:600; margin-bottom:4px; font-size:0.92rem; }
+        .ai-alert-msg { color:var(--text-muted); font-size:0.84rem; margin-bottom:6px; }
+        .ai-alert-action {
+            font-size:0.8rem; color:var(--primary); font-style:italic;
+        }
+        .ai-badge {
+            display:inline-block; padding:2px 9px; border-radius:20px;
+            font-size:0.72rem; font-weight:600; text-transform:uppercase; margin-right:6px;
+        }
+        .ai-badge-high { background:rgba(239,68,68,0.15); color:#fca5a5; }
+        .ai-badge-medium { background:rgba(245,158,11,0.15); color:#fcd34d; }
+        .ai-badge-low { background:rgba(16,185,129,0.15); color:#6ee7b7; }
+        .ai-score-circle {
+            width:110px; height:110px; border-radius:50%;
+            background:conic-gradient(var(--primary) var(--pct), rgba(255,255,255,0.08) 0);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            font-size:2rem; font-weight:800; margin:0 auto 1rem;
+            box-shadow:0 0 30px rgba(59,130,246,0.3);
+        }
+        .ai-score-grade { font-size:0.85rem; font-weight:600; color:var(--text-muted); }
+        .ai-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+        .ai-card {
+            background:var(--glass-bg); border:1px solid var(--glass-border);
+            border-radius:12px; padding:16px;
+        }
+        .ai-card-title { font-weight:600; font-size:0.88rem; margin-bottom:8px; color:var(--text-light); }
+        .ai-card-value { font-size:1.5rem; font-weight:700; }
+        .ai-card-sub { font-size:0.78rem; color:var(--text-muted); margin-top:3px; }
+        .ai-tip-card {
+            background:var(--glass-bg); border:1px solid var(--glass-border);
+            border-radius:12px; padding:16px 18px; margin-bottom:10px;
+        }
+        .ai-tip-title { font-weight:600; font-size:0.9rem; margin-bottom:5px; }
+        .ai-tip-desc { color:var(--text-muted); font-size:0.83rem; line-height:1.5; }
+        .ai-tip-meta { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+        .ai-pill {
+            font-size:0.73rem; padding:2px 9px; border-radius:20px; font-weight:500;
+        }
+        .ai-pill-easy { background:rgba(16,185,129,0.15); color:#6ee7b7; }
+        .ai-pill-medium { background:rgba(245,158,11,0.15); color:#fcd34d; }
+        .ai-pill-hard { background:rgba(239,68,68,0.15); color:#fca5a5; }
+        .ai-pill-high { background:rgba(59,130,246,0.15); color:#93c5fd; }
+        .ai-pill-low { background:rgba(148,163,184,0.15); color:#94a3b8; }
+        .ai-saving { color:var(--success); font-weight:700; font-size:0.88rem; margin-top:6px; }
+        .ai-chat-wrap {
+            display:flex; flex-direction:column;
+            height:520px; background:var(--glass-bg);
+            border:1px solid var(--glass-border); border-radius:14px; overflow:hidden;
+        }
+        .ai-chat-history {
+            flex:1; overflow-y:auto; padding:16px;
+            display:flex; flex-direction:column; gap:10px;
+        }
+        .ai-chat-history::-webkit-scrollbar { width:5px; }
+        .ai-chat-history::-webkit-scrollbar-thumb { background:rgba(99,102,241,0.4); border-radius:4px; }
+        .ai-msg { max-width:82%; padding:10px 14px; border-radius:12px; font-size:0.86rem; line-height:1.55; }
+        .ai-msg-user {
+            align-self:flex-end; background:var(--primary-gradient);
+            color:#fff; border-bottom-right-radius:4px;
+        }
+        .ai-msg-assistant {
+            align-self:flex-start; background:rgba(30,41,59,0.9);
+            border:1px solid var(--glass-border); color:var(--text-light);
+            border-bottom-left-radius:4px; white-space:pre-wrap;
+        }
+        .ai-suggestions { display:flex; gap:6px; flex-wrap:wrap; padding:8px 16px 4px; }
+        .ai-suggestion-chip {
+            background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3);
+            color:#93c5fd; border-radius:20px; padding:4px 12px; font-size:0.76rem;
+            cursor:pointer; transition:all 0.15s;
+        }
+        .ai-suggestion-chip:hover { background:rgba(59,130,246,0.2); }
+        .ai-chat-input-row {
+            display:flex; gap:8px; padding:12px 16px;
+            border-top:1px solid var(--glass-border); background:rgba(15,23,42,0.6);
+        }
+        .ai-chat-input {
+            flex:1; background:rgba(30,41,59,0.6); border:1px solid var(--glass-border);
+            border-radius:10px; padding:10px 14px; color:var(--text-light);
+            font-size:0.88rem; outline:none; resize:none; font-family:inherit; height:42px;
+        }
+        .ai-chat-input:focus { border-color:var(--primary); }
+        .ai-send-btn {
+            width:42px; height:42px; border-radius:10px; border:none;
+            background:var(--primary-gradient); color:#fff; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            font-size:0.9rem; transition:opacity 0.2s;
+        }
+        .ai-send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+        .ai-dimension-bar {
+            height:6px; border-radius:4px; background:rgba(255,255,255,0.08);
+            margin-top:4px; overflow:hidden;
+        }
+        .ai-dimension-bar-fill { height:100%; border-radius:4px; transition:width 0.6s ease; }
+        .ai-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+        .ai-table th {
+            text-align:left; padding:8px 12px; color:var(--text-muted);
+            font-weight:500; border-bottom:1px solid var(--glass-border);
+        }
+        .ai-table td {
+            padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.04);
+        }
+        .ai-table tr:hover td { background:rgba(255,255,255,0.03); }
+
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=trader-filters-1">
 </head>
@@ -1097,6 +1238,9 @@
             </button>
 
             <div class="side-section">Relatórios</div>
+            <button class="side-link" data-module="ai_agent" onclick="openModule('ai_agent')">
+                <i class="fa-solid fa-robot"></i><span>Assistente IA</span>
+            </button>
             <button class="side-link" data-module="dashboard" onclick="openModule('dashboard')">
                 <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
             </button>
@@ -1258,6 +1402,114 @@
                 <div class="menu-title">Configurações</div>
             </div>
         </div>
+    </div>
+
+    <!-- Módulo Assistente IA -->
+    <div class="container module-container module-fullscreen" id="aiAgentModule" style="display:none;">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.5rem;">
+            <div>
+                <h1 style="margin:0;display:flex;align-items:center;gap:10px;">
+                    <i class="fa-solid fa-robot" style="color:var(--primary);"></i> Assistente IA
+                </h1>
+                <small style="color:var(--text-muted);" id="aiLastUpdated">Clique em Analisar para gerar a análise</small>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <select id="aiMesSel" style="background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-light);padding:6px 10px;border-radius:8px;font-size:0.83rem;" onchange="aiOnMonthChange()"></select>
+                <button class="ai-analysis-btn" style="padding:7px 16px;font-size:0.82rem;" onclick="aiClearCache()">
+                    <i class="fa-solid fa-rotate"></i> Atualizar Cache
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="ai-tabs">
+            <button class="ai-tab active" onclick="showAiTab('alerts')"><i class="fa-solid fa-bell"></i> Alertas</button>
+            <button class="ai-tab" onclick="showAiTab('health')"><i class="fa-solid fa-heart-pulse"></i> Saúde Financeira</button>
+            <button class="ai-tab" onclick="showAiTab('economy')"><i class="fa-solid fa-lightbulb"></i> Dicas de Economia</button>
+            <button class="ai-tab" onclick="showAiTab('investments')"><i class="fa-solid fa-seedling"></i> Dicas de Investimento</button>
+            <button class="ai-tab" onclick="showAiTab('portfolio')"><i class="fa-solid fa-chart-pie"></i> Análise de Carteira</button>
+            <button class="ai-tab" onclick="showAiTab('trader')"><i class="fa-solid fa-arrow-trend-up"></i> Análise Trader</button>
+            <button class="ai-tab" onclick="showAiTab('chat')"><i class="fa-solid fa-comments"></i> Chat</button>
+        </div>
+
+        <!-- TAB: Alertas -->
+        <div id="aiTab-alerts" class="ai-tab-content active">
+            <button class="ai-analysis-btn" id="btnAlerts" onclick="loadAiAnalysis('alerts','/api/ai/alerts','renderAiAlerts')">
+                <i class="fa-solid fa-magnifying-glass"></i> Analisar Alertas
+            </button>
+            <div class="ai-result-area" id="res-alerts"></div>
+        </div>
+
+        <!-- TAB: Saúde Financeira -->
+        <div id="aiTab-health" class="ai-tab-content">
+            <button class="ai-analysis-btn" id="btnHealth" onclick="loadAiAnalysis('health','/api/ai/health','renderAiHealth')">
+                <i class="fa-solid fa-magnifying-glass"></i> Analisar Saúde Financeira
+            </button>
+            <div class="ai-result-area" id="res-health"></div>
+        </div>
+
+        <!-- TAB: Dicas de Economia -->
+        <div id="aiTab-economy" class="ai-tab-content">
+            <button class="ai-analysis-btn" id="btnEconomy" onclick="loadAiAnalysis('economy','/api/ai/economy-tips','renderAiEconomy')">
+                <i class="fa-solid fa-magnifying-glass"></i> Gerar Dicas de Economia
+            </button>
+            <div class="ai-result-area" id="res-economy"></div>
+        </div>
+
+        <!-- TAB: Dicas de Investimento -->
+        <div id="aiTab-investments" class="ai-tab-content">
+            <button class="ai-analysis-btn" id="btnInvestments" onclick="loadAiAnalysis('investments','/api/ai/investment-tips','renderAiInvestmentTips')">
+                <i class="fa-solid fa-magnifying-glass"></i> Gerar Dicas de Investimento
+            </button>
+            <div class="ai-result-area" id="res-investments"></div>
+        </div>
+
+        <!-- TAB: Análise de Carteira -->
+        <div id="aiTab-portfolio" class="ai-tab-content">
+            <button class="ai-analysis-btn" id="btnPortfolio" onclick="loadAiAnalysis('portfolio','/api/ai/portfolio','renderAiPortfolio')">
+                <i class="fa-solid fa-magnifying-glass"></i> Analisar Carteira
+            </button>
+            <div class="ai-result-area" id="res-portfolio"></div>
+        </div>
+
+        <!-- TAB: Análise Trader -->
+        <div id="aiTab-trader" class="ai-tab-content">
+            <button class="ai-analysis-btn" id="btnTrader" onclick="loadAiAnalysis('trader','/api/ai/trader-analysis','renderAiTrader')">
+                <i class="fa-solid fa-magnifying-glass"></i> Analisar Operações Trader
+            </button>
+            <div class="ai-result-area" id="res-trader"></div>
+        </div>
+
+        <!-- TAB: Chat -->
+        <div id="aiTab-chat" class="ai-tab-content">
+            <div class="ai-chat-wrap">
+                <div class="ai-chat-history" id="aiChatHistory">
+                    <div class="ai-msg ai-msg-assistant" style="opacity:0.7;font-style:italic;">
+                        Olá! Sou seu assistente financeiro. Tenho acesso a todos os seus dados na plataforma. Como posso ajudar?
+                    </div>
+                </div>
+                <div class="ai-suggestions" id="aiSuggestions">
+                    <span class="ai-suggestion-chip" onclick="aiUseSuggestion(this)">Como está minha saúde financeira?</span>
+                    <span class="ai-suggestion-chip" onclick="aiUseSuggestion(this)">Quais são meus maiores gastos?</span>
+                    <span class="ai-suggestion-chip" onclick="aiUseSuggestion(this)">Como está minha carteira de investimentos?</span>
+                </div>
+                <div class="ai-chat-input-row">
+                    <textarea class="ai-chat-input" id="aiChatInput" placeholder="Pergunte sobre suas finanças..." rows="1"
+                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"></textarea>
+                    <button class="ai-send-btn" id="aiSendBtn" onclick="sendAiMessage()" title="Enviar">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            <div style="text-align:right;margin-top:8px;">
+                <button onclick="aiClearChat()" style="background:none;border:none;color:var(--text-muted);font-size:0.78rem;cursor:pointer;">
+                    <i class="fa-solid fa-trash"></i> Limpar conversa
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Módulo Temporário (Em Construção) -->
@@ -3845,6 +4097,7 @@
             'cad_investimentos': 'Cadastro de Investimentos',
             'cad_tipo_imposto': 'Cadastro de Tipos de Imposto',
             'avancado': 'Avançado',
+            'ai_agent': 'Assistente IA',
         };
 
         function showGoodbyeMessage() {
@@ -3915,6 +4168,7 @@
                 'trader':            () => { document.getElementById('traderModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initTrader(); },
                 'lcto_investimentos': () => { document.getElementById('lctoInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadLctoInvestimentos(); },
                 'avancado':          () => { document.getElementById('avancadoModule').style.display = 'block'; nav.style.maxWidth = '800px'; },
+                'ai_agent':          () => { document.getElementById('aiAgentModule').style.display = 'block'; nav.style.maxWidth = '1400px'; initAiAgent(); },
             };
 
             if (moduleMap[moduleKey]) {
@@ -9455,6 +9709,386 @@
                 console.error(e);
                 document.getElementById('budgetCompStatus').textContent = 'Erro ao carregar dados.';
             }
+        }
+
+
+        // ── Assistente IA ────────────────────────────────────────────────
+
+        function initAiAgent() {
+            _aiPopulateMonths();
+            // load chat history on open
+            fetch('/api/ai/chat/history')
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (!data || !data.history || data.history.length === 0) return;
+                    const hist = document.getElementById('aiChatHistory');
+                    data.history.forEach(m => _aiAppendMsg(m.role, m.content));
+                    hist.scrollTop = hist.scrollHeight;
+                }).catch(() => {});
+        }
+
+        function _aiPopulateMonths() {
+            const sel = document.getElementById('aiMesSel');
+            if (!sel || sel.options.length > 0) return;
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                const label = d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+                const opt = new Option(label.charAt(0).toUpperCase()+label.slice(1), val);
+                sel.appendChild(opt);
+            }
+        }
+
+        function aiOnMonthChange() { /* allow re-analysis with new month on next click */ }
+
+        function showAiTab(tab) {
+            document.querySelectorAll('.ai-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.ai-tab-content').forEach(c => {
+                c.classList.remove('active'); c.style.display = 'none';
+            });
+            const content = document.getElementById('aiTab-' + tab);
+            if (content) { content.style.display = 'block'; content.classList.add('active'); }
+            event.currentTarget.classList.add('active');
+        }
+
+        async function loadAiAnalysis(key, endpoint, renderFn) {
+            const mes = document.getElementById('aiMesSel').value;
+            const btn = document.getElementById('btn' + key.charAt(0).toUpperCase() + key.slice(1));
+            const res = document.getElementById('res-' + key);
+            if (btn) { btn.disabled = true; }
+            res.innerHTML = `<div class="ai-spinner"><i class="fa-solid fa-spinner"></i> A analisar dados com IA... aguarde.</div>`;
+            try {
+                const resp = await fetch(`${endpoint}?mes=${mes}`);
+                const data = await resp.json();
+                if (data.error) {
+                    res.innerHTML = `<div style="color:var(--error);padding:1rem;">${data.error}</div>`;
+                } else {
+                    window[renderFn](data, res);
+                    const ts = data._cached ? 'resultado em cache' : `gerado agora`;
+                    document.getElementById('aiLastUpdated').textContent = `Última análise: ${ts} — ${data._period || mes}`;
+                }
+            } catch(e) {
+                res.innerHTML = `<div style="color:var(--error);padding:1rem;">Erro de ligação ao servidor.</div>`;
+            } finally {
+                if (btn) { btn.disabled = false; }
+            }
+        }
+
+        function renderAiAlerts(data, el) {
+            if (!data.alerts || data.alerts.length === 0) {
+                el.innerHTML = `<div class="form-panel" style="text-align:center;padding:2rem;">
+                    <i class="fa-solid fa-circle-check" style="font-size:2.5rem;color:var(--success);margin-bottom:0.75rem;display:block;"></i>
+                    <strong>Sem alertas</strong><p style="color:var(--text-muted);margin-top:4px;">${data.summary||'Tudo em ordem.'}</p>
+                </div>`;
+                return;
+            }
+            const severityLabel = {high:'Alto',medium:'Médio',low:'Baixo'};
+            let html = `<p style="color:var(--text-muted);margin-bottom:1rem;font-size:0.88rem;">${data.summary||''}</p>`;
+            data.alerts.forEach(a => {
+                html += `<div class="ai-alert-card ${a.severity}">
+                    <div class="ai-alert-title">
+                        <span class="ai-badge ai-badge-${a.severity}">${severityLabel[a.severity]||a.severity}</span>${a.title}
+                    </div>
+                    <div class="ai-alert-msg">${a.message}</div>
+                    <div class="ai-alert-action"><i class="fa-solid fa-arrow-right"></i> ${a.action}</div>
+                </div>`;
+            });
+            el.innerHTML = html;
+        }
+
+        function renderAiHealth(data, el) {
+            const pct = (data.score || 0) + '%';
+            const gradeColor = {A:'var(--success)',B:'#6ee7b7',C:'var(--warning)',D:'#fb923c',F:'var(--error)'}[data.grade] || 'var(--primary)';
+            const statusLabel = {excellent:'Excelente',good:'Bom',fair:'Regular',poor:'Fraco'};
+            const barColor = {excellent:'var(--success)',good:'#6ee7b7',fair:'var(--warning)',poor:'var(--error)'};
+            let dims = '';
+            (data.dimensions || []).forEach(d => {
+                const w = (d.score||0)+'%';
+                const bc = barColor[d.status] || 'var(--primary)';
+                dims += `<div style="margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                        <span style="font-size:0.85rem;font-weight:500;">${d.name}</span>
+                        <span style="font-size:0.83rem;color:${bc};">${d.score}/100</span>
+                    </div>
+                    <div class="ai-dimension-bar"><div class="ai-dimension-bar-fill" style="width:${w};background:${bc};"></div></div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;">${d.comment}</div>
+                </div>`;
+            });
+            el.innerHTML = `
+                <div style="text-align:center;margin-bottom:1.5rem;">
+                    <div class="ai-score-circle" style="--pct:${pct};">
+                        <span>${data.score}</span><span class="ai-score-grade" style="color:${gradeColor};">Nota ${data.grade}</span>
+                    </div>
+                    <p style="color:var(--text-muted);max-width:600px;margin:0 auto;font-size:0.88rem;">${data.summary||''}</p>
+                </div>
+                <div class="ai-grid">
+                    <div class="form-panel"><h3 style="margin-bottom:1rem;font-size:0.95rem;">Dimensões</h3>${dims}</div>
+                    <div>
+                        <div class="form-panel" style="margin-bottom:12px;">
+                            <h3 style="margin-bottom:0.75rem;font-size:0.88rem;color:var(--success);"><i class="fa-solid fa-thumbs-up"></i> Pontos Fortes</h3>
+                            ${(data.strengths||[]).map(s=>`<div style="font-size:0.83rem;color:var(--text-muted);margin-bottom:5px;">• ${s}</div>`).join('')}
+                        </div>
+                        <div class="form-panel">
+                            <h3 style="margin-bottom:0.75rem;font-size:0.88rem;color:var(--warning);"><i class="fa-solid fa-triangle-exclamation"></i> A Melhorar</h3>
+                            ${(data.improvements||[]).map(s=>`<div style="font-size:0.83rem;color:var(--text-muted);margin-bottom:5px;">• ${s}</div>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderAiEconomy(data, el) {
+            const cur = data.currency || 'EUR';
+            let html = `<div style="display:flex;align-items:center;gap:16px;margin-bottom:1.25rem;flex-wrap:wrap;">
+                <div class="form-panel" style="padding:12px 20px;flex:0 0 auto;">
+                    <div style="font-size:0.78rem;color:var(--text-muted);">Poupança Potencial Total/mês</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:var(--success);">${cur} ${_fmtN(data.total_potential_saving)}</div>
+                </div>
+                <p style="color:var(--text-muted);font-size:0.87rem;flex:1;">${data.summary||''}</p>
+            </div>`;
+            (data.tips || []).forEach(t => {
+                const diffClass = {easy:'ai-pill-easy',medium:'ai-pill-medium',hard:'ai-pill-hard'}[t.difficulty]||'ai-pill-medium';
+                const impClass = {high:'ai-pill-high',medium:'ai-pill-medium',low:'ai-pill-low'}[t.impact]||'ai-pill-medium';
+                const diffLabel = {easy:'Fácil',medium:'Médio',hard:'Difícil'};
+                const impLabel = {high:'Alto Impacto',medium:'Médio Impacto',low:'Baixo Impacto'};
+                html += `<div class="ai-tip-card">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+                        <div class="ai-tip-title">${t.title}</div>
+                        <div class="ai-saving">-${t.currency||cur} ${_fmtN(t.potential_saving)}/mês</div>
+                    </div>
+                    <div class="ai-tip-desc">${t.description}</div>
+                    <div class="ai-tip-meta">
+                        <span class="ai-pill ${diffClass}">${diffLabel[t.difficulty]||t.difficulty}</span>
+                        <span class="ai-pill ${impClass}">${impLabel[t.impact]||t.impact}</span>
+                        <span style="font-size:0.78rem;color:var(--text-muted);align-self:center;">${t.category}</span>
+                    </div>
+                </div>`;
+            });
+            el.innerHTML = html;
+        }
+
+        function renderAiInvestmentTips(data, el) {
+            const ps = data.portfolio_summary || {};
+            const alloc = data.suggested_allocation || {};
+            const typeLabel = {rebalance:'Rebalancear',diversify:'Diversificar',increase:'Aumentar',reduce:'Reduzir',switch:'Trocar'};
+            const prioClass = {high:'ai-badge-high',medium:'ai-badge-medium',low:'ai-badge-low'};
+            const prioLabel = {high:'Alta','medium':'Média','low':'Baixa'};
+            let html = `<div class="ai-grid" style="margin-bottom:1.25rem;">
+                <div class="ai-card"><div class="ai-card-title">Valor Investido</div>
+                    <div class="ai-card-value">${_fmtN(ps.total_invested)}</div></div>
+                <div class="ai-card"><div class="ai-card-title">Valor Atual</div>
+                    <div class="ai-card-value">${_fmtN(ps.current_value)}</div></div>
+                <div class="ai-card"><div class="ai-card-title">Rentabilidade Total</div>
+                    <div class="ai-card-value" style="color:${(ps.total_return_pct||0)>=0?'var(--success)':'var(--error)'};">${(ps.total_return_pct||0).toFixed(1)}%</div></div>
+                <div class="ai-card"><div class="ai-card-title">Score de Diversificação</div>
+                    <div class="ai-card-value">${ps.diversification_score||'—'}/100</div></div>
+            </div>
+            <p style="color:var(--text-muted);margin-bottom:1.25rem;font-size:0.87rem;">${data.summary||''}</p>`;
+            (data.tips || []).forEach(t => {
+                html += `<div class="ai-tip-card">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                        <span class="ai-badge ${prioClass[t.priority]||'ai-badge-medium'}">${prioLabel[t.priority]||t.priority}</span>
+                        <span style="font-size:0.73rem;color:var(--text-muted);background:rgba(255,255,255,0.05);border-radius:4px;padding:1px 7px;">${typeLabel[t.type]||t.type}</span>
+                        <span class="ai-tip-title">${t.title}</span>
+                    </div>
+                    <div class="ai-tip-desc">${t.description}</div>
+                </div>`;
+            });
+            if (Object.keys(alloc).length) {
+                html += `<div class="form-panel" style="margin-top:1rem;">
+                    <h3 style="font-size:0.88rem;margin-bottom:0.75rem;">Alocação Sugerida</h3>
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                        ${Object.entries(alloc).map(([k,v])=>`<div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:6px 12px;font-size:0.82rem;">
+                            <span style="color:var(--text-muted);">${k.replace(/_pct$/,'').replace(/_/g,' ')}</span>
+                            <strong style="color:var(--primary);margin-left:6px;">${v}%</strong>
+                        </div>`).join('')}
+                    </div>
+                </div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        function renderAiPortfolio(data, el) {
+            const p = data.performance || {};
+            const pnlColor = (p.total_profit||0) >= 0 ? 'var(--success)' : 'var(--error)';
+            let html = `<div class="ai-grid" style="margin-bottom:1.25rem;">
+                <div class="ai-card"><div class="ai-card-title">Total Investido</div><div class="ai-card-value">${_fmtN(p.total_invested)}</div></div>
+                <div class="ai-card"><div class="ai-card-title">Valor Atual</div><div class="ai-card-value">${_fmtN(p.current_value)}</div></div>
+                <div class="ai-card"><div class="ai-card-title">Lucro/Perda Total</div>
+                    <div class="ai-card-value" style="color:${pnlColor};">${_fmtN(p.total_profit)}</div></div>
+                <div class="ai-card"><div class="ai-card-title">Rentabilidade</div>
+                    <div class="ai-card-value" style="color:${pnlColor};">${(p.total_return_pct||0).toFixed(1)}%</div></div>
+            </div>`;
+            if ((data.by_type||[]).length) {
+                html += `<div class="form-panel" style="margin-bottom:1rem;">
+                    <h3 style="font-size:0.88rem;margin-bottom:0.75rem;">Por Tipo de Investimento</h3>
+                    <table class="ai-table"><thead><tr>
+                        <th>Tipo</th><th>Qtd</th><th>Valor</th><th>Rentab.</th><th>Alocação</th>
+                    </tr></thead><tbody>
+                    ${data.by_type.map(t=>`<tr>
+                        <td>${t.type}</td><td>${t.count||'—'}</td>
+                        <td>${_fmtN(t.value)}</td>
+                        <td style="color:${(t.return_pct||0)>=0?'var(--success)':'var(--error)'};">${(t.return_pct||0).toFixed(1)}%</td>
+                        <td>${(t.allocation_pct||0).toFixed(1)}%</td>
+                    </tr>`).join('')}
+                    </tbody></table>
+                </div>`;
+            }
+            if (data.analysis) {
+                html += `<div class="form-panel" style="margin-bottom:1rem;">
+                    <h3 style="font-size:0.88rem;margin-bottom:0.75rem;"><i class="fa-solid fa-brain" style="color:var(--primary);"></i> Análise IA</h3>
+                    <p style="color:var(--text-muted);font-size:0.86rem;line-height:1.6;white-space:pre-wrap;">${data.analysis}</p>
+                </div>`;
+            }
+            if ((data.rebalancing_suggestions||[]).length) {
+                html += `<div class="form-panel">
+                    <h3 style="font-size:0.88rem;margin-bottom:0.75rem;">Sugestões de Rebalanceamento</h3>
+                    ${data.rebalancing_suggestions.map(s=>`<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:0.84rem;">
+                        <span style="background:rgba(59,130,246,0.15);color:#93c5fd;border-radius:6px;padding:2px 8px;flex-shrink:0;">${s.action}</span>
+                        <div><strong>${s.asset}</strong><span style="color:var(--text-muted);margin-left:6px;">— ${s.reason}</span></div>
+                    </div>`).join('')}
+                </div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        function renderAiTrader(data, el) {
+            const st = data.statistics || {};
+            const pnlColor = (st.total_pnl||0) >= 0 ? 'var(--success)' : 'var(--error)';
+            const riskColor = {conservative:'var(--success)',moderate:'var(--warning)',aggressive:'var(--error)'}[data.risk_assessment?.level] || 'var(--text-muted)';
+            const prioClass = {high:'ai-badge-high',medium:'ai-badge-medium',low:'ai-badge-low'};
+            const prioLabel = {high:'Alta',medium:'Média',low:'Baixa'};
+            let html = `<div class="ai-grid" style="margin-bottom:1.25rem;">
+                <div class="ai-card"><div class="ai-card-title">Total de Operações</div><div class="ai-card-value">${st.total_trades||0}</div></div>
+                <div class="ai-card"><div class="ai-card-title">Taxa de Acerto</div>
+                    <div class="ai-card-value" style="color:${(st.win_rate_pct||0)>=50?'var(--success)':'var(--error)'};">${(st.win_rate_pct||0).toFixed(1)}%</div>
+                    <div class="ai-card-sub">${st.winning_trades||0}W / ${st.losing_trades||0}L</div></div>
+                <div class="ai-card"><div class="ai-card-title">P&L Total</div>
+                    <div class="ai-card-value" style="color:${pnlColor};">${_fmtN(st.total_pnl)}</div></div>
+                <div class="ai-card"><div class="ai-card-title">Profit Factor</div>
+                    <div class="ai-card-value" style="color:${(st.profit_factor||0)>=1?'var(--success)':'var(--error)'};">${st.profit_factor!=null?st.profit_factor.toFixed(2):'—'}</div></div>
+            </div>`;
+            if ((data.by_symbol||[]).length) {
+                const recColor = {continue:'var(--success)',reduce:'var(--warning)',avoid:'var(--error)'};
+                const recLabel = {continue:'Continuar',reduce:'Reduzir',avoid:'Evitar'};
+                html += `<div class="form-panel" style="margin-bottom:1rem;">
+                    <h3 style="font-size:0.88rem;margin-bottom:0.75rem;">Por Símbolo</h3>
+                    <table class="ai-table"><thead><tr>
+                        <th>Símbolo</th><th>Ops</th><th>Win%</th><th>P&L Total</th><th>P&L Médio</th><th>Recomendação</th>
+                    </tr></thead><tbody>
+                    ${data.by_symbol.map(s=>`<tr>
+                        <td><strong>${s.symbol}</strong></td><td>${s.trades}</td>
+                        <td style="color:${(s.win_rate_pct||0)>=50?'var(--success)':'var(--error)'};">${(s.win_rate_pct||0).toFixed(1)}%</td>
+                        <td style="color:${(s.total_pnl||0)>=0?'var(--success)':'var(--error)'};">${_fmtN(s.total_pnl)}</td>
+                        <td style="color:${(s.avg_pnl||0)>=0?'var(--success)':'var(--error)'};">${_fmtN(s.avg_pnl)}</td>
+                        <td><span style="color:${recColor[s.recommendation]||'var(--text-muted)'};font-weight:600;font-size:0.8rem;">${recLabel[s.recommendation]||s.recommendation}</span></td>
+                    </tr>`).join('')}
+                    </tbody></table>
+                </div>`;
+            }
+            if (data.risk_assessment) {
+                const ra = data.risk_assessment;
+                html += `<div class="form-panel" style="margin-bottom:1rem;">
+                    <h3 style="font-size:0.88rem;margin-bottom:0.75rem;">Avaliação de Risco — Score: <span style="color:${riskColor}">${ra.score}/100 (${ra.level})</span></h3>
+                    ${(ra.issues||[]).map(i=>`<div style="font-size:0.83rem;color:var(--warning);margin-bottom:4px;">⚠ ${i}</div>`).join('')}
+                </div>`;
+            }
+            if ((data.suggestions||[]).length) {
+                html += `<div class="form-panel" style="margin-bottom:1rem;">
+                    <h3 style="font-size:0.88rem;margin-bottom:0.75rem;"><i class="fa-solid fa-brain" style="color:var(--primary);"></i> Sugestões de Melhoria</h3>
+                    ${data.suggestions.map(s=>`<div class="ai-tip-card" style="margin-bottom:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            <span class="ai-badge ${prioClass[s.priority]||'ai-badge-medium'}">${prioLabel[s.priority]||s.priority}</span>
+                            <span style="font-size:0.73rem;color:var(--text-muted);">${s.area?.replace(/_/g,' ')}</span>
+                            <strong style="font-size:0.88rem;">${s.title}</strong>
+                        </div>
+                        <div class="ai-tip-desc">${s.description}</div>
+                    </div>`).join('')}
+                </div>`;
+            }
+            if (data.overall_assessment) {
+                html += `<div class="form-panel">
+                    <h3 style="font-size:0.88rem;margin-bottom:0.75rem;">Avaliação Geral</h3>
+                    <p style="color:var(--text-muted);font-size:0.86rem;line-height:1.6;">${data.overall_assessment}</p>
+                </div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        async function sendAiMessage() {
+            const inp = document.getElementById('aiChatInput');
+            const msg = inp.value.trim();
+            if (!msg) return;
+            const mes = document.getElementById('aiMesSel').value;
+            inp.value = '';
+            _aiAppendMsg('user', msg);
+            document.getElementById('aiSendBtn').disabled = true;
+            document.getElementById('aiSuggestions').style.display = 'none';
+            const typingId = 'typing-' + Date.now();
+            _aiAppendMsg('assistant', '…', typingId);
+            try {
+                const resp = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({message: msg, mes}),
+                });
+                const data = await resp.json();
+                const typing = document.getElementById(typingId);
+                if (typing) typing.remove();
+                if (data.error) {
+                    _aiAppendMsg('assistant', '⚠ ' + data.error);
+                } else {
+                    _aiAppendMsg('assistant', data.reply);
+                    if ((data.suggestions||[]).length) {
+                        const sugg = document.getElementById('aiSuggestions');
+                        sugg.style.display = 'flex';
+                        sugg.innerHTML = data.suggestions.map(s =>
+                            `<span class="ai-suggestion-chip" onclick="aiUseSuggestion(this)">${s}</span>`
+                        ).join('');
+                    }
+                }
+            } catch(e) {
+                const typing = document.getElementById(typingId);
+                if (typing) typing.remove();
+                _aiAppendMsg('assistant', '⚠ Erro de ligação ao servidor.');
+            } finally {
+                document.getElementById('aiSendBtn').disabled = false;
+                const hist = document.getElementById('aiChatHistory');
+                hist.scrollTop = hist.scrollHeight;
+            }
+        }
+
+        function _aiAppendMsg(role, content, id) {
+            const hist = document.getElementById('aiChatHistory');
+            const div = document.createElement('div');
+            div.className = `ai-msg ai-msg-${role}`;
+            if (id) div.id = id;
+            div.textContent = content;
+            hist.appendChild(div);
+            hist.scrollTop = hist.scrollHeight;
+        }
+
+        function aiUseSuggestion(el) {
+            document.getElementById('aiChatInput').value = el.textContent;
+            sendAiMessage();
+        }
+
+        async function aiClearCache() {
+            await fetch('/api/ai/cache', {method:'DELETE'});
+            document.getElementById('aiLastUpdated').textContent = 'Cache limpo — clique em Analisar para regenerar';
+        }
+
+        async function aiClearChat() {
+            if (!confirm('Limpar o histórico do chat?')) return;
+            await fetch('/api/ai/chat/clear', {method:'DELETE'});
+            const hist = document.getElementById('aiChatHistory');
+            hist.innerHTML = `<div class="ai-msg ai-msg-assistant" style="opacity:0.7;font-style:italic;">
+                Olá! Sou seu assistente financeiro. Como posso ajudar?</div>`;
+        }
+
+        function _fmtN(v) {
+            if (v == null || isNaN(v)) return '—';
+            return Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
         }
 
     </script>

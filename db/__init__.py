@@ -22,6 +22,7 @@ def init_all():
         from modules.trader.db import init_tables as init_trader
         from modules.relatorios.db import init_tables as init_relatorios
         from modules.budget.db import init_tables as init_budget
+        from modules.ai_agent.db import init_tables as init_ai_agent
 
         init_auth()
         init_extratos()
@@ -39,5 +40,6 @@ def init_all():
         init_trader()
         init_relatorios()
         init_budget()
+        init_ai_agent()
     except Exception as e:
         print(f"[init_all] aviso: {e}", file=sys.stderr)

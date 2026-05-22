@@ -10,3 +10,5 @@ xlrd
 psycopg2-binary
 gunicorn
 python-dotenv
+anthropic
+openai
