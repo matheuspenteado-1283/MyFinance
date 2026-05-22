@@ -87,6 +87,37 @@ def logout():
     return jsonify({'status': 'ok'})
 
 
+@bp.route('/api/fix_email_migration', methods=['POST'])
+def api_fix_email_migration():
+    """Rota temporária — remover após usar uma vez."""
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    data = request.json or {}
+    old_email = data.get('old_email', '').strip().lower()
+    new_email = session['user_email'].lower()
+    if not old_email:
+        return jsonify({'error': 'old_email obrigatório'}), 400
+    from db.connection import get_connection
+    TABLES = [
+        'cad_investimentos', 'cad_despesas', 'cad_contas',
+        'cad_receitas', 'cad_usuarios', 'tb_tipo_imposto',
+    ]
+    conn = get_connection()
+    c = conn.cursor()
+    updated = {}
+    try:
+        for table in TABLES:
+            c.execute(f'UPDATE {table} SET user_email = %s WHERE LOWER(user_email) = %s', (new_email, old_email))
+            updated[table] = c.rowcount
+        conn.commit()
+        return jsonify({'status': 'ok', 'updated': updated})
+    except Exception as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 500
+    finally:
+        conn.close()
+
+
 @bp.route('/api/change_email', methods=['POST'])
 def api_change_email():
     if 'user_email' not in session:

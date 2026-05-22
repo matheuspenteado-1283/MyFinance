@@ -149,6 +149,7 @@ def change_user_email(current_email: str, password: str, new_email: str) -> dict
             return {'error': 'Este e-mail já está em uso'}
 
         TABLES = [
+            # lançamentos
             'despesas_mensais',
             'despesas_anuais',
             'receitas_mensais',
@@ -157,6 +158,13 @@ def change_user_email(current_email: str, password: str, new_email: str) -> dict
             'lcto_investimentos',
             'trader_positions',
             'relatorios_configurados',
+            # cadastros
+            'cad_investimentos',
+            'cad_despesas',
+            'cad_contas',
+            'cad_receitas',
+            'cad_usuarios',
+            'tb_tipo_imposto',
         ]
         for table in TABLES:
             c.execute(
