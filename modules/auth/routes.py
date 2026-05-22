@@ -1,6 +1,6 @@
 from flask import request, jsonify, session, render_template, current_app, url_for
 from . import bp
-from .db import register_user, verify_user, limpar_dados_usuario, create_reset_token, verify_reset_token, consume_reset_token
+from .db import register_user, verify_user, limpar_dados_usuario, create_reset_token, verify_reset_token, consume_reset_token, change_user_email
 from .email_utils import send_reset_email
 from modules.cadastros.db.despesas import clear_despesas
 from modules.cadastros.db.contas import clear_contas
@@ -85,6 +85,22 @@ def reset_password():
 def logout():
     session.pop('user_email', None)
     return jsonify({'status': 'ok'})
+
+
+@bp.route('/api/change_email', methods=['POST'])
+def api_change_email():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    data = request.json or {}
+    password = data.get('password', '').strip()
+    new_email = data.get('new_email', '').strip().lower()
+    if not password or not new_email:
+        return jsonify({'error': 'Preencha todos os campos'}), 400
+    result = change_user_email(session['user_email'], password, new_email)
+    if result.get('ok'):
+        session['user_email'] = new_email
+        return jsonify({'status': 'ok'})
+    return jsonify({'error': result['error']}), 400
 
 
 @bp.route('/api/limpar_dados', methods=['POST'])

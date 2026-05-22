@@ -3673,6 +3673,34 @@
             </button>
             <div id="limparCfgStatus" style="font-size: 0.9rem; color: var(--warning); margin-top: 0.5rem;"></div>
         </div>
+
+        <!-- Alterar E-mail de Acesso -->
+        <div class="form-panel">
+            <h3 style="margin-bottom:1rem;">Alterar E-mail de Acesso</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    Digite sua senha atual e o novo e-mail. Todos os seus dados serão migrados automaticamente.
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:4px;">Senha atual</label>
+                    <input type="password" id="changeEmailPassword"
+                           style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border);
+                                  background:var(--bg-input,#1e293b);color:var(--text);font-size:0.95rem;"
+                           placeholder="Digite sua senha">
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;color:var(--text-muted);display:block;margin-bottom:4px;">Novo e-mail</label>
+                    <input type="email" id="changeEmailNew"
+                           style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border);
+                                  background:var(--bg-input,#1e293b);color:var(--text);font-size:0.95rem;"
+                           placeholder="novo@email.com">
+                </div>
+                <button class="btn btn-xs secondary" onclick="submitChangeEmail()">
+                    <i class="fa-solid fa-envelope-circle-check"></i> Alterar E-mail
+                </button>
+                <div id="changeEmailStatus" style="font-size: 0.9rem; margin-top: 0.25rem; display:none;"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -7435,6 +7463,46 @@
                 }
             } catch(e) {
                 status.innerText = 'Erro: ' + e.message;
+            }
+        }
+
+        async function submitChangeEmail() {
+            const password  = document.getElementById('changeEmailPassword').value.trim();
+            const new_email = document.getElementById('changeEmailNew').value.trim();
+            const status    = document.getElementById('changeEmailStatus');
+
+            status.style.display = 'none';
+
+            if (!password || !new_email) {
+                status.style.color = '#f87171';
+                status.textContent = 'Preencha todos os campos.';
+                status.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/change_email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, new_email })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    status.style.color = '#4ade80';
+                    status.textContent = `E-mail alterado para ${new_email}. Por favor, faça login novamente.`;
+                    status.style.display = 'block';
+                    document.getElementById('changeEmailPassword').value = '';
+                    document.getElementById('changeEmailNew').value = '';
+                    setTimeout(() => location.reload(), 2500);
+                } else {
+                    status.style.color = '#f87171';
+                    status.textContent = data.error || 'Erro ao alterar e-mail.';
+                    status.style.display = 'block';
+                }
+            } catch {
+                status.style.color = '#f87171';
+                status.textContent = 'Erro de rede. Tente novamente.';
+                status.style.display = 'block';
             }
         }
 

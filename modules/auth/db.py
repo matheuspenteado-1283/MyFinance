@@ -129,6 +129,56 @@ def consume_reset_token(token: str, new_password: str) -> bool:
         conn.close()
 
 
+def change_user_email(current_email: str, password: str, new_email: str) -> dict:
+    current = current_email.lower().strip()
+    new = new_email.lower().strip()
+
+    if current == new:
+        return {'error': 'O novo e-mail é igual ao atual'}
+
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('SELECT password_hash FROM users WHERE email = %s', (current,))
+        row = c.fetchone()
+        if not row or not check_password_hash(row['password_hash'], password):
+            return {'error': 'Senha incorreta'}
+
+        c.execute('SELECT id FROM users WHERE email = %s', (new,))
+        if c.fetchone():
+            return {'error': 'Este e-mail já está em uso'}
+
+        TABLES = [
+            'despesas_mensais',
+            'despesas_anuais',
+            'receitas_mensais',
+            'lcto_impostos',
+            'lcto_emprestimos',
+            'lcto_investimentos',
+            'trader_positions',
+            'relatorios_configurados',
+        ]
+        for table in TABLES:
+            c.execute(
+                f'UPDATE {table} SET user_email = %s WHERE LOWER(user_email) = %s',
+                (new, current)
+            )
+
+        c.execute(
+            'UPDATE password_reset_tokens SET email = %s WHERE LOWER(email) = %s',
+            (new, current)
+        )
+        c.execute('UPDATE users SET email = %s WHERE email = %s', (new, current))
+
+        conn.commit()
+        return {'ok': True}
+    except Exception as exc:
+        conn.rollback()
+        return {'error': f'Erro interno: {exc}'}
+    finally:
+        conn.close()
+
+
 def limpar_dados_usuario(email: str):
     conn = get_connection()
     c = conn.cursor()
