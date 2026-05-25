@@ -74,31 +74,46 @@ class PGConnection:
         self.close()
 
 
+def _parse_db_url(db_url: str) -> dict:
+    """Extrai parâmetros de conexão do DATABASE_URL, ignorando parâmetros não suportados pelo psycopg2."""
+    import urllib.parse
+
+    # psycopg2 não suporta estes parâmetros de query string
+    UNSUPPORTED_PARAMS = {"channel_binding", "options"}
+
+    parsed = urllib.parse.urlparse(db_url)
+    params = {
+        "host":     parsed.hostname,
+        "port":     parsed.port or 5432,
+        "dbname":   parsed.path.lstrip("/"),
+        "user":     parsed.username,
+        "password": urllib.parse.unquote(parsed.password or ""),
+        "sslmode":  "require",
+        "connect_timeout": 10,
+    }
+
+    # Mantém apenas parâmetros suportados da query string
+    for key, value in urllib.parse.parse_qsl(parsed.query):
+        if key not in UNSUPPORTED_PARAMS and key not in params:
+            params[key] = value
+
+    return params
+
+
 def get_connection(max_retries: int = 4, retry_delay: float = 2.0) -> PGConnection:
-    """Conecta ao PostgreSQL com retry para aguentar cold start do Neon."""
     import sys
     db_url = os.getenv("DATABASE_URL")
 
     if not db_url:
         raise RuntimeError("DATABASE_URL não está configurada no ambiente")
 
-    url = db_url
-    if "sslmode" not in url:
-        sep = "&" if "?" in url else "?"
-        url = url + sep + "sslmode=require"
-
-    # Log do host para diagnóstico (sem expor credenciais)
-    try:
-        import urllib.parse
-        parsed = urllib.parse.urlparse(url)
-        print(f"[db] tentando conectar: host={parsed.hostname} port={parsed.port} db={parsed.path}", file=sys.stderr)
-    except Exception:
-        pass
+    params = _parse_db_url(db_url)
+    print(f"[db] conectando: host={params['host']} port={params['port']} db={params['dbname']}", file=sys.stderr)
 
     last_err: Exception = RuntimeError("Falha ao conectar")
     for attempt in range(max_retries):
         try:
-            conn = psycopg2.connect(url, connect_timeout=10)
+            conn = psycopg2.connect(**params)
             print(f"[db] conectado na tentativa {attempt + 1}", file=sys.stderr)
             return PGConnection(conn)
         except Exception as e:
