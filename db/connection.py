@@ -1,4 +1,5 @@
 import os
+import time
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
@@ -73,22 +74,33 @@ class PGConnection:
         self.close()
 
 
-def get_connection() -> PGConnection:
+def get_connection(max_retries: int = 4, retry_delay: float = 2.0) -> PGConnection:
+    """Conecta ao PostgreSQL com retry para aguentar cold start do Neon."""
     db_url = os.getenv("DATABASE_URL")
-    if db_url:
-        if "sslmode" not in db_url:
-            sep = "&" if "?" in db_url else "?"
-            db_url = db_url + sep + "sslmode=require"
-        # connect_timeout=10 dá tempo ao Neon acordar do cold start
-        conn = psycopg2.connect(db_url, connect_timeout=10)
-    else:
-        conn = psycopg2.connect(
-            host=os.getenv("DB_HOST", "localhost"),
-            port=int(os.getenv("DB_PORT", "5432")),
-            dbname=os.getenv("DB_NAME", "postgres"),
-            user=os.getenv("DB_USER", "postgres"),
-            password=os.getenv("DB_PASSWORD", ""),
-            sslmode="require",
-            connect_timeout=10,
-        )
-    return PGConnection(conn)
+    last_err: Exception = RuntimeError("DATABASE_URL não configurada")
+
+    for attempt in range(max_retries):
+        try:
+            if db_url:
+                url = db_url
+                if "sslmode" not in url:
+                    sep = "&" if "?" in url else "?"
+                    url = url + sep + "sslmode=require"
+                conn = psycopg2.connect(url, connect_timeout=10)
+            else:
+                conn = psycopg2.connect(
+                    host=os.getenv("DB_HOST", "localhost"),
+                    port=int(os.getenv("DB_PORT", "5432")),
+                    dbname=os.getenv("DB_NAME", "postgres"),
+                    user=os.getenv("DB_USER", "postgres"),
+                    password=os.getenv("DB_PASSWORD", ""),
+                    sslmode="require",
+                    connect_timeout=10,
+                )
+            return PGConnection(conn)
+        except Exception as e:
+            last_err = e
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+
+    raise last_err
