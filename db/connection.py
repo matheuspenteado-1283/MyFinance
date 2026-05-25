@@ -76,30 +76,34 @@ class PGConnection:
 
 def get_connection(max_retries: int = 4, retry_delay: float = 2.0) -> PGConnection:
     """Conecta ao PostgreSQL com retry para aguentar cold start do Neon."""
+    import sys
     db_url = os.getenv("DATABASE_URL")
-    last_err: Exception = RuntimeError("DATABASE_URL não configurada")
 
+    if not db_url:
+        raise RuntimeError("DATABASE_URL não está configurada no ambiente")
+
+    url = db_url
+    if "sslmode" not in url:
+        sep = "&" if "?" in url else "?"
+        url = url + sep + "sslmode=require"
+
+    # Log do host para diagnóstico (sem expor credenciais)
+    try:
+        import urllib.parse
+        parsed = urllib.parse.urlparse(url)
+        print(f"[db] tentando conectar: host={parsed.hostname} port={parsed.port} db={parsed.path}", file=sys.stderr)
+    except Exception:
+        pass
+
+    last_err: Exception = RuntimeError("Falha ao conectar")
     for attempt in range(max_retries):
         try:
-            if db_url:
-                url = db_url
-                if "sslmode" not in url:
-                    sep = "&" if "?" in url else "?"
-                    url = url + sep + "sslmode=require"
-                conn = psycopg2.connect(url, connect_timeout=10)
-            else:
-                conn = psycopg2.connect(
-                    host=os.getenv("DB_HOST", "localhost"),
-                    port=int(os.getenv("DB_PORT", "5432")),
-                    dbname=os.getenv("DB_NAME", "postgres"),
-                    user=os.getenv("DB_USER", "postgres"),
-                    password=os.getenv("DB_PASSWORD", ""),
-                    sslmode="require",
-                    connect_timeout=10,
-                )
+            conn = psycopg2.connect(url, connect_timeout=10)
+            print(f"[db] conectado na tentativa {attempt + 1}", file=sys.stderr)
             return PGConnection(conn)
         except Exception as e:
             last_err = e
+            print(f"[db] tentativa {attempt + 1}/{max_retries} falhou: {type(e).__name__}: {e}", file=sys.stderr)
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
 

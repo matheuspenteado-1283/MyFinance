@@ -15,6 +15,26 @@ def index():
     return render_template('index.html')
 
 
+@bp.route('/api/db-check')
+def db_check():
+    import os
+    from db.connection import get_connection
+    db_url = os.getenv("DATABASE_URL", "")
+    host_hint = ""
+    try:
+        import urllib.parse
+        parsed = urllib.parse.urlparse(db_url)
+        host_hint = f"{parsed.hostname}:{parsed.port}"
+    except Exception:
+        pass
+    try:
+        conn = get_connection(max_retries=1, retry_delay=0)
+        conn.close()
+        return jsonify({"status": "ok", "host": host_hint})
+    except Exception as e:
+        return jsonify({"status": "error", "host": host_hint, "error": str(e)}), 500
+
+
 @bp.route('/api/me', methods=['GET'])
 def api_me():
     if 'user_email' in session:
