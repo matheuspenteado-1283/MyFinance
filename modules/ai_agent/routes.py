@@ -2,10 +2,6 @@ import traceback
 from datetime import datetime
 from flask import request, jsonify, session
 from . import bp
-from .db import (
-    get_cached_analysis, save_analysis, clear_user_cache,
-    get_chat_history, save_chat_message, clear_chat_history,
-)
 from .collector import collect_financial_snapshot
 from . import analyst
 
@@ -21,6 +17,42 @@ def _period():
     return mes, int(mes[:4])
 
 
+# ── Cache helpers — falham silenciosamente se BD offline ─────────────────────
+
+def _get_cache(user_email, analysis_type, mes):
+    try:
+        from .db import get_cached_analysis
+        return get_cached_analysis(user_email, analysis_type, mes)
+    except Exception:
+        return None
+
+
+def _save_cache(user_email, analysis_type, result, mes, ttl_hours):
+    try:
+        from .db import save_analysis
+        save_analysis(user_email, analysis_type, result, period=mes, ttl_hours=ttl_hours)
+    except Exception:
+        pass  # cache indisponível — continua sem guardar
+
+
+def _get_history(user_email, limit=10):
+    try:
+        from .db import get_chat_history
+        return get_chat_history(user_email, limit=limit)
+    except Exception:
+        return []
+
+
+def _save_msg(user_email, role, content):
+    try:
+        from .db import save_chat_message
+        save_chat_message(user_email, role, content)
+    except Exception:
+        pass
+
+
+# ── Endpoint genérico para análises ──────────────────────────────────────────
+
 def _analysis_endpoint(analysis_type: str, analyzer_fn, ttl_hours: int = 6):
     err = _auth()
     if err:
@@ -28,22 +60,26 @@ def _analysis_endpoint(analysis_type: str, analyzer_fn, ttl_hours: int = 6):
     user_email = session['user_email']
     mes, ano = _period()
     force = request.args.get('refresh', '').lower() == 'true'
+
     if not force:
-        cached = get_cached_analysis(user_email, analysis_type, mes)
+        cached = _get_cache(user_email, analysis_type, mes)
         if cached:
             cached['_cached'] = True
             return jsonify(cached)
+
     try:
         snapshot = collect_financial_snapshot(user_email, mes, ano)
         result = analyzer_fn(snapshot)
         result['_period'] = mes
         result['_generated_at'] = datetime.utcnow().isoformat()
-        save_analysis(user_email, analysis_type, result, period=mes, ttl_hours=ttl_hours)
+        _save_cache(user_email, analysis_type, result, mes, ttl_hours)
         return jsonify(result)
     except Exception:
         traceback.print_exc()
         return jsonify({'error': 'Erro ao gerar análise. Verifique ANTHROPIC_API_KEY.'}), 500
 
+
+# ── Rotas ─────────────────────────────────────────────────────────────────────
 
 @bp.route('/api/ai/alerts', methods=['GET'])
 def api_ai_alerts():
@@ -93,11 +129,11 @@ def api_ai_chat():
     mes = data.get('mes', datetime.now().strftime('%Y-%m'))
     ano = int(mes[:4])
     try:
-        history = get_chat_history(user_email, limit=10)
+        history = _get_history(user_email, limit=10)
         snapshot = collect_financial_snapshot(user_email, mes, ano)
-        save_chat_message(user_email, 'user', message)
+        _save_msg(user_email, 'user', message)
         result = analyst.chat_with_analyst(snapshot, history, message)
-        save_chat_message(user_email, 'assistant', result['reply'])
+        _save_msg(user_email, 'assistant', result['reply'])
         return jsonify(result)
     except Exception:
         traceback.print_exc()
@@ -109,7 +145,7 @@ def api_ai_chat_history():
     err = _auth()
     if err:
         return err
-    history = get_chat_history(session['user_email'], limit=30)
+    history = _get_history(session['user_email'], limit=30)
     return jsonify({'history': history})
 
 
@@ -118,7 +154,11 @@ def api_ai_chat_clear():
     err = _auth()
     if err:
         return err
-    clear_chat_history(session['user_email'])
+    try:
+        from .db import clear_chat_history
+        clear_chat_history(session['user_email'])
+    except Exception:
+        pass
     return jsonify({'status': 'ok'})
 
 
@@ -127,5 +167,9 @@ def api_ai_clear_cache():
     err = _auth()
     if err:
         return err
-    clear_user_cache(session['user_email'])
-    return jsonify({'status': 'ok', 'message': 'Cache limpo com sucesso'})
+    try:
+        from .db import clear_user_cache
+        clear_user_cache(session['user_email'])
+    except Exception:
+        pass
+    return jsonify({'status': 'ok', 'message': 'Cache limpo'})

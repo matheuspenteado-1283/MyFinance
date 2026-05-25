@@ -74,14 +74,13 @@ class PGConnection:
 
 
 def get_connection() -> PGConnection:
-    # Suporta DATABASE_URL ou variáveis individuais (DB_HOST, DB_PASSWORD, etc.)
     db_url = os.getenv("DATABASE_URL")
     if db_url:
-        # Adicionar sslmode=require se não estiver presente (exigido pelo Supabase)
         if "sslmode" not in db_url:
             sep = "&" if "?" in db_url else "?"
             db_url = db_url + sep + "sslmode=require"
-        conn = psycopg2.connect(db_url)
+        # connect_timeout=10 dá tempo ao Neon acordar do cold start
+        conn = psycopg2.connect(db_url, connect_timeout=10)
     else:
         conn = psycopg2.connect(
             host=os.getenv("DB_HOST", "localhost"),
@@ -90,5 +89,6 @@ def get_connection() -> PGConnection:
             user=os.getenv("DB_USER", "postgres"),
             password=os.getenv("DB_PASSWORD", ""),
             sslmode="require",
+            connect_timeout=10,
         )
     return PGConnection(conn)

@@ -40,7 +40,11 @@ def login():
     data = request.json
     email = data.get('email')
     password = data.get('password')
-    if verify_user(email, password):
+    try:
+        ok = verify_user(email, password)
+    except Exception:
+        return jsonify({'error': 'Serviço indisponível. Tente novamente em instantes.'}), 503
+    if ok:
         session['user_email'] = email
         return jsonify({'status': 'ok'})
     return jsonify({'error': 'Credenciais inválidas'}), 401
