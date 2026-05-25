@@ -116,6 +116,7 @@ def init_db():
             mes_referencia TEXT,
             despesa_mensal_id INTEGER,
             comentarios TEXT,
+            pagador_usr TEXT,
             criado_em TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')

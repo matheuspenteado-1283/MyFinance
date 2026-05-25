@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS receitas_mensais (
     mes_referencia TEXT,
     despesa_mensal_id INTEGER,
     comentarios TEXT,
+    pagador_usr TEXT,
     criado_em TEXT DEFAULT to_char(NOW(), 'YYYY-MM-DD HH24:MI:SS')
 );
 

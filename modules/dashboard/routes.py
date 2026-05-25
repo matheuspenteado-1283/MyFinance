@@ -1,10 +1,22 @@
 import io
+import math
 import traceback
 
 import pandas as pd
 from flask import request, jsonify, send_file, session
 
 from . import bp
+
+
+def _sanitize(obj):
+    """Recursively replace non-finite floats (NaN, Inf) with 0 before JSON serialization."""
+    if isinstance(obj, float):
+        return 0.0 if not math.isfinite(obj) else obj
+    if isinstance(obj, dict):
+        return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize(v) for v in obj]
+    return obj
 from .db import (
     get_dashboard_data, get_annual_report,
     get_dashboard_overview, get_dashboard_expenses, get_dashboard_revenues,
@@ -31,15 +43,22 @@ def _dashboard_params():
     today = datetime.now()
     mes = request.args.get('mes') or today.strftime('%Y-%m')
     ano = request.args.get('ano', type=int) or int(mes[:4])
-    return mes, ano
+    usr = (request.args.get('usr') or 'all').lower()
+    if usr not in ('all', 'usr1', 'usr2'):
+        usr = 'all'
+    return mes, ano, usr
 
 
-def _json_dashboard(loader):
+def _json_dashboard(loader, pass_usr=True):
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    mes, ano = _dashboard_params()
+    mes, ano, usr = _dashboard_params()
     try:
-        return jsonify(loader(session['user_email'], mes, ano))
+        if pass_usr:
+            result = loader(session['user_email'], mes, ano, usr)
+        else:
+            result = loader(session['user_email'], mes, ano)
+        return jsonify(_sanitize(result))
     except Exception:
         traceback.print_exc()
         return jsonify({'error': 'Erro interno'}), 500
@@ -67,21 +86,21 @@ def api_dashboard_budget():
 
 @bp.route('/api/dashboard/investimentos', methods=['GET'])
 def api_dashboard_investimentos():
-    return _json_dashboard(get_dashboard_investments)
+    return _json_dashboard(get_dashboard_investments, pass_usr=False)
 
 
 @bp.route('/api/dashboard/pnl', methods=['GET'])
 def api_dashboard_pnl():
-    return _json_dashboard(get_dashboard_pnl)
+    return _json_dashboard(get_dashboard_pnl, pass_usr=False)
 
 
 @bp.route('/api/dashboard/fluxo-caixa', methods=['GET'])
 def api_dashboard_fluxo_caixa():
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    _, ano = _dashboard_params()
+    _, ano, usr = _dashboard_params()
     try:
-        return jsonify(get_dashboard_cashflow(session['user_email'], ano))
+        return jsonify(_sanitize(get_dashboard_cashflow(session['user_email'], ano, usr)))
     except Exception:
         traceback.print_exc()
         return jsonify({'error': 'Erro interno'}), 500

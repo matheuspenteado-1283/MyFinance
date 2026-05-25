@@ -18,9 +18,11 @@ def init_tables():
             mes_referencia TEXT,
             despesa_mensal_id INTEGER,
             comentarios TEXT,
+            pagador_usr TEXT,
             criado_em TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    conn.execute('ALTER TABLE receitas_mensais ADD COLUMN IF NOT EXISTS pagador_usr TEXT')
     conn.commit()
     conn.close()
 
@@ -41,19 +43,25 @@ def get_receitas_mensais(user_email, mes=None):
     return [dict(r) for r in rows]
 
 
+def _normalize_pagador(value):
+    v = (value or '').strip().lower() if isinstance(value, str) else value
+    return v if v in ('usr1', 'usr2') else None
+
+
 def add_receita_mensal(user_email, row):
     conn = get_connection()
     conn.execute('''
         INSERT INTO receitas_mensais
         (user_email, data, tipo_receita, valor_original, moeda_original, cotacao, valor_eur, valor_brl,
-         conta_bancaria, mes_referencia, despesa_mensal_id, comentarios)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+         conta_bancaria, mes_referencia, despesa_mensal_id, comentarios, pagador_usr)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     ''', (
         user_email,
         row.get('data'), row.get('tipo_receita'), row.get('valor_original'),
         row.get('moeda_original'), row.get('cotacao', 1), row.get('valor_eur'),
         row.get('valor_brl'), row.get('conta_bancaria'), row.get('mes_referencia'),
         row.get('despesa_mensal_id'), row.get('comentarios'),
+        _normalize_pagador(row.get('pagador_usr')),
     ))
     conn.commit()
     conn.close()
@@ -64,13 +72,14 @@ def update_receita_mensal(user_email, r_id, row):
     conn.execute('''
         UPDATE receitas_mensais SET
         data=%s, tipo_receita=%s, valor_original=%s, moeda_original=%s, cotacao=%s, valor_eur=%s, valor_brl=%s,
-        conta_bancaria=%s, mes_referencia=%s, comentarios=%s
+        conta_bancaria=%s, mes_referencia=%s, comentarios=%s, pagador_usr=%s
         WHERE id=%s AND user_email=%s
     ''', (
         row.get('data'), row.get('tipo_receita'), row.get('valor_original'),
         row.get('moeda_original'), row.get('cotacao', 1), row.get('valor_eur'),
         row.get('valor_brl'), row.get('conta_bancaria'), row.get('mes_referencia'),
-        row.get('comentarios'), r_id, user_email,
+        row.get('comentarios'), _normalize_pagador(row.get('pagador_usr')),
+        r_id, user_email,
     ))
     conn.commit()
     conn.close()

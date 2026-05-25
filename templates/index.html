@@ -2549,9 +2549,19 @@
                         <select id="rm_conta" class="auth-input"><option value="">—</option></select>
                     </div>
                 </div>
-                <div class="form-field" style="margin-top:1rem;">
-                    <label>Comentários</label>
-                    <input type="text" id="rm_comments" class="auth-input" placeholder="Observações...">
+                <div class="form-row" style="margin-top:1rem;">
+                    <div class="form-field">
+                        <label>Pagador</label>
+                        <select id="rm_pagador" class="auth-input">
+                            <option value="">—</option>
+                            <option value="usr1">USR1</option>
+                            <option value="usr2">USR2</option>
+                        </select>
+                    </div>
+                    <div class="form-field" style="grid-column: span 3;">
+                        <label>Comentários</label>
+                        <input type="text" id="rm_comments" class="auth-input" placeholder="Observações...">
+                    </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:1.2rem;">
                     <button type="submit" class="btn btn-xs secondary" id="rmSaveBtn" style="background:#10b981;"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
@@ -2676,6 +2686,12 @@
                 <div class="dash-controls">
                     <label for="dashMesRef">Mês</label>
                     <input type="month" id="dashMesRef" class="auth-input" onchange="loadDashboard()">
+                    <label for="dashUsrFilter">Usuário</label>
+                    <select id="dashUsrFilter" class="auth-input" onchange="loadDashboard()">
+                        <option value="all">Ambos</option>
+                        <option value="usr1">USR1</option>
+                        <option value="usr2">USR2</option>
+                    </select>
                     <button class="btn btn-xs secondary" onclick="loadDashboard()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
                 </div>
             </div>
@@ -6451,6 +6467,7 @@
         function openRmForm(id, data) {
             document.getElementById('rmFormPanel').style.display = 'block';
             document.getElementById('rmForm').reset();
+            applyUsrLabels('rm_pagador');
             const mesValue = document.getElementById('rmMesRef').value;
             
             if(id) {
@@ -6465,6 +6482,7 @@
                 document.getElementById('rm_valor_brl').value = data.valor_brl;
                 document.getElementById('rm_conta').value = data.conta_bancaria;
                 document.getElementById('rm_comments').value = data.comentarios;
+                document.getElementById('rm_pagador').value = data.pagador_usr || '';
                 document.getElementById('rmSaveBtn').innerHTML = '<i class="fa-solid fa-save"></i> Salvar';
             } else {
                 document.getElementById('rmFormTitle').innerText = 'Nova Receita';
@@ -6512,6 +6530,7 @@
                 valor_brl: parseFloat(document.getElementById('rm_valor_brl').value) || 0,
                 conta_bancaria: document.getElementById('rm_conta').value,
                 comentarios: document.getElementById('rm_comments').value,
+                pagador_usr: document.getElementById('rm_pagador').value || null,
                 mes_referencia: mesRef
             };
             
@@ -6676,6 +6695,7 @@
             if(!mesInput.value) {
                 mesInput.value = new Date().toISOString().substring(0, 7);
             }
+            await dashLoadUsrLabels();
             if (resetView) dashCurrentView = 'overview';
             await dashSetView(dashCurrentView, true);
         }
@@ -6717,15 +6737,48 @@
 
         function dashPeriod() {
             const mes = document.getElementById('dashMesRef').value || new Date().toISOString().substring(0, 7);
-            return { mes, ano: mes.substring(0, 4) };
+            const usrEl = document.getElementById('dashUsrFilter');
+            const usr = (usrEl && usrEl.value) ? usrEl.value : 'all';
+            return { mes, ano: mes.substring(0, 4), usr };
         }
 
         async function dashFetch(endpoint) {
-            const { mes, ano } = dashPeriod();
-            const res = await fetch(`${endpoint}?mes=${mes}&ano=${ano}`);
+            const { mes, ano, usr } = dashPeriod();
+            const res = await fetch(`${endpoint}?mes=${mes}&ano=${ano}&usr=${usr}`);
             const data = await res.json();
             if (!res.ok || data.error) throw new Error(data.error || 'Erro ao carregar dados');
             return data;
+        }
+
+        let usrLabelsCache = null;
+        async function getUsrLabels() {
+            if (usrLabelsCache) return usrLabelsCache;
+            try {
+                const res = await fetch('/api/cad_usuarios');
+                if (!res.ok) return { usr1: 'USR1', usr2: 'USR2' };
+                const usuarios = await res.json();
+                usrLabelsCache = {
+                    usr1: usuarios.map(u => u.chave_usr1).find(k => k) || 'USR1',
+                    usr2: usuarios.map(u => u.chave_usr2).find(k => k) || 'USR2',
+                };
+                return usrLabelsCache;
+            } catch (e) {
+                return { usr1: 'USR1', usr2: 'USR2' };
+            }
+        }
+
+        async function applyUsrLabels(selectId) {
+            const { usr1, usr2 } = await getUsrLabels();
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+            const o1 = sel.querySelector('option[value="usr1"]');
+            const o2 = sel.querySelector('option[value="usr2"]');
+            if (o1) o1.textContent = usr1;
+            if (o2) o2.textContent = usr2;
+        }
+
+        async function dashLoadUsrLabels() {
+            await applyUsrLabels('dashUsrFilter');
         }
 
         function dashSetLoading(message = 'Carregando dashboard...') {

@@ -1,7 +1,29 @@
+import math
 from db.connection import get_connection
 
 MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 MONTH_KEYS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+USR_VALID = ('all', 'usr1', 'usr2')
+
+
+def _norm_usr(usr):
+    return usr if usr in ('usr1', 'usr2') else 'all'
+
+
+def _desp_value_expr(usr: str, alias: str = '', value_col: str = 'valor_eur') -> str:
+    p = f'{alias}.' if alias else ''
+    # Treat NULL and PostgreSQL NaN (stored in REAL columns) as 0
+    col_safe = (
+        f"CASE WHEN {p}{value_col} IS NULL OR ({p}{value_col})::text = 'NaN' "
+        f"THEN 0::numeric ELSE {p}{value_col}::numeric END"
+    )
+    if usr == 'all':
+        return col_safe
+    # Safe TEXT→NUMERIC: NULLIF converts empty string to NULL, COALESCE to 0
+    u1 = f"COALESCE(CAST(NULLIF(TRIM(COALESCE({p}usr1::TEXT, '')), '') AS NUMERIC), 0)"
+    u2 = f"COALESCE(CAST(NULLIF(TRIM(COALESCE({p}usr2::TEXT, '')), '') AS NUMERIC), 0)"
+    target = f"COALESCE(CAST(NULLIF(TRIM(COALESCE({p}{usr}::TEXT, '')), '') AS NUMERIC), 0)"
+    return f'{col_safe} * COALESCE({target} / NULLIF({u1} + {u2}, 0), 0)'
 
 
 def init_tables():
@@ -50,7 +72,8 @@ def get_dashboard_data(user_email: str, mes_referencia: str):
 
 
 def _to_float(value):
-    return float(value or 0)
+    v = float(value or 0)
+    return 0.0 if not math.isfinite(v) else v
 
 
 def _months_for_year(ano):
@@ -64,37 +87,72 @@ def _budget_month_col(mes):
         return 'valor_jan'
 
 
-def _monthly_expenses(conn, user_email, mes):
-    row = conn.execute('''
-        SELECT COALESCE(SUM(valor_eur), 0) AS total
+def _monthly_expenses(conn, user_email, mes, usr='all'):
+    usr = _norm_usr(usr)
+    expr = _desp_value_expr(usr)
+    row = conn.execute(f'''
+        SELECT COALESCE(SUM({expr}), 0) AS total
         FROM despesas_mensais
         WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
     ''', (user_email, mes)).fetchone()
     return _to_float(row['total'])
 
 
-def _monthly_revenues(conn, user_email, mes):
-    row = conn.execute('''
+def _monthly_revenues(conn, user_email, mes, usr='all'):
+    usr = _norm_usr(usr)
+    despesa_value_unlinked = _desp_value_expr(usr, alias='d')
+    despesa_value_linked = _desp_value_expr(usr, alias='d')
+
+    if usr == 'all':
+        unlinked_rec_sql = '''
+            SELECT COALESCE(SUM(r.valor_eur), 0)
+            FROM receitas_mensais r
+            WHERE r.user_email=%s AND r.mes_referencia=%s
+              AND r.despesa_mensal_id IS NULL
+        '''
+        linked_rec_sql = f'''
+            SELECT COALESCE(SUM({despesa_value_linked}), 0)
+            FROM receitas_mensais r
+            JOIN despesas_mensais d ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
+            WHERE r.user_email=%s AND r.mes_referencia=%s
+              AND r.despesa_mensal_id IS NOT NULL
+        '''
+    else:
+        unlinked_rec_sql = f'''
+            SELECT COALESCE(SUM(r.valor_eur), 0)
+            FROM receitas_mensais r
+            WHERE r.user_email=%s AND r.mes_referencia=%s
+              AND r.despesa_mensal_id IS NULL
+              AND r.pagador_usr = '{usr}'
+        '''
+        linked_rec_sql = f'''
+            SELECT COALESCE(SUM({despesa_value_linked}), 0)
+            FROM receitas_mensais r
+            JOIN despesas_mensais d ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
+            WHERE r.user_email=%s AND r.mes_referencia=%s
+              AND r.despesa_mensal_id IS NOT NULL
+        '''
+
+    orphan_despesas_sql = f'''
+        SELECT COALESCE(SUM({despesa_value_unlinked}), 0)
+        FROM despesas_mensais d
+        WHERE d.user_email=%s
+          AND d.mes_referencia=%s
+          AND d.receita=1
+          AND NOT EXISTS (
+              SELECT 1
+              FROM receitas_mensais r
+              WHERE r.user_email=d.user_email
+                AND r.despesa_mensal_id=d.id
+          )
+    '''
+
+    row = conn.execute(f'''
         SELECT
-            COALESCE((
-                SELECT SUM(valor_eur)
-                FROM receitas_mensais
-                WHERE user_email=%s AND mes_referencia=%s
-            ), 0) +
-            COALESCE((
-                SELECT SUM(d.valor_eur)
-                FROM despesas_mensais d
-                WHERE d.user_email=%s
-                  AND d.mes_referencia=%s
-                  AND d.receita=1
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM receitas_mensais r
-                      WHERE r.user_email=d.user_email
-                        AND r.despesa_mensal_id=d.id
-                  )
-            ), 0) AS total
-    ''', (user_email, mes, user_email, mes)).fetchone()
+            ({unlinked_rec_sql}) +
+            ({linked_rec_sql}) +
+            ({orphan_despesas_sql}) AS total
+    ''', (user_email, mes, user_email, mes, user_email, mes)).fetchone()
     return _to_float(row['total'])
 
 
@@ -139,41 +197,69 @@ def _debt_summary(conn, user_email):
     }
 
 
-def _cash_balance_until(conn, user_email, mes):
-    row = conn.execute('''
-        SELECT COALESCE(SUM(CASE WHEN receita=0 OR receita IS NULL THEN valor_eur ELSE 0 END), 0) AS despesas
+def _cash_balance_until(conn, user_email, mes, usr='all'):
+    usr = _norm_usr(usr)
+    desp_expr = _desp_value_expr(usr)
+    row = conn.execute(f'''
+        SELECT COALESCE(SUM(CASE WHEN receita=0 OR receita IS NULL THEN {desp_expr} ELSE 0 END), 0) AS despesas
         FROM despesas_mensais
         WHERE user_email=%s AND mes_referencia <= %s
     ''', (user_email, mes)).fetchone()
-    rec_row = conn.execute('''
+
+    despesa_value_linked = _desp_value_expr(usr, alias='d')
+    despesa_value_unlinked = _desp_value_expr(usr, alias='d')
+
+    if usr == 'all':
+        unlinked_rec_sql = '''
+            SELECT COALESCE(SUM(r.valor_eur), 0)
+            FROM receitas_mensais r
+            WHERE r.user_email=%s AND r.mes_referencia <= %s
+              AND r.despesa_mensal_id IS NULL
+        '''
+    else:
+        unlinked_rec_sql = f'''
+            SELECT COALESCE(SUM(r.valor_eur), 0)
+            FROM receitas_mensais r
+            WHERE r.user_email=%s AND r.mes_referencia <= %s
+              AND r.despesa_mensal_id IS NULL
+              AND r.pagador_usr = '{usr}'
+        '''
+    linked_rec_sql = f'''
+        SELECT COALESCE(SUM({despesa_value_linked}), 0)
+        FROM receitas_mensais r
+        JOIN despesas_mensais d ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
+        WHERE r.user_email=%s AND r.mes_referencia <= %s
+          AND r.despesa_mensal_id IS NOT NULL
+    '''
+    orphan_despesas_sql = f'''
+        SELECT COALESCE(SUM({despesa_value_unlinked}), 0)
+        FROM despesas_mensais d
+        WHERE d.user_email=%s
+          AND d.mes_referencia <= %s
+          AND d.receita=1
+          AND NOT EXISTS (
+              SELECT 1
+              FROM receitas_mensais r
+              WHERE r.user_email=d.user_email
+                AND r.despesa_mensal_id=d.id
+          )
+    '''
+    rec_row = conn.execute(f'''
         SELECT
-            COALESCE((
-                SELECT SUM(valor_eur)
-                FROM receitas_mensais
-                WHERE user_email=%s AND mes_referencia <= %s
-            ), 0) +
-            COALESCE((
-                SELECT SUM(d.valor_eur)
-                FROM despesas_mensais d
-                WHERE d.user_email=%s
-                  AND d.mes_referencia <= %s
-                  AND d.receita=1
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM receitas_mensais r
-                      WHERE r.user_email=d.user_email
-                        AND r.despesa_mensal_id=d.id
-                  )
-            ), 0) AS total
-    ''', (user_email, mes, user_email, mes)).fetchone()
+            ({unlinked_rec_sql}) +
+            ({linked_rec_sql}) +
+            ({orphan_despesas_sql}) AS total
+    ''', (user_email, mes, user_email, mes, user_email, mes)).fetchone()
     return _to_float(rec_row['total']) - _to_float(row['despesas'])
 
 
-def get_dashboard_expenses(user_email: str, mes: str, ano: int):
+def get_dashboard_expenses(user_email: str, mes: str, ano: int, usr: str = 'all'):
+    usr = _norm_usr(usr)
+    expr = _desp_value_expr(usr)
     conn = get_connection()
     c = conn.cursor()
-    c.execute('''
-        SELECT COALESCE(categoria_final, 'Sem Categoria') AS categoria, COALESCE(SUM(valor_eur), 0) AS total
+    c.execute(f'''
+        SELECT COALESCE(categoria_final, 'Sem Categoria') AS categoria, COALESCE(SUM({expr}), 0) AS total
         FROM despesas_mensais
         WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
         GROUP BY COALESCE(categoria_final, 'Sem Categoria')
@@ -181,8 +267,8 @@ def get_dashboard_expenses(user_email: str, mes: str, ano: int):
     ''', (user_email, mes))
     by_category = [dict(r) for r in c.fetchall()]
 
-    c.execute('''
-        SELECT COALESCE(conta_bancaria, 'Sem Conta') AS conta, COALESCE(SUM(valor_eur), 0) AS total
+    c.execute(f'''
+        SELECT COALESCE(conta_bancaria, 'Sem Conta') AS conta, COALESCE(SUM({expr}), 0) AS total
         FROM despesas_mensais
         WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
         GROUP BY COALESCE(conta_bancaria, 'Sem Conta')
@@ -190,8 +276,8 @@ def get_dashboard_expenses(user_email: str, mes: str, ano: int):
     ''', (user_email, mes))
     by_account = [dict(r) for r in c.fetchall()]
 
-    c.execute('''
-        SELECT mes_referencia AS mes, COALESCE(SUM(valor_eur), 0) AS total
+    c.execute(f'''
+        SELECT mes_referencia AS mes, COALESCE(SUM({expr}), 0) AS total
         FROM despesas_mensais
         WHERE user_email=%s AND mes_referencia LIKE %s AND (receita IS NULL OR receita=0)
         GROUP BY mes_referencia
@@ -199,12 +285,12 @@ def get_dashboard_expenses(user_email: str, mes: str, ano: int):
     ''', (user_email, f'{ano}-%'))
     monthly_map = {r['mes']: _to_float(r['total']) for r in c.fetchall()}
 
-    c.execute('''
+    c.execute(f'''
         SELECT data, descricao, COALESCE(categoria_final, 'Sem Categoria') AS categoria,
-               COALESCE(conta_bancaria, 'Sem Conta') AS conta, valor_eur
+               COALESCE(conta_bancaria, 'Sem Conta') AS conta, {expr} AS valor_eur
         FROM despesas_mensais
         WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
-        ORDER BY valor_eur DESC
+        ORDER BY {expr} DESC
         LIMIT 8
     ''', (user_email, mes))
     top_transactions = [dict(r) for r in c.fetchall()]
@@ -222,35 +308,69 @@ def get_dashboard_expenses(user_email: str, mes: str, ano: int):
     }
 
 
-def get_dashboard_revenues(user_email: str, mes: str, ano: int):
+def get_dashboard_revenues(user_email: str, mes: str, ano: int, usr: str = 'all'):
+    usr = _norm_usr(usr)
     conn = get_connection()
     c = conn.cursor()
-    c.execute('''
-        SELECT COALESCE(tipo_receita, 'Sem Tipo') AS tipo, COALESCE(SUM(valor_eur), 0) AS total
-        FROM receitas_mensais
-        WHERE user_email=%s AND mes_referencia=%s
-        GROUP BY COALESCE(tipo_receita, 'Sem Tipo')
+
+    if usr == 'all':
+        rec_value_expr = 'r.valor_eur'
+        rec_filter = ''
+        join_clause = ''
+    else:
+        despesa_value_linked = _desp_value_expr(usr, alias='d')
+        rec_value_expr = (
+            f"CASE WHEN r.despesa_mensal_id IS NULL THEN r.valor_eur "
+            f"ELSE {despesa_value_linked} END"
+        )
+        rec_filter = (
+            " AND ((r.despesa_mensal_id IS NULL AND r.pagador_usr=%s) "
+            "OR r.despesa_mensal_id IS NOT NULL)"
+        )
+        join_clause = (
+            " LEFT JOIN despesas_mensais d "
+            "ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email"
+        )
+
+    base_params = [user_email, mes]
+    if usr != 'all':
+        base_params.append(usr)
+
+    c.execute(f'''
+        SELECT COALESCE(r.tipo_receita, 'Sem Tipo') AS tipo,
+               COALESCE(SUM({rec_value_expr}), 0) AS total
+        FROM receitas_mensais r{join_clause}
+        WHERE r.user_email=%s AND r.mes_referencia=%s{rec_filter}
+        GROUP BY COALESCE(r.tipo_receita, 'Sem Tipo')
         ORDER BY total DESC
-    ''', (user_email, mes))
+    ''', tuple(base_params))
     by_type = [dict(r) for r in c.fetchall()]
 
-    c.execute('''
-        SELECT mes_referencia AS mes, COALESCE(SUM(valor_eur), 0) AS total
-        FROM receitas_mensais
-        WHERE user_email=%s AND mes_referencia LIKE %s
-        GROUP BY mes_referencia
-        ORDER BY mes_referencia
-    ''', (user_email, f'{ano}-%'))
+    year_params = [user_email, f'{ano}-%']
+    if usr != 'all':
+        year_params.append(usr)
+    year_filter = (
+        " AND ((r.despesa_mensal_id IS NULL AND r.pagador_usr=%s) "
+        "OR r.despesa_mensal_id IS NOT NULL)"
+    ) if usr != 'all' else ''
+    c.execute(f'''
+        SELECT r.mes_referencia AS mes, COALESCE(SUM({rec_value_expr}), 0) AS total
+        FROM receitas_mensais r{join_clause}
+        WHERE r.user_email=%s AND r.mes_referencia LIKE %s{year_filter}
+        GROUP BY r.mes_referencia
+        ORDER BY r.mes_referencia
+    ''', tuple(year_params))
     monthly_map = {r['mes']: _to_float(r['total']) for r in c.fetchall()}
 
-    c.execute('''
-        SELECT data, COALESCE(tipo_receita, 'Sem Tipo') AS tipo, COALESCE(conta_bancaria, 'Sem Conta') AS conta,
-               valor_eur, moeda_original
-        FROM receitas_mensais
-        WHERE user_email=%s AND mes_referencia=%s
-        ORDER BY valor_eur DESC
+    c.execute(f'''
+        SELECT r.data AS data, COALESCE(r.tipo_receita, 'Sem Tipo') AS tipo,
+               COALESCE(r.conta_bancaria, 'Sem Conta') AS conta,
+               {rec_value_expr} AS valor_eur, r.moeda_original AS moeda_original
+        FROM receitas_mensais r{join_clause}
+        WHERE r.user_email=%s AND r.mes_referencia=%s{rec_filter}
+        ORDER BY {rec_value_expr} DESC
         LIMIT 8
-    ''', (user_email, mes))
+    ''', tuple(base_params))
     top_transactions = [dict(r) for r in c.fetchall()]
     conn.close()
 
@@ -268,7 +388,9 @@ def get_dashboard_revenues(user_email: str, mes: str, ano: int):
     }
 
 
-def get_dashboard_budget(user_email: str, mes: str, ano: int):
+def get_dashboard_budget(user_email: str, mes: str, ano: int, usr: str = 'all'):
+    usr = _norm_usr(usr)
+    desp_expr = _desp_value_expr(usr)
     conn = get_connection()
     month_col = _budget_month_col(mes)
     budget_rows = conn.execute(f'''
@@ -278,18 +400,41 @@ def get_dashboard_budget(user_email: str, mes: str, ano: int):
         ORDER BY tipo, categoria_nome
     ''', (user_email, ano)).fetchall()
 
-    desp_rows = conn.execute('''
-        SELECT LOWER(TRIM(COALESCE(categoria_final, ''))) AS key, COALESCE(SUM(valor_eur), 0) AS total
+    desp_rows = conn.execute(f'''
+        SELECT LOWER(TRIM(COALESCE(categoria_final, ''))) AS key, COALESCE(SUM({desp_expr}), 0) AS total
         FROM despesas_mensais
         WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
         GROUP BY LOWER(TRIM(COALESCE(categoria_final, '')))
     ''', (user_email, mes)).fetchall()
-    rec_rows = conn.execute('''
-        SELECT LOWER(TRIM(COALESCE(tipo_receita, ''))) AS key, COALESCE(SUM(valor_eur), 0) AS total
-        FROM receitas_mensais
-        WHERE user_email=%s AND mes_referencia=%s
-        GROUP BY LOWER(TRIM(COALESCE(tipo_receita, '')))
-    ''', (user_email, mes)).fetchall()
+
+    if usr == 'all':
+        rec_value_expr = 'r.valor_eur'
+        rec_filter = ''
+        join_clause = ''
+        rec_params = (user_email, mes)
+    else:
+        despesa_value_linked = _desp_value_expr(usr, alias='d')
+        rec_value_expr = (
+            f"CASE WHEN r.despesa_mensal_id IS NULL THEN r.valor_eur "
+            f"ELSE {despesa_value_linked} END"
+        )
+        rec_filter = (
+            " AND ((r.despesa_mensal_id IS NULL AND r.pagador_usr=%s) "
+            "OR r.despesa_mensal_id IS NOT NULL)"
+        )
+        join_clause = (
+            " LEFT JOIN despesas_mensais d "
+            "ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email"
+        )
+        rec_params = (user_email, mes, usr)
+
+    rec_rows = conn.execute(f'''
+        SELECT LOWER(TRIM(COALESCE(r.tipo_receita, ''))) AS key,
+               COALESCE(SUM({rec_value_expr}), 0) AS total
+        FROM receitas_mensais r{join_clause}
+        WHERE r.user_email=%s AND r.mes_referencia=%s{rec_filter}
+        GROUP BY LOWER(TRIM(COALESCE(r.tipo_receita, '')))
+    ''', rec_params).fetchall()
     conn.close()
 
     desp_map = {r['key']: _to_float(r['total']) for r in desp_rows}
@@ -412,14 +557,15 @@ def get_dashboard_pnl(user_email: str, mes: str, ano: int):
     }
 
 
-def get_dashboard_cashflow(user_email: str, ano: int):
+def get_dashboard_cashflow(user_email: str, ano: int, usr: str = 'all'):
+    usr = _norm_usr(usr)
     conn = get_connection()
     months = _months_for_year(ano)
     rows = []
     saldo = 0
     for i, mes in enumerate(months):
-        receitas = _monthly_revenues(conn, user_email, mes)
-        despesas = _monthly_expenses(conn, user_email, mes)
+        receitas = _monthly_revenues(conn, user_email, mes, usr)
+        despesas = _monthly_expenses(conn, user_email, mes, usr)
         net = receitas - despesas
         saldo += net
         rows.append({
@@ -443,17 +589,18 @@ def get_dashboard_cashflow(user_email: str, ano: int):
     }
 
 
-def get_dashboard_net_worth(user_email: str, mes: str, ano: int):
+def get_dashboard_net_worth(user_email: str, mes: str, ano: int, usr: str = 'all'):
+    usr = _norm_usr(usr)
     conn = get_connection()
     investimentos = _investment_summary(conn, user_email)
     dividas = _debt_summary(conn, user_email)
-    caixa = _cash_balance_until(conn, user_email, mes)
+    caixa = _cash_balance_until(conn, user_email, mes, usr)
     patrimonio = investimentos['valor_atual'] + caixa - dividas['saldo']
 
     cashflow = []
     saldo = 0
     for i, month in enumerate(_months_for_year(ano)):
-        saldo += _monthly_revenues(conn, user_email, month) - _monthly_expenses(conn, user_email, month)
+        saldo += _monthly_revenues(conn, user_email, month, usr) - _monthly_expenses(conn, user_email, month, usr)
         cashflow.append({
             'mes': month,
             'label': MONTH_LABELS[i],
@@ -478,13 +625,14 @@ def get_dashboard_net_worth(user_email: str, mes: str, ano: int):
     }
 
 
-def get_dashboard_overview(user_email: str, mes: str, ano: int):
+def get_dashboard_overview(user_email: str, mes: str, ano: int, usr: str = 'all'):
+    usr = _norm_usr(usr)
     conn = get_connection()
-    receitas = _monthly_revenues(conn, user_email, mes)
-    despesas = _monthly_expenses(conn, user_email, mes)
+    receitas = _monthly_revenues(conn, user_email, mes, usr)
+    despesas = _monthly_expenses(conn, user_email, mes, usr)
     investimentos = _investment_summary(conn, user_email)
     dividas = _debt_summary(conn, user_email)
-    caixa = _cash_balance_until(conn, user_email, mes)
+    caixa = _cash_balance_until(conn, user_email, mes, usr)
     budget_col = _budget_month_col(mes)
     row = conn.execute(f'''
         SELECT
@@ -495,7 +643,7 @@ def get_dashboard_overview(user_email: str, mes: str, ano: int):
     ''', (user_email, ano)).fetchone()
     conn.close()
 
-    cashflow = get_dashboard_cashflow(user_email, ano)
+    cashflow = get_dashboard_cashflow(user_email, ano, usr)
     patrimonio = investimentos['valor_atual'] + caixa - dividas['saldo']
     budget_despesas = _to_float(row['budget_despesas'])
     budget_receitas = _to_float(row['budget_receitas'])
