@@ -709,9 +709,29 @@ def get_dashboard_overview(user_email: str, mes: str, ano: int, usr: str = 'all'
         FROM budget_items
         WHERE user_email=%s AND ano=%s
     ''', (user_email, ano)).fetchone()
+
+    # Reutiliza a mesma conexão para o cashflow — evita 2ª conexão ao pool
+    desp_map = _bulk_monthly_expenses(conn, user_email, ano, usr)
+    rec_map = _bulk_monthly_revenues(conn, user_email, ano, usr)
     conn.close()
 
-    cashflow = get_dashboard_cashflow(user_email, ano, usr)
+    months = _months_for_year(ano)
+    cashflow_rows = []
+    saldo_cf = 0
+    for i, m in enumerate(months):
+        r = rec_map.get(m, 0.0)
+        d = desp_map.get(m, 0.0)
+        net = r - d
+        saldo_cf += net
+        cashflow_rows.append({
+            'mes': m,
+            'label': MONTH_LABELS[i],
+            'receitas': r,
+            'despesas': d,
+            'saldo_mes': net,
+            'saldo_acumulado': saldo_cf,
+        })
+
     patrimonio = investimentos['valor_atual'] + caixa - dividas['saldo']
     budget_despesas = _to_float(row['budget_despesas'])
     budget_receitas = _to_float(row['budget_receitas'])
@@ -745,7 +765,7 @@ def get_dashboard_overview(user_email: str, mes: str, ano: int, usr: str = 'all'
             'patrimonio_liquido': patrimonio,
             'dividas': dividas['saldo'],
         },
-        'cashflow': cashflow['rows'],
+        'cashflow': cashflow_rows,
         'insights': insights,
     }
 

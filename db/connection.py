@@ -131,7 +131,9 @@ def _build_pool() -> psycopg2.pool.ThreadedConnectionPool:
         raise RuntimeError("DATABASE_URL não está configurada no ambiente")
     params = _parse_db_url(db_url)
     print(f"[db] criando pool: host={params['host']} db={params['dbname']}", file=sys.stderr)
-    return psycopg2.pool.ThreadedConnectionPool(minconn=2, maxconn=10, **params)
+    # Supabase free tier: ~10 conexões diretas (porta 5432).
+    # 4 workers × maxconn=2 = 8 conexões máximas — fica abaixo do limite.
+    return psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=2, **params)
 
 
 def _get_pool() -> psycopg2.pool.ThreadedConnectionPool:

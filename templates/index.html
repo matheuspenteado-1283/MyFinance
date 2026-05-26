@@ -6742,11 +6742,27 @@
             return { mes, ano: mes.substring(0, 4), usr };
         }
 
+        // Cache de aba: evita re-fetch ao trocar de aba no mesmo período
+        const _dashTabCache = {};
+        let _dashCachePeriod = '';
+
         async function dashFetch(endpoint) {
             const { mes, ano, usr } = dashPeriod();
+            const period = `${mes}:${ano}:${usr}`;
+
+            // Invalida o cache ao trocar de período
+            if (period !== _dashCachePeriod) {
+                Object.keys(_dashTabCache).forEach(k => delete _dashTabCache[k]);
+                _dashCachePeriod = period;
+            }
+
+            const cacheKey = `${endpoint}:${period}`;
+            if (_dashTabCache[cacheKey]) return _dashTabCache[cacheKey];
+
             const res = await fetch(`${endpoint}?mes=${mes}&ano=${ano}&usr=${usr}`);
             const data = await res.json();
             if (!res.ok || data.error) throw new Error(data.error || 'Erro ao carregar dados');
+            _dashTabCache[cacheKey] = data;
             return data;
         }
 
