@@ -23,18 +23,30 @@ from modules.ai_agent import bp as ai_agent_bp
 
 
 def _start_keep_alive():
-    """Pings own /health every 10 min to prevent Render free-tier spin-down."""
+    """
+    Mantém o Neon compute e o Render web service acordados.
+    - Neon auto-suspende após 5 min de inatividade → pinga o DB a cada 4 min.
+    - Render free tier spin-down após 15 min → pinga o /health HTTP também.
+    """
     url = os.getenv("RENDER_EXTERNAL_URL")
-    if not url:
-        return
 
     def ping():
         while True:
-            time.sleep(600)
+            time.sleep(240)  # 4 minutos — abaixo do threshold de 5 min do Neon
+            # 1. Mantém o Neon compute ativo com uma query leve
             try:
-                requests.get(f"{url}/health", timeout=10)
+                from db.connection import get_connection
+                conn = get_connection()
+                conn.execute("SELECT 1")
+                conn.close()
             except Exception:
                 pass
+            # 2. Mantém o Render web service ativo
+            if url:
+                try:
+                    requests.get(f"{url}/health", timeout=10)
+                except Exception:
+                    pass
 
     t = threading.Thread(target=ping, daemon=True)
     t.start()
@@ -51,7 +63,14 @@ def create_app():
 
     @app.route('/health')
     def health():
-        return jsonify({"status": "ok"}), 200
+        try:
+            from db.connection import get_connection
+            conn = get_connection()
+            conn.execute("SELECT 1")
+            conn.close()
+            return jsonify({"status": "ok", "db": "ok"}), 200
+        except Exception as e:
+            return jsonify({"status": "ok", "db": "error", "detail": str(e)}), 200
 
     @app.route('/debug/db')
     def debug_db():

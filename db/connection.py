@@ -131,8 +131,8 @@ def _build_pool() -> psycopg2.pool.ThreadedConnectionPool:
         raise RuntimeError("DATABASE_URL não está configurada no ambiente")
     params = _parse_db_url(db_url)
     print(f"[db] criando pool: host={params['host']} db={params['dbname']}", file=sys.stderr)
-    # Supabase free tier: ~10 conexões diretas (porta 5432).
-    # 4 workers × maxconn=2 = 8 conexões máximas — fica abaixo do limite.
+    # Neon free tier: ~10 conexões diretas por compute unit.
+    # 2 workers × maxconn=2 = 4 conexões máximas — bem abaixo do limite.
     return psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=2, **params)
 
 
@@ -151,19 +151,34 @@ def _get_pool() -> psycopg2.pool.ThreadedConnectionPool:
 # API pública
 # ---------------------------------------------------------------------------
 
+def _is_conn_alive(raw) -> bool:
+    """Verifica se a conexão ainda está viva com SELECT 1.
+    Necessário para Neon: o compute pode suspender e fechar conexões TCP."""
+    if raw.closed:
+        return False
+    try:
+        raw.cursor().execute("SELECT 1")
+        if raw.status == psycopg2.extensions.STATUS_IN_TRANSACTION:
+            raw.rollback()
+        return True
+    except Exception:
+        return False
+
+
 def get_connection(max_retries: int = 3, retry_delay: float = 1.0) -> PGConnection:
-    """Retorna uma conexão do pool. A conexão é devolvida ao pool no close()."""
+    """Retorna uma conexão saudável do pool. Descarta conexões mortas (Neon compute wake-up)."""
     last_err: Exception = RuntimeError("Pool indisponível")
     for attempt in range(max_retries):
         try:
             pool = _get_pool()
             raw = pool.getconn()
-            if raw.closed:
-                pool.putconn(raw)
-                raise psycopg2.OperationalError("Conexão do pool está fechada")
-            # Garante estado limpo
-            if raw.status == psycopg2.extensions.STATUS_IN_TRANSACTION:
-                raw.rollback()
+            if not _is_conn_alive(raw):
+                # Conexão morta (Neon estava suspenso) — descarta e força nova conexão
+                try:
+                    pool.putconn(raw, close=True)
+                except Exception:
+                    pass
+                raise psycopg2.OperationalError("Conexão do pool estava morta (Neon wake-up)")
             return _PooledConnection(raw, pool)
         except psycopg2.pool.PoolError:
             # Pool esgotado — tentar novamente
