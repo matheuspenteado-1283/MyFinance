@@ -98,6 +98,66 @@ def _monthly_expenses(conn, user_email, mes, usr='all'):
     return _to_float(row['total'])
 
 
+def _bulk_monthly_expenses(conn, user_email: str, ano: int, usr: str = 'all') -> dict:
+    """Retorna {mes_referencia: total} para todos os meses do ano em UMA query."""
+    usr = _norm_usr(usr)
+    expr = _desp_value_expr(usr)
+    rows = conn.execute(f'''
+        SELECT mes_referencia, COALESCE(SUM({expr}), 0) AS total
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia LIKE %s AND (receita IS NULL OR receita=0)
+        GROUP BY mes_referencia
+    ''', (user_email, f'{ano}-%')).fetchall()
+    return {r['mes_referencia']: _to_float(r['total']) for r in rows}
+
+
+def _bulk_monthly_revenues(conn, user_email: str, ano: int, usr: str = 'all') -> dict:
+    """Retorna {mes_referencia: total} para todos os meses do ano em UMA query (UNION ALL)."""
+    usr = _norm_usr(usr)
+    year_pattern = f'{ano}-%'
+    desp_expr = _desp_value_expr(usr, alias='d')
+
+    if usr == 'all':
+        unlinked_filter = ''
+        unlinked_val = 'r.valor_eur'
+    else:
+        unlinked_filter = f" AND r.pagador_usr = '{usr}'"
+        unlinked_val = 'r.valor_eur'
+
+    rows = conn.execute(f'''
+        SELECT mes_referencia, COALESCE(SUM(v), 0) AS total
+        FROM (
+            SELECT r.mes_referencia, {unlinked_val} AS v
+            FROM receitas_mensais r
+            WHERE r.user_email=%s AND r.mes_referencia LIKE %s
+              AND r.despesa_mensal_id IS NULL{unlinked_filter}
+
+            UNION ALL
+
+            SELECT r.mes_referencia, {desp_expr} AS v
+            FROM receitas_mensais r
+            JOIN despesas_mensais d ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
+            WHERE r.user_email=%s AND r.mes_referencia LIKE %s
+              AND r.despesa_mensal_id IS NOT NULL
+
+            UNION ALL
+
+            SELECT d.mes_referencia, {desp_expr} AS v
+            FROM despesas_mensais d
+            WHERE d.user_email=%s AND d.mes_referencia LIKE %s
+              AND d.receita = 1
+              AND NOT EXISTS (
+                  SELECT 1 FROM receitas_mensais r
+                  WHERE r.user_email = d.user_email AND r.despesa_mensal_id = d.id
+              )
+        ) t
+        GROUP BY mes_referencia
+    ''', (user_email, year_pattern,
+          user_email, year_pattern,
+          user_email, year_pattern)).fetchall()
+    return {r['mes_referencia']: _to_float(r['total']) for r in rows}
+
+
 def _monthly_revenues(conn, user_email, mes, usr='all'):
     usr = _norm_usr(usr)
     despesa_value_unlinked = _desp_value_expr(usr, alias='d')
@@ -561,11 +621,17 @@ def get_dashboard_cashflow(user_email: str, ano: int, usr: str = 'all'):
     usr = _norm_usr(usr)
     conn = get_connection()
     months = _months_for_year(ano)
+
+    # 2 queries agregadas substituem o loop de 24 queries mensais
+    desp_map = _bulk_monthly_expenses(conn, user_email, ano, usr)
+    rec_map = _bulk_monthly_revenues(conn, user_email, ano, usr)
+    conn.close()
+
     rows = []
     saldo = 0
     for i, mes in enumerate(months):
-        receitas = _monthly_revenues(conn, user_email, mes, usr)
-        despesas = _monthly_expenses(conn, user_email, mes, usr)
+        receitas = rec_map.get(mes, 0.0)
+        despesas = desp_map.get(mes, 0.0)
         net = receitas - despesas
         saldo += net
         rows.append({
@@ -576,7 +642,6 @@ def get_dashboard_cashflow(user_email: str, ano: int, usr: str = 'all'):
             'saldo_mes': net,
             'saldo_acumulado': saldo,
         })
-    conn.close()
     return {
         'ano': ano,
         'rows': rows,
@@ -597,16 +662,19 @@ def get_dashboard_net_worth(user_email: str, mes: str, ano: int, usr: str = 'all
     caixa = _cash_balance_until(conn, user_email, mes, usr)
     patrimonio = investimentos['valor_atual'] + caixa - dividas['saldo']
 
+    desp_map = _bulk_monthly_expenses(conn, user_email, ano, usr)
+    rec_map = _bulk_monthly_revenues(conn, user_email, ano, usr)
+    conn.close()
+
     cashflow = []
     saldo = 0
     for i, month in enumerate(_months_for_year(ano)):
-        saldo += _monthly_revenues(conn, user_email, month, usr) - _monthly_expenses(conn, user_email, month, usr)
+        saldo += rec_map.get(month, 0.0) - desp_map.get(month, 0.0)
         cashflow.append({
             'mes': month,
             'label': MONTH_LABELS[i],
             'patrimonio_estimado': investimentos['valor_atual'] + saldo - dividas['saldo'],
         })
-    conn.close()
     return {
         'mes': mes,
         'ano': ano,

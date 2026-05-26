@@ -7,7 +7,7 @@ import pdfplumber
 from bs4 import BeautifulSoup
 
 from .db import guess_category
-from exchange_api import get_exchange_rate
+from exchange_api import get_exchange_rate, prefetch_rates
 
 
 def _find_column(df, possible_names):
@@ -103,6 +103,30 @@ def _df_to_transactions(df, filepath=''):
                 col_val = df.columns[2]
         else:
             return []
+
+    # Pré-aquece o cache de câmbio para todos os pares únicos (data, moeda)
+    # antes do loop principal, eliminando chamadas HTTP repetidas por linha.
+    _pairs_to_prefetch: list[tuple[str, str]] = []
+    for _, _pr in df.iterrows():
+        _d = _parse_date(_pr[col_date]) if col_date and not pd.isna(_pr[col_date]) else None
+        if not _d:
+            continue
+        _col_hint = ' '.join(str(c).lower() for c in [col_val, col_deb, col_cred, *df.columns] if c)
+        _m = 'BRL'
+        if '€' in _col_hint or '(eur)' in _col_hint or 'euros' in _col_hint:
+            _m = 'EUR'
+        elif 'us$' in _col_hint or '(usd)' in _col_hint or 'dólar' in _col_hint or 'dolar' in _col_hint:
+            _m = 'USD'
+        elif col_deb or col_cred:
+            _m = 'EUR'
+        _col_cur = _find_column(df, ['moeda', 'currency'])
+        if _col_cur and not pd.isna(_pr.get(_col_cur, float('nan'))):
+            _m = str(_pr[_col_cur]).strip().upper()
+        fp = str(filepath).lower()
+        if 'br_' in fp or 'santander' in fp or 'itau' in fp or 'bradesco' in fp or 'nubank' in fp or 'brasil' in fp:
+            _m = 'BRL'
+        _pairs_to_prefetch.append((_d, _m))
+    prefetch_rates(_pairs_to_prefetch)
 
     for index, row in df.iterrows():
         raw_desc = row[col_desc]

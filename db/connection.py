@@ -1,17 +1,19 @@
 import os
+import sys
 import time
+import threading
 import psycopg2
 import psycopg2.extras
+import psycopg2.pool
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
+# ---------------------------------------------------------------------------
+# Wrappers de compatibilidade (mantêm a API usada em todo o código)
+# ---------------------------------------------------------------------------
 
 class PGCursor:
-    """Wrapper em torno de RealDictCursor para manter compatibilidade com o código SQLite."""
-
     def __init__(self, cursor):
         self._cur = cursor
 
@@ -34,13 +36,7 @@ class PGCursor:
 
 
 class PGConnection:
-    """Wrapper em torno de psycopg2 connection que imita a API do sqlite3.
-
-    Suporta:
-      - conn.execute(sql, params)  → retorna PGCursor (padrão usado em despesas_mensais etc.)
-      - conn.cursor()              → retorna PGCursor
-      - conn.commit() / conn.close()
-    """
+    """Imita a API do sqlite3: conn.execute(), conn.cursor(), commit(), close()."""
 
     def __init__(self, conn):
         self._conn = conn
@@ -74,52 +70,116 @@ class PGConnection:
         self.close()
 
 
+class _PooledConnection(PGConnection):
+    """Devolve a conexão ao pool em vez de fechá-la."""
+
+    def __init__(self, conn, pool: psycopg2.pool.ThreadedConnectionPool):
+        super().__init__(conn)
+        self._pool = pool
+        self._returned = False
+
+    def close(self):
+        if not self._returned and not self._conn.closed:
+            try:
+                if self._conn.status == psycopg2.extensions.STATUS_IN_TRANSACTION:
+                    self._conn.rollback()
+            except Exception:
+                pass
+            self._pool.putconn(self._conn)
+            self._returned = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.rollback()
+        else:
+            self.commit()
+        self.close()
+
+
+# ---------------------------------------------------------------------------
+# Connection pool — singleton por processo
+# ---------------------------------------------------------------------------
+
+_pool: psycopg2.pool.ThreadedConnectionPool | None = None
+_pool_lock = threading.Lock()
+
+
 def _parse_db_url(db_url: str) -> dict:
-    """Extrai parâmetros de conexão do DATABASE_URL, ignorando parâmetros não suportados pelo psycopg2."""
     import urllib.parse
-
-    # psycopg2 não suporta estes parâmetros de query string
     UNSUPPORTED_PARAMS = {"channel_binding", "options"}
-
     parsed = urllib.parse.urlparse(db_url)
     params = {
-        "host":     parsed.hostname,
-        "port":     parsed.port or 5432,
-        "dbname":   parsed.path.lstrip("/"),
-        "user":     parsed.username,
-        "password": urllib.parse.unquote(parsed.password or ""),
-        "sslmode":  "require",
+        "host":            parsed.hostname,
+        "port":            parsed.port or 5432,
+        "dbname":          parsed.path.lstrip("/"),
+        "user":            parsed.username,
+        "password":        urllib.parse.unquote(parsed.password or ""),
+        "sslmode":         "require",
         "connect_timeout": 10,
+        "keepalives":      1,
+        "keepalives_idle": 30,
     }
-
-    # Mantém apenas parâmetros suportados da query string
     for key, value in urllib.parse.parse_qsl(parsed.query):
         if key not in UNSUPPORTED_PARAMS and key not in params:
             params[key] = value
-
     return params
 
 
-def get_connection(max_retries: int = 4, retry_delay: float = 2.0) -> PGConnection:
-    import sys
+def _build_pool() -> psycopg2.pool.ThreadedConnectionPool:
     db_url = os.getenv("DATABASE_URL")
-
     if not db_url:
         raise RuntimeError("DATABASE_URL não está configurada no ambiente")
-
     params = _parse_db_url(db_url)
-    print(f"[db] conectando: host={params['host']} port={params['port']} db={params['dbname']}", file=sys.stderr)
+    print(f"[db] criando pool: host={params['host']} db={params['dbname']}", file=sys.stderr)
+    return psycopg2.pool.ThreadedConnectionPool(minconn=2, maxconn=10, **params)
 
-    last_err: Exception = RuntimeError("Falha ao conectar")
+
+def _get_pool() -> psycopg2.pool.ThreadedConnectionPool:
+    global _pool
+    if _pool is not None and not _pool.closed:
+        return _pool
+    with _pool_lock:
+        if _pool is not None and not _pool.closed:
+            return _pool
+        _pool = _build_pool()
+        return _pool
+
+
+# ---------------------------------------------------------------------------
+# API pública
+# ---------------------------------------------------------------------------
+
+def get_connection(max_retries: int = 3, retry_delay: float = 1.0) -> PGConnection:
+    """Retorna uma conexão do pool. A conexão é devolvida ao pool no close()."""
+    last_err: Exception = RuntimeError("Pool indisponível")
     for attempt in range(max_retries):
         try:
-            conn = psycopg2.connect(**params)
-            print(f"[db] conectado na tentativa {attempt + 1}", file=sys.stderr)
-            return PGConnection(conn)
+            pool = _get_pool()
+            raw = pool.getconn()
+            if raw.closed:
+                pool.putconn(raw)
+                raise psycopg2.OperationalError("Conexão do pool está fechada")
+            # Garante estado limpo
+            if raw.status == psycopg2.extensions.STATUS_IN_TRANSACTION:
+                raw.rollback()
+            return _PooledConnection(raw, pool)
+        except psycopg2.pool.PoolError:
+            # Pool esgotado — tentar novamente
+            last_err = psycopg2.pool.PoolError("Pool esgotado")
+            time.sleep(retry_delay * (2 ** attempt))
         except Exception as e:
             last_err = e
             print(f"[db] tentativa {attempt + 1}/{max_retries} falhou: {type(e).__name__}: {e}", file=sys.stderr)
+            # Pool pode estar corrompido; reinicializa
+            global _pool
+            with _pool_lock:
+                try:
+                    if _pool is not None:
+                        _pool.closeall()
+                except Exception:
+                    pass
+                _pool = None
             if attempt < max_retries - 1:
-                time.sleep(retry_delay)
+                time.sleep(retry_delay * (2 ** attempt))
 
     raise last_err
