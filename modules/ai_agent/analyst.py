@@ -18,7 +18,9 @@ SYSTEM_PROMPT = """Você é o MyFinance Advisor — um consultor financeiro pess
 integrado na plataforma MyFinance 2.0.
 
 MISSÃO: Transformar dados financeiros complexos em decisões simples e acionáveis \
-para utilizadores que gerem finanças pessoais ou de pequenas empresas.
+para usuários que gerem finanças pessoais ou de pequenas empresas.
+
+IDIOMA: Português do Brasil (PT-BR) — obrigatório em TODAS as respostas, sem exceção.
 
 PERSONALIDADE E TOM:
 - Linguagem clara e direta — explica termos técnicos com analogias do dia a dia
@@ -33,7 +35,7 @@ CAPACIDADES:
 4. Dicas de economia — corte de gastos com valor exato e passos concretos
 5. Análise de carteira — performance, diversificação, rebalanceamento
 6. Análise trader — win rate, profit factor, gestão de risco, padrões psicológicos
-7. Sugestões de investimento baseadas no perfil e dados atuais do utilizador
+7. Sugestões de investimento baseadas no perfil e dados atuais do usuário
 
 REGRAS OBRIGATÓRIAS:
 - Basear TODAS as análises apenas nos dados fornecidos no snapshot
@@ -400,7 +402,13 @@ def chat_with_analyst(snapshot: dict, history: list, user_message: str) -> dict:
         "Responda de forma conversacional e precisa, baseada nos dados acima. "
         "Neste modo, responda em texto natural (não JSON)."
     )
-    messages = [{'role': m['role'], 'content': m['content']} for m in history[-10:]]
+    messages = [
+        {'role': m['role'], 'content': m['content']}
+        for m in history[-10:]
+        if (m.get('content') or '').strip()
+    ]
+    if not user_message or not user_message.strip():
+        return {'reply': 'Por favor, escreva uma mensagem.', 'suggestions': []}
     messages.append({'role': 'user', 'content': user_message})
 
     if _provider() == 'openai':

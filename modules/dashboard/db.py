@@ -100,59 +100,29 @@ def _monthly_expenses(conn, user_email, mes, usr='all'):
 
 def _monthly_revenues(conn, user_email, mes, usr='all'):
     usr = _norm_usr(usr)
-    despesa_value_unlinked = _desp_value_expr(usr, alias='d')
-    despesa_value_linked = _desp_value_expr(usr, alias='d')
-
     if usr == 'all':
-        unlinked_rec_sql = '''
-            SELECT COALESCE(SUM(r.valor_eur), 0)
+        row = conn.execute('''
+            SELECT COALESCE(SUM(r.valor_eur), 0) AS total
             FROM receitas_mensais r
             WHERE r.user_email=%s AND r.mes_referencia=%s
-              AND r.despesa_mensal_id IS NULL
-        '''
-        linked_rec_sql = f'''
-            SELECT COALESCE(SUM({despesa_value_linked}), 0)
-            FROM receitas_mensais r
-            JOIN despesas_mensais d ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
-            WHERE r.user_email=%s AND r.mes_referencia=%s
-              AND r.despesa_mensal_id IS NOT NULL
-        '''
+        ''', (user_email, mes)).fetchone()
     else:
-        unlinked_rec_sql = f'''
-            SELECT COALESCE(SUM(r.valor_eur), 0)
+        despesa_value_linked = _desp_value_expr(usr, alias='d')
+        rec_value_expr = (
+            f"CASE WHEN r.despesa_mensal_id IS NULL THEN r.valor_eur "
+            f"ELSE {despesa_value_linked} END"
+        )
+        row = conn.execute(f'''
+            SELECT COALESCE(SUM({rec_value_expr}), 0) AS total
             FROM receitas_mensais r
+            LEFT JOIN despesas_mensais d
+              ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
             WHERE r.user_email=%s AND r.mes_referencia=%s
-              AND r.despesa_mensal_id IS NULL
-              AND r.pagador_usr = '{usr}'
-        '''
-        linked_rec_sql = f'''
-            SELECT COALESCE(SUM({despesa_value_linked}), 0)
-            FROM receitas_mensais r
-            JOIN despesas_mensais d ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
-            WHERE r.user_email=%s AND r.mes_referencia=%s
-              AND r.despesa_mensal_id IS NOT NULL
-        '''
-
-    orphan_despesas_sql = f'''
-        SELECT COALESCE(SUM({despesa_value_unlinked}), 0)
-        FROM despesas_mensais d
-        WHERE d.user_email=%s
-          AND d.mes_referencia=%s
-          AND d.receita=1
-          AND NOT EXISTS (
-              SELECT 1
-              FROM receitas_mensais r
-              WHERE r.user_email=d.user_email
-                AND r.despesa_mensal_id=d.id
-          )
-    '''
-
-    row = conn.execute(f'''
-        SELECT
-            ({unlinked_rec_sql}) +
-            ({linked_rec_sql}) +
-            ({orphan_despesas_sql}) AS total
-    ''', (user_email, mes, user_email, mes, user_email, mes)).fetchone()
+              AND (
+                (r.despesa_mensal_id IS NULL AND r.pagador_usr = %s)
+                OR r.despesa_mensal_id IS NOT NULL
+              )
+        ''', (user_email, mes, usr)).fetchone()
     return _to_float(row['total'])
 
 
@@ -206,50 +176,29 @@ def _cash_balance_until(conn, user_email, mes, usr='all'):
         WHERE user_email=%s AND mes_referencia <= %s
     ''', (user_email, mes)).fetchone()
 
-    despesa_value_linked = _desp_value_expr(usr, alias='d')
-    despesa_value_unlinked = _desp_value_expr(usr, alias='d')
-
     if usr == 'all':
-        unlinked_rec_sql = '''
-            SELECT COALESCE(SUM(r.valor_eur), 0)
+        rec_row = conn.execute('''
+            SELECT COALESCE(SUM(r.valor_eur), 0) AS total
             FROM receitas_mensais r
             WHERE r.user_email=%s AND r.mes_referencia <= %s
-              AND r.despesa_mensal_id IS NULL
-        '''
+        ''', (user_email, mes)).fetchone()
     else:
-        unlinked_rec_sql = f'''
-            SELECT COALESCE(SUM(r.valor_eur), 0)
+        despesa_value_linked = _desp_value_expr(usr, alias='d')
+        rec_value_expr = (
+            f"CASE WHEN r.despesa_mensal_id IS NULL THEN r.valor_eur "
+            f"ELSE {despesa_value_linked} END"
+        )
+        rec_row = conn.execute(f'''
+            SELECT COALESCE(SUM({rec_value_expr}), 0) AS total
             FROM receitas_mensais r
+            LEFT JOIN despesas_mensais d
+              ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
             WHERE r.user_email=%s AND r.mes_referencia <= %s
-              AND r.despesa_mensal_id IS NULL
-              AND r.pagador_usr = '{usr}'
-        '''
-    linked_rec_sql = f'''
-        SELECT COALESCE(SUM({despesa_value_linked}), 0)
-        FROM receitas_mensais r
-        JOIN despesas_mensais d ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
-        WHERE r.user_email=%s AND r.mes_referencia <= %s
-          AND r.despesa_mensal_id IS NOT NULL
-    '''
-    orphan_despesas_sql = f'''
-        SELECT COALESCE(SUM({despesa_value_unlinked}), 0)
-        FROM despesas_mensais d
-        WHERE d.user_email=%s
-          AND d.mes_referencia <= %s
-          AND d.receita=1
-          AND NOT EXISTS (
-              SELECT 1
-              FROM receitas_mensais r
-              WHERE r.user_email=d.user_email
-                AND r.despesa_mensal_id=d.id
-          )
-    '''
-    rec_row = conn.execute(f'''
-        SELECT
-            ({unlinked_rec_sql}) +
-            ({linked_rec_sql}) +
-            ({orphan_despesas_sql}) AS total
-    ''', (user_email, mes, user_email, mes, user_email, mes)).fetchone()
+              AND (
+                (r.despesa_mensal_id IS NULL AND r.pagador_usr = %s)
+                OR r.despesa_mensal_id IS NOT NULL
+              )
+        ''', (user_email, mes, usr)).fetchone()
     return _to_float(rec_row['total']) - _to_float(row['despesas'])
 
 
