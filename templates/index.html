@@ -2692,6 +2692,11 @@
                         <option value="usr2">USR2</option>
                         <option value="all">Ambos (USR1+USR2)</option>
                     </select>
+                    <label for="dashCurrencyFilter">Moeda</label>
+                    <select id="dashCurrencyFilter" class="auth-input" onchange="loadDashboard()">
+                        <option value="EUR">EUR (€)</option>
+                        <option value="BRL">BRL (R$)</option>
+                    </select>
                     <button class="btn btn-xs secondary" onclick="loadDashboard()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
                 </div>
             </div>
@@ -2705,7 +2710,7 @@
                 <button class="dash-tab" data-dash-view="pnl" onclick="dashSetView('pnl')"><i class="fa-solid fa-arrow-trend-up"></i><span>P&amp;L</span></button>
                 <button class="dash-tab" data-dash-view="cashflow" onclick="dashSetView('cashflow')"><i class="fa-solid fa-water"></i><span>Fluxo de Caixa</span></button>
                 <button class="dash-tab" data-dash-view="networth" onclick="dashSetView('networth')"><i class="fa-solid fa-landmark"></i><span>Patrimônio</span></button>
-                <button class="dash-tab" data-dash-view="debt" onclick="dashSetView('debt')"><i class="fa-solid fa-money-bill-transfer"></i><span>Dívidas</span></button>
+                <button class="dash-tab" data-dash-view="debt" onclick="dashSetView('debt')"><i class="fa-solid fa-hand-holding-dollar"></i><span>A Receber</span></button>
             </div>
 
             <div id="dashStatus" class="dash-state">Carregando dashboard...</div>
@@ -6696,6 +6701,14 @@
                 mesInput.value = new Date().toISOString().substring(0, 7);
             }
             await dashLoadUsrLabels();
+            if (!window._dashRate) {
+                try {
+                    const rr = await fetch('/api/exchange_rate');
+                    if (rr.ok) window._dashRate = await rr.json();
+                } catch(e) {
+                    window._dashRate = { EUR_BRL: 6.0, BRL_EUR: 0.1667 };
+                }
+            }
             if (resetView) dashCurrentView = 'overview';
             await dashSetView(dashCurrentView, true);
         }
@@ -6797,8 +6810,63 @@
             document.getElementById('dashContent').innerHTML = html;
         }
 
+        function dashGetCurrency() {
+            const el = document.getElementById('dashCurrencyFilter');
+            return el ? el.value : 'EUR';
+        }
+
         function dashMoney(value) {
-            return formatCurrency(value, 'EUR');
+            const cur = dashGetCurrency();
+            const num = parseFloat(value) || 0;
+            if (cur === 'BRL' && window._dashRate) {
+                return formatCurrency(num * (window._dashRate.EUR_BRL || 6.0), 'BRL');
+            }
+            return formatCurrency(num, 'EUR');
+        }
+
+        // Valor nativo em BRL — converte para EUR se filtro = EUR
+        function dashMoneyBRL(value) {
+            const cur = dashGetCurrency();
+            const num = parseFloat(value) || 0;
+            if (cur === 'EUR') {
+                const rate = window._dashRate || { BRL_EUR: 0.1667 };
+                return formatCurrency(num * (rate.BRL_EUR || 0.1667), 'EUR');
+            }
+            return formatCurrency(num, 'BRL');
+        }
+
+        // Patrimônio líquido: inv_eur e caixa em EUR; inv_brl e a_receber em BRL
+        function dashPatrimonioNum(inv_eur, inv_brl, caixa_eur, a_receber_brl) {
+            const rate = window._dashRate || { EUR_BRL: 6.0, BRL_EUR: 0.1667 };
+            const cur = dashGetCurrency();
+            if (cur === 'EUR') {
+                return (inv_eur || 0) + (inv_brl || 0) * rate.BRL_EUR
+                     + (caixa_eur || 0) + (a_receber_brl || 0) * rate.BRL_EUR;
+            }
+            return (inv_eur || 0) * rate.EUR_BRL + (inv_brl || 0)
+                 + (caixa_eur || 0) * rate.EUR_BRL + (a_receber_brl || 0);
+        }
+
+        function dashPatrimonio(inv_eur, inv_brl, caixa_eur, a_receber_brl) {
+            return formatCurrency(
+                dashPatrimonioNum(inv_eur, inv_brl, caixa_eur, a_receber_brl),
+                dashGetCurrency()
+            );
+        }
+
+        function dashMoneyInv(eur_value, brl_value) {
+            const cur = dashGetCurrency();
+            const rate = window._dashRate || { EUR_BRL: 6.0, BRL_EUR: 0.1667 };
+            if (cur === 'BRL') {
+                return formatCurrency((brl_value || 0) + (eur_value || 0) * rate.EUR_BRL, 'BRL');
+            }
+            return formatCurrency((eur_value || 0) + (brl_value || 0) * rate.BRL_EUR, 'EUR');
+        }
+
+        function dashInvHint(eur_value, brl_value) {
+            const e = (parseFloat(eur_value) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            const b = (parseFloat(brl_value) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            return `€ ${e} + R$ ${b}`;
         }
 
         function dashPct(value) {
@@ -6873,10 +6941,10 @@
                         ${dashKpi('fa-solid fa-receipt', 'Despesas do mês', dashMoney(k.despesas), `${dashPct(k.budget_usado_pct)} do budget`, dashTone((k.budget_despesas || 0) - (k.despesas || 0)), 'expenses')}
                         ${dashKpi('fa-solid fa-scale-balanced', 'Saldo do mês', dashMoney(k.saldo), 'Receitas - despesas', dashTone(k.saldo), 'cashflow')}
                         ${dashKpi('fa-solid fa-bullseye', 'Budget usado', dashPct(k.budget_usado_pct), dashMoney(k.budget_despesas || 0), (k.budget_usado_pct || 0) <= 100 ? 'positive' : 'negative', 'budget')}
-                        ${dashKpi('fa-solid fa-chart-pie', 'Investimentos', dashMoney(k.investimentos), 'Valor atual da carteira', 'neutral', 'investments')}
-                        ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L investimentos', dashMoney(k.pnl), 'Resultado estimado', dashTone(k.pnl), 'pnl')}
-                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio líquido', dashMoney(k.patrimonio_liquido), 'Estimativa consolidada', dashTone(k.patrimonio_liquido), 'networth')}
-                        ${dashKpi('fa-solid fa-money-bill-transfer', 'Dívidas', dashMoney(k.dividas), 'Saldo de empréstimos', k.dividas > 0 ? 'warning' : 'positive', 'debt')}
+                        ${dashKpi('fa-solid fa-chart-pie', 'Investimentos', dashMoneyInv(k.investimentos_eur, k.investimentos_brl), dashInvHint(k.investimentos_eur, k.investimentos_brl), 'neutral', 'investments')}
+                        ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L investimentos', dashMoneyInv(k.pnl_eur, k.pnl_brl), dashInvHint(k.pnl_eur, k.pnl_brl), dashTone(k.pnl), 'pnl')}
+                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio líquido', dashPatrimonio(k.investimentos_eur, k.investimentos_brl, k.caixa_estimado, k.a_receber_brl ?? k.a_receber ?? k.dividas), 'Estimativa consolidada', dashTone(dashPatrimonioNum(k.investimentos_eur, k.investimentos_brl, k.caixa_estimado, k.a_receber_brl ?? k.a_receber ?? k.dividas)), 'networth')}
+                        ${dashKpi('fa-solid fa-hand-holding-dollar', 'Valores a Receber', dashMoneyBRL(k.a_receber_brl ?? k.a_receber ?? k.dividas), 'Empréstimos concedidos', (k.a_receber_brl ?? k.a_receber ?? k.dividas) > 0 ? 'positive' : 'neutral', 'debt')}
                     </div>
                     <div class="dash-panel-grid">
                         ${dashPanel('Evolução do ano', 'fa-solid fa-chart-area', '<div class="dash-chart-box"><canvas id="dashOverviewFlow"></canvas></div>', 'dash-panel-wide')}
@@ -6993,16 +7061,20 @@
                 const s = data.summary || {};
                 dashRender(`
                     <div class="dash-kpi-grid">
-                        ${dashKpi('fa-solid fa-chart-pie', 'Valor atual', dashMoney(s.valor_atual), 'Carteira consolidada', 'neutral')}
-                        ${dashKpi('fa-solid fa-wallet', 'Valor investido', dashMoney(s.valor_investido), 'Base de custo', 'neutral')}
-                        ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L', dashMoney(s.pnl), dashPct(s.pnl_pct), dashTone(s.pnl))}
+                        ${dashKpi('fa-solid fa-euro-sign', 'Valor atual EUR', formatCurrency(s.valor_atual_eur || 0, 'EUR'), 'Posições em Euro', 'neutral')}
+                        ${dashKpi('fa-solid fa-money-bill', 'Valor atual BRL', formatCurrency(s.valor_atual_brl || 0, 'BRL'), 'Posições em Real', 'neutral')}
+                        ${dashKpi('fa-solid fa-chart-pie', 'Total consolidado', dashMoneyInv(s.valor_atual_eur, s.valor_atual_brl), dashInvHint(s.valor_atual_eur, s.valor_atual_brl), 'neutral')}
+                        ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L EUR', formatCurrency(s.pnl_eur || 0, 'EUR'), 'Resultado em Euro', dashTone(s.pnl_eur))}
+                        ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L BRL', formatCurrency(s.pnl_brl || 0, 'BRL'), 'Resultado em Real', dashTone(s.pnl_brl))}
                         ${dashKpi('fa-solid fa-plus', 'Aportes', dashMoney(s.aportes), 'Total informado', 'positive')}
                     </div>
                     <div class="dash-panel-grid">
                         ${dashPanel('Alocação por tipo', 'fa-solid fa-chart-pie', '<div class="dash-chart-box"><canvas id="dashInvestType"></canvas></div>')}
                         ${dashPanel('Por instituição', 'fa-solid fa-building-columns', '<div class="dash-chart-box"><canvas id="dashInvestBank"></canvas></div>')}
-                        ${dashPanel('Principais posições', 'fa-solid fa-list', dashTable(['Tipo', 'Banco', 'Moeda', 'Atual', 'P&L'], (data.positions || []).map(r => `
-                            <tr><td>${r.tp_investimento || '-'}</td><td>${r.banco || '-'}</td><td>${r.moeda || '-'}</td><td>${dashMoney(r.valor_atual)}</td><td class="${(r.pnl || 0) >= 0 ? 'dash-text-positive' : 'dash-text-negative'}">${dashMoney(r.pnl)}</td></tr>`)), 'dash-panel-wide')}
+                        ${dashPanel('Principais posições', 'fa-solid fa-list', dashTable(['Tipo', 'Banco', 'Moeda', 'Atual', 'P&L'], (data.positions || []).map(r => {
+                            const isEUR = (r.moeda || 'BRL').toUpperCase() === 'EUR';
+                            return `<tr><td>${r.tp_investimento || '-'}</td><td>${r.banco || '-'}</td><td>${r.moeda || '-'}</td><td>${isEUR ? dashMoney(r.valor_atual) : dashMoneyBRL(r.valor_atual)}</td><td class="${(r.pnl || 0) >= 0 ? 'dash-text-positive' : 'dash-text-negative'}">${isEUR ? dashMoney(r.pnl) : dashMoneyBRL(r.pnl)}</td></tr>`;
+                        })), 'dash-panel-wide')}
                     </div>
                 `);
                 const byType = data.by_type || [];
@@ -7025,8 +7097,9 @@
                 const s = data.summary || {};
                 dashRender(`
                     <div class="dash-kpi-grid">
-                        ${dashKpi('fa-solid fa-scale-balanced', 'P&L total', dashMoney(s.pnl_total), 'Investimentos + trader', dashTone(s.pnl_total))}
-                        ${dashKpi('fa-solid fa-chart-line', 'Investimentos', dashMoney(s.pnl_investimentos), 'Resultado da carteira', dashTone(s.pnl_investimentos))}
+                        ${dashKpi('fa-solid fa-scale-balanced', 'P&L total', dashMoneyInv(s.pnl_investimentos_eur, s.pnl_investimentos_brl), dashInvHint(s.pnl_investimentos_eur, s.pnl_investimentos_brl), dashTone(s.pnl_total))}
+                        ${dashKpi('fa-solid fa-euro-sign', 'P&L EUR', formatCurrency(s.pnl_investimentos_eur || 0, 'EUR'), 'Resultado em Euro', dashTone(s.pnl_investimentos_eur))}
+                        ${dashKpi('fa-solid fa-money-bill', 'P&L BRL', formatCurrency(s.pnl_investimentos_brl || 0, 'BRL'), 'Resultado em Real', dashTone(s.pnl_investimentos_brl))}
                         ${dashKpi('fa-solid fa-arrow-trend-up', 'Trader', dashMoney(s.pnl_trader), 'Período selecionado', dashTone(s.pnl_trader))}
                     </div>
                     <div class="dash-panel-grid">
@@ -7080,10 +7153,11 @@
                 const s = data.summary || {};
                 dashRender(`
                     <div class="dash-kpi-grid">
-                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio líquido', dashMoney(s.patrimonio_liquido), 'Estimativa atual', dashTone(s.patrimonio_liquido))}
-                        ${dashKpi('fa-solid fa-chart-pie', 'Investimentos', dashMoney(s.investimentos), 'Ativos financeiros', 'neutral')}
-                        ${dashKpi('fa-solid fa-wallet', 'Caixa estimado', dashMoney(s.caixa_estimado), 'Saldo acumulado', dashTone(s.caixa_estimado))}
-                        ${dashKpi('fa-solid fa-money-bill-transfer', 'Dívidas', dashMoney(s.dividas), 'Passivos', s.dividas > 0 ? 'warning' : 'positive')}
+                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio líquido', dashPatrimonio(s.investimentos_eur, s.investimentos_brl, s.caixa_estimado, s.a_receber_brl ?? s.a_receber ?? s.dividas), 'Estimativa atual', dashTone(dashPatrimonioNum(s.investimentos_eur, s.investimentos_brl, s.caixa_estimado, s.a_receber_brl ?? s.a_receber ?? s.dividas)))}
+                        ${dashKpi('fa-solid fa-euro-sign', 'Invest. EUR', formatCurrency(s.investimentos_eur || 0, 'EUR'), 'Posições em Euro', 'neutral')}
+                        ${dashKpi('fa-solid fa-money-bill', 'Invest. BRL', formatCurrency(s.investimentos_brl || 0, 'BRL'), 'Posições em Real', 'neutral')}
+                        ${dashKpi('fa-solid fa-wallet', 'Caixa estimado', dashMoney(s.caixa_estimado), 'Saldo acumulado (EUR)', dashTone(s.caixa_estimado))}
+                        ${dashKpi('fa-solid fa-hand-holding-dollar', 'A Receber', dashMoneyBRL(s.a_receber_brl ?? s.a_receber ?? s.dividas), 'Empréstimos concedidos', (s.a_receber_brl ?? s.a_receber ?? s.dividas) > 0 ? 'positive' : 'neutral')}
                     </div>
                     <div class="dash-panel-grid">
                         ${dashPanel('Composição patrimonial', 'fa-solid fa-chart-pie', '<div class="dash-chart-box"><canvas id="dashNetComposition"></canvas></div>')}
@@ -7093,39 +7167,42 @@
                 const comp = (data.composition || []).filter(r => Math.abs(r.value || 0) > 0);
                 updateOrCreateChart('dashNetComposition', 'doughnut', {
                     labels: comp.map(r => r.label),
-                    datasets: [{ data: comp.map(r => Math.abs(r.value)), backgroundColor: ['#14b8a6', '#3b82f6', '#dc2626'], borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 }]
+                    datasets: [{ data: comp.map(r => Math.abs(r.value)), backgroundColor: ['#14b8a6', '#06b6d4', '#3b82f6', '#f59e0b'], borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 }]
                 }, dashChartOptions({ scales: {} }));
                 const monthly = data.monthly || [];
+                const aReceber = s.a_receber_brl ?? s.a_receber ?? s.dividas ?? 0;
                 updateOrCreateChart('dashNetMonthly', 'line', {
                     labels: monthly.map(r => r.label),
-                    datasets: [{ label: 'Patrimônio estimado', data: monthly.map(r => r.patrimonio_estimado), borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.12)', tension: 0.35, fill: true }]
+                    datasets: [{ label: 'Patrimônio estimado', data: monthly.map(r => dashPatrimonioNum(s.investimentos_eur, s.investimentos_brl, r.caixa_acumulado ?? r.patrimonio_estimado, aReceber)), borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.12)', tension: 0.35, fill: true }]
                 }, dashChartOptions());
             } catch (e) { console.error(e); dashSetError(e); }
         }
 
         async function dashLoadDebt() {
-            dashSetLoading('Carregando dívidas...');
+            dashSetLoading('Carregando valores a receber...');
             try {
                 const data = await dashFetch('/api/dashboard/patrimonio');
                 const s = data.summary || {};
+                const aReceber = s.a_receber_brl ?? s.a_receber ?? s.dividas ?? 0;
                 dashRender(`
                     <div class="dash-kpi-grid">
-                        ${dashKpi('fa-solid fa-money-bill-transfer', 'Saldo de dívidas', dashMoney(s.dividas), 'Empréstimos em aberto', s.dividas > 0 ? 'warning' : 'positive')}
-                        ${dashKpi('fa-solid fa-scale-balanced', 'Impacto no patrimônio', dashMoney(-(s.dividas || 0)), 'Passivo líquido', s.dividas > 0 ? 'negative' : 'positive')}
-                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio após dívidas', dashMoney(s.patrimonio_liquido), 'Visão consolidada', dashTone(s.patrimonio_liquido))}
+                        ${dashKpi('fa-solid fa-hand-holding-dollar', 'Valores a Receber', dashMoneyBRL(aReceber), 'Empréstimos concedidos (BRL)', aReceber > 0 ? 'positive' : 'neutral')}
+                        ${dashKpi('fa-solid fa-scale-balanced', 'Impacto no patrimônio', dashMoneyBRL(aReceber), 'Ativo a recuperar', aReceber > 0 ? 'positive' : 'neutral')}
+                        ${dashKpi('fa-solid fa-landmark', 'Patrimônio líquido', dashPatrimonio(s.investimentos_eur, s.investimentos_brl, s.caixa_estimado, aReceber), 'Visão consolidada', dashTone(dashPatrimonioNum(s.investimentos_eur, s.investimentos_brl, s.caixa_estimado, aReceber)))}
                     </div>
                     <div class="dash-panel-grid">
-                        ${dashPanel('Dívidas no patrimônio', 'fa-solid fa-chart-pie', '<div class="dash-chart-box"><canvas id="dashDebtComposition"></canvas></div>')}
+                        ${dashPanel('Composição patrimonial', 'fa-solid fa-chart-pie', '<div class="dash-chart-box"><canvas id="dashDebtComposition"></canvas></div>')}
                         ${dashPanel('Leitura executiva', 'fa-solid fa-lightbulb', `
                             <div class="dash-insight-list">
-                                <div class="dash-insight dash-status-${s.dividas > 0 ? 'warning' : 'positive'}"><i class="fa-solid fa-circle"></i><span>${s.dividas > 0 ? 'Há saldo de empréstimos abatendo o patrimônio líquido.' : 'Não há saldo de empréstimos em aberto nos dados atuais.'}</span></div>
-                                <div class="dash-insight dash-status-neutral"><i class="fa-solid fa-circle"></i><span>Use a aba Empréstimos para revisar credores, pagamentos e abatimentos.</span></div>
+                                <div class="dash-insight dash-status-${aReceber > 0 ? 'positive' : 'neutral'}"><i class="fa-solid fa-circle"></i><span>${aReceber > 0 ? 'Há valores a receber de empréstimos concedidos — ativo no patrimônio.' : 'Não há empréstimos concedidos em aberto nos dados atuais.'}</span></div>
+                                <div class="dash-insight dash-status-neutral"><i class="fa-solid fa-circle"></i><span>Use a aba Empréstimos para revisar beneficiários, pagamentos e abatimentos.</span></div>
                             </div>`)}
                     </div>
                 `);
+                const comp = (data.composition || []).filter(r => Math.abs(r.value || 0) > 0);
                 updateOrCreateChart('dashDebtComposition', 'doughnut', {
-                    labels: ['Investimentos', 'Caixa estimado', 'Dívidas'],
-                    datasets: [{ data: [Math.abs(s.investimentos || 0), Math.abs(s.caixa_estimado || 0), Math.abs(s.dividas || 0)], backgroundColor: ['#14b8a6', '#3b82f6', '#dc2626'], borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 }]
+                    labels: comp.map(r => r.label),
+                    datasets: [{ data: comp.map(r => Math.abs(r.value)), backgroundColor: ['#14b8a6', '#06b6d4', '#3b82f6', '#f59e0b'], borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 }]
                 }, dashChartOptions({ scales: {} }));
             } catch (e) { console.error(e); dashSetError(e); }
         }

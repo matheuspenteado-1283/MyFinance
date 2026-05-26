@@ -130,22 +130,42 @@ def _investment_summary(conn, user_email):
     row = conn.execute('''
         SELECT
             COALESCE(SUM(COALESCE(valor_atual, 0)), 0) AS valor_atual,
+            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) = 'EUR'
+                THEN COALESCE(valor_atual, 0) ELSE 0 END), 0) AS valor_atual_eur,
+            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) != 'EUR'
+                THEN COALESCE(valor_atual, 0) ELSE 0 END), 0) AS valor_atual_brl,
             COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) AS valor_investido,
+            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) = 'EUR'
+                THEN COALESCE(valor_inv, 0) * COALESCE(qtd, 0) ELSE 0 END), 0) AS valor_investido_eur,
+            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) != 'EUR'
+                THEN COALESCE(valor_inv, 0) * COALESCE(qtd, 0) ELSE 0 END), 0) AS valor_investido_brl,
             COALESCE(SUM(COALESCE(taxa, 0)), 0) AS taxas,
             COALESCE(SUM(COALESCE(aporte, 0)), 0) AS aportes
         FROM lcto_investimentos
         WHERE user_email=%s
     ''', (user_email,)).fetchone()
     valor_atual = _to_float(row['valor_atual'])
+    valor_atual_eur = _to_float(row['valor_atual_eur'])
+    valor_atual_brl = _to_float(row['valor_atual_brl'])
     valor_investido = _to_float(row['valor_investido'])
+    valor_investido_eur = _to_float(row['valor_investido_eur'])
+    valor_investido_brl = _to_float(row['valor_investido_brl'])
     taxas = _to_float(row['taxas'])
     pnl = valor_atual - valor_investido - taxas
+    pnl_eur = valor_atual_eur - valor_investido_eur
+    pnl_brl = valor_atual_brl - valor_investido_brl
     return {
         'valor_atual': valor_atual,
+        'valor_atual_eur': valor_atual_eur,
+        'valor_atual_brl': valor_atual_brl,
         'valor_investido': valor_investido,
+        'valor_investido_eur': valor_investido_eur,
+        'valor_investido_brl': valor_investido_brl,
         'taxas': taxas,
         'aportes': _to_float(row['aportes']),
         'pnl': pnl,
+        'pnl_eur': pnl_eur,
+        'pnl_brl': pnl_brl,
         'pnl_pct': (pnl / valor_investido * 100) if valor_investido else 0,
     }
 
@@ -160,10 +180,12 @@ def _debt_summary(conn, user_email):
     ''', (user_email,)).fetchone()
     total_emprestado = _to_float(row['total_emprestado'])
     total_pago = _to_float(row['total_pago'])
+    saldo = total_emprestado - total_pago
     return {
         'total_emprestado': total_emprestado,
         'total_pago': total_pago,
-        'saldo': total_emprestado - total_pago,
+        'saldo': saldo,
+        'saldo_brl': saldo,  # empréstimos sempre em BRL
     }
 
 
@@ -479,6 +501,17 @@ def get_dashboard_pnl(user_email: str, mes: str, ano: int):
     ''', (user_email,))
     investment_pnl = [dict(r) for r in c.fetchall()]
 
+    pnl_by_cur = conn.execute('''
+        SELECT
+            CASE WHEN UPPER(COALESCE(moeda, 'BRL')) = 'EUR' THEN 'EUR' ELSE 'BRL' END AS moeda_group,
+            COALESCE(SUM(valor_atual), 0) - COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) - COALESCE(SUM(taxa), 0) AS pnl
+        FROM lcto_investimentos
+        WHERE user_email=%s
+        GROUP BY moeda_group
+    ''', (user_email,)).fetchall()
+    pnl_invest_eur = sum(_to_float(r['pnl']) for r in pnl_by_cur if r['moeda_group'] == 'EUR')
+    pnl_invest_brl = sum(_to_float(r['pnl']) for r in pnl_by_cur if r['moeda_group'] == 'BRL')
+
     c.execute('''
         SELECT COALESCE(symbol, 'Sem Ativo') AS grupo, COALESCE(SUM(gross_pl), 0) AS pnl
         FROM trader_positions
@@ -497,6 +530,8 @@ def get_dashboard_pnl(user_email: str, mes: str, ano: int):
         'ano': ano,
         'summary': {
             'pnl_investimentos': total_investments,
+            'pnl_investimentos_eur': pnl_invest_eur,
+            'pnl_investimentos_brl': pnl_invest_brl,
             'pnl_trader': total_trader,
             'pnl_total': total_investments + total_trader,
         },
@@ -544,7 +579,6 @@ def get_dashboard_net_worth(user_email: str, mes: str, ano: int, usr: str = 'all
     investimentos = _investment_summary(conn, user_email)
     dividas = _debt_summary(conn, user_email)
     caixa = _cash_balance_until(conn, user_email, mes, usr)
-    patrimonio = investimentos['valor_atual'] + caixa - dividas['saldo']
 
     cashflow = []
     saldo = 0
@@ -553,7 +587,7 @@ def get_dashboard_net_worth(user_email: str, mes: str, ano: int, usr: str = 'all
         cashflow.append({
             'mes': month,
             'label': MONTH_LABELS[i],
-            'patrimonio_estimado': investimentos['valor_atual'] + saldo - dividas['saldo'],
+            'caixa_acumulado': saldo,  # em EUR; frontend calcula patrimônio com taxa de câmbio
         })
     conn.close()
     return {
@@ -561,14 +595,18 @@ def get_dashboard_net_worth(user_email: str, mes: str, ano: int, usr: str = 'all
         'ano': ano,
         'summary': {
             'investimentos': investimentos['valor_atual'],
-            'caixa_estimado': caixa,
-            'dividas': dividas['saldo'],
-            'patrimonio_liquido': patrimonio,
+            'investimentos_eur': investimentos['valor_atual_eur'],
+            'investimentos_brl': investimentos['valor_atual_brl'],
+            'caixa_estimado': caixa,       # em EUR
+            'a_receber': dividas['saldo_brl'],
+            'a_receber_brl': dividas['saldo_brl'],  # explícito: sempre BRL
+            'dividas': dividas['saldo'],   # compat. retroativa
         },
         'composition': [
-            {'label': 'Investimentos', 'value': investimentos['valor_atual']},
-            {'label': 'Caixa estimado', 'value': caixa},
-            {'label': 'Dívidas', 'value': -dividas['saldo']},
+            {'label': 'Invest. EUR', 'value': investimentos['valor_atual_eur']},
+            {'label': 'Invest. BRL', 'value': investimentos['valor_atual_brl']},
+            {'label': 'Caixa (EUR)', 'value': caixa},
+            {'label': 'A Receber', 'value': dividas['saldo']},
         ],
         'monthly': cashflow,
     }
@@ -593,7 +631,6 @@ def get_dashboard_overview(user_email: str, mes: str, ano: int, usr: str = 'all'
     conn.close()
 
     cashflow = get_dashboard_cashflow(user_email, ano, usr)
-    patrimonio = investimentos['valor_atual'] + caixa - dividas['saldo']
     budget_despesas = _to_float(row['budget_despesas'])
     budget_receitas = _to_float(row['budget_receitas'])
     saldo = receitas - despesas
@@ -622,9 +659,15 @@ def get_dashboard_overview(user_email: str, mes: str, ano: int, usr: str = 'all'
             'budget_despesas': budget_despesas,
             'budget_receitas': budget_receitas,
             'investimentos': investimentos['valor_atual'],
+            'investimentos_eur': investimentos['valor_atual_eur'],
+            'investimentos_brl': investimentos['valor_atual_brl'],
             'pnl': investimentos['pnl'],
-            'patrimonio_liquido': patrimonio,
-            'dividas': dividas['saldo'],
+            'pnl_eur': investimentos['pnl_eur'],
+            'pnl_brl': investimentos['pnl_brl'],
+            'caixa_estimado': caixa,           # em EUR; frontend calcula patrimônio
+            'a_receber': dividas['saldo_brl'],
+            'a_receber_brl': dividas['saldo_brl'],  # explícito: sempre BRL
+            'dividas': dividas['saldo'],       # compat. retroativa
         },
         'cashflow': cashflow['rows'],
         'insights': insights,

@@ -111,6 +111,20 @@ def api_dashboard_patrimonio():
     return _json_dashboard(get_dashboard_net_worth)
 
 
+@bp.route('/api/exchange_rate', methods=['GET'])
+def api_exchange_rate():
+    if 'user_email' not in session:
+        return jsonify({'error': 'Não logado'}), 401
+    try:
+        from exchange_api import get_exchange_rate
+        eur_brl = get_exchange_rate('latest', 'EUR', 'BRL')
+        brl_eur = get_exchange_rate('latest', 'BRL', 'EUR')
+        return jsonify({'EUR_BRL': eur_brl, 'BRL_EUR': brl_eur})
+    except Exception:
+        traceback.print_exc()
+        return jsonify({'EUR_BRL': 6.0, 'BRL_EUR': 0.1667})
+
+
 @bp.route('/api/relatorio_anual', methods=['GET'])
 def api_get_relatorio_anual():
     if 'user_email' not in session:
