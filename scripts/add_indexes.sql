@@ -1,4 +1,4 @@
--- Performance indexes — executar uma vez no Supabase SQL Editor
+-- Performance indexes — executar uma vez no Neon SQL Editor
 -- Todas as queries críticas filtram por user_email e/ou mes_referencia
 
 CREATE INDEX IF NOT EXISTS idx_despesas_user_mes
