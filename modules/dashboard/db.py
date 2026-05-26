@@ -19,10 +19,14 @@ def _desp_value_expr(usr: str, alias: str = '', value_col: str = 'valor_eur') ->
     )
     if usr == 'all':
         return col_safe
-    # Safe TEXT→NUMERIC: NULLIF converts empty string to NULL, COALESCE to 0
-    u1 = f"COALESCE(CAST(NULLIF(TRIM(COALESCE({p}usr1::TEXT, '')), '') AS NUMERIC), 0)"
-    u2 = f"COALESCE(CAST(NULLIF(TRIM(COALESCE({p}usr2::TEXT, '')), '') AS NUMERIC), 0)"
-    target = f"COALESCE(CAST(NULLIF(TRIM(COALESCE({p}{usr}::TEXT, '')), '') AS NUMERIC), 0)"
+    # Safe TEXT→NUMERIC: strip 'nan' strings (pandas artifact) before casting
+    def _usr_cast(col):
+        return (
+            f"COALESCE(CAST(NULLIF(NULLIF(LOWER(TRIM(COALESCE({p}{col}::TEXT, ''))), ''), 'nan') AS NUMERIC), 0)"
+        )
+    u1 = _usr_cast('usr1')
+    u2 = _usr_cast('usr2')
+    target = _usr_cast(usr)
     return f'{col_safe} * COALESCE({target} / NULLIF({u1} + {u2}, 0), 0)'
 
 

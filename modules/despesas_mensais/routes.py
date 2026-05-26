@@ -165,8 +165,15 @@ def api_upload_despesas_mensais():
                         continue
 
                 desc = desc[:200]
-                usr1 = str(row.get('usr1') or row.get('Usr1') or '') or ''
-                usr2 = str(row.get('usr2') or row.get('Usr2') or '') or ''
+                def _safe_usr(v):
+                    try:
+                        import math as _m
+                        f = float(v)
+                        return '' if _m.isnan(f) or _m.isinf(f) else str(f)
+                    except (TypeError, ValueError):
+                        return str(v or '').strip() if str(v or '').strip().lower() not in ('nan', 'none', 'null') else ''
+                usr1 = _safe_usr(row.get('usr1') or row.get('Usr1'))
+                usr2 = _safe_usr(row.get('usr2') or row.get('Usr2'))
                 status = str(row.get('status_pago') or row.get('status pago') or row.get('status') or 'Pendente')
                 cat = str(row.get('categoria_final') or row.get('categoria final') or row.get('categoria') or '') or 'Não Categorizado'
                 receita = 1 if str(row.get('receita') or '').lower() in ['sim', 'yes', '1', 'true'] else 0
