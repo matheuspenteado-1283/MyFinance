@@ -59,12 +59,12 @@ def get_despesas_mensais(user_email, mes=None):
     conn = get_connection()
     if mes:
         rows = conn.execute(
-            'SELECT * FROM despesas_mensais WHERE user_email=%s AND mes_referencia=%s ORDER BY data, id',
+            'SELECT * FROM despesas_mensais WHERE user_email=%s AND SUBSTR(data, 1, 7)=%s ORDER BY data, id',
             (user_email, mes),
         ).fetchall()
     else:
         rows = conn.execute(
-            'SELECT * FROM despesas_mensais WHERE user_email=%s ORDER BY mes_referencia DESC, data, id',
+            'SELECT * FROM despesas_mensais WHERE user_email=%s ORDER BY SUBSTR(data, 1, 7) DESC, data, id',
             (user_email,),
         ).fetchall()
     conn.close()
@@ -230,7 +230,7 @@ def delete_despesas_mensais_batch(user_email, ids):
 def clear_despesas_mensais(user_email, mes=None):
     conn = get_connection()
     if mes:
-        conn.execute('DELETE FROM despesas_mensais WHERE user_email=%s AND mes_referencia=%s', (user_email, mes))
+        conn.execute('DELETE FROM despesas_mensais WHERE user_email=%s AND SUBSTR(data, 1, 7)=%s', (user_email, mes))
     else:
         conn.execute('DELETE FROM despesas_mensais WHERE user_email=%s', (user_email,))
     conn.commit()
@@ -268,7 +268,7 @@ def get_consolidacao_tipo_despesa(user_email, mes_referencia):
             SUM(dm.usr1) + SUM(dm.usr2) as total_geral
         FROM despesas_mensais dm
         LEFT JOIN cad_despesas cd ON cd.despesa = dm.categoria_final
-        WHERE dm.user_email = %s AND dm.mes_referencia = %s AND dm.receita = 0
+        WHERE dm.user_email = %s AND SUBSTR(dm.data, 1, 7) = %s AND dm.receita = 0
         GROUP BY cd.tipo_despesa, dm.moeda
         ORDER BY cd.tipo_despesa, dm.moeda
     ''', (user_email, mes_referencia)).fetchall()
@@ -302,7 +302,7 @@ def get_relatorio_mensal_v2(user_email, mes_referencia):
                COALESCE(SUM(CAST(usr2 AS NUMERIC)), 0) as total_usr2,
                COALESCE(SUM(valor_original), 0) as total_original
         FROM despesas_mensais
-        WHERE user_email=%s AND mes_referencia=%s AND receita=0
+        WHERE user_email=%s AND SUBSTR(data, 1, 7)=%s AND receita=0
         GROUP BY categoria_final, moeda
         ORDER BY categoria_final, moeda
     ''', (user_email, mes_referencia))
