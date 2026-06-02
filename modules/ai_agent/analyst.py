@@ -5,8 +5,12 @@ Selecção via variável de ambiente AI_PROVIDER=anthropic|openai (padrão: anth
 import os
 import json
 import re
+import logging
 from datetime import datetime, date
 from decimal import Decimal
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ── Modelos ──────────────────────────────────────────────────────────────────
 _ANTHROPIC_DEEP  = 'claude-sonnet-4-6'
@@ -77,20 +81,40 @@ def _extract_json(text: str) -> dict:
 
 
 def _call_anthropic(model: str, user_content: str, max_tokens: int) -> dict:
+    logger.info(f"[ANTHROPIC] Iniciando chamada com modelo {model}")
     import anthropic
-    client = anthropic.Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
-    msg = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=SYSTEM_PROMPT,
-        messages=[{'role': 'user', 'content': user_content}],
-    )
-    return _extract_json(msg.content[0].text)
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY não está configurada")
+    logger.info(f"[ANTHROPIC] API Key encontrada: {api_key[:20]}...")
+    logger.info(f"[ANTHROPIC] Tamanho da mensagem: {len(user_content)} chars")
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        logger.info("[ANTHROPIC] Cliente criado com sucesso")
+        logger.info(f"[ANTHROPIC] Sistema prompt tamanho={len(SYSTEM_PROMPT)}")
+        logger.info(f"[ANTHROPIC] Chamando messages.create()...")
+        msg = client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            system=SYSTEM_PROMPT,
+            messages=[{'role': 'user', 'content': user_content}],
+        )
+        logger.info("[ANTHROPIC] Mensagem recebida com sucesso")
+        logger.info(f"[ANTHROPIC] Response texto primeiras 100 chars: {msg.content[0].text[:100]}...")
+        result = _extract_json(msg.content[0].text)
+        logger.info(f"[ANTHROPIC] JSON extraído com sucesso")
+        return result
+    except Exception as e:
+        logger.error(f"[ANTHROPIC] ERRO: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise
 
 
 def _call_openai(model: str, user_content: str, max_tokens: int) -> dict:
     from openai import OpenAI
-    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY não está configurada")
+    client = OpenAI(api_key=api_key)
     resp = client.chat.completions.create(
         model=model,
         max_tokens=max_tokens,
@@ -115,7 +139,10 @@ def _call(speed: str, user_content: str, max_tokens: int = 2048) -> dict:
 
 def _chat_anthropic(system: str, messages: list, max_tokens: int) -> str:
     import anthropic
-    client = anthropic.Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY não está configurada")
+    client = anthropic.Anthropic(api_key=api_key)
     resp = client.messages.create(
         model=_ANTHROPIC_DEEP,
         max_tokens=max_tokens,
@@ -127,7 +154,10 @@ def _chat_anthropic(system: str, messages: list, max_tokens: int) -> str:
 
 def _chat_openai(system: str, messages: list, max_tokens: int) -> str:
     from openai import OpenAI
-    client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY não está configurada")
+    client = OpenAI(api_key=api_key)
     full_messages = [{'role': 'system', 'content': system}] + messages
     resp = client.chat.completions.create(
         model=_OPENAI_DEEP,

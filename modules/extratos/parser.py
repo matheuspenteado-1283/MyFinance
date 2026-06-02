@@ -269,6 +269,249 @@ def _read_xml_xls(filepath):
     return None
 
 
+def _parse_pdf_text_lines(lines, filepath=''):
+    """Tenta extrair transações de linhas de texto de PDF sem tabela estruturada.
+    Suporta: dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy, dd/mm (sem ano — infere o ano do texto).
+    """
+    date_full = re.compile(r'\b(\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4})\b')
+    date_short = re.compile(r'\b(\d{2}/\d{2})\b')
+    value_pattern = re.compile(r'-?(?:R\$|€|USD)?\s*\d{1,3}(?:[.\s]\d{3})*[.,]\d{2}(?:€)?')
+
+    # Detectar moeda nas primeiras linhas do PDF (cabeçalho)
+    import datetime
+    header_text = ' '.join(lines[:30]).upper()
+    if '€' in header_text or ' EUR' in header_text or 'EUROS' in header_text:
+        detected_currency = 'EUR'
+    elif 'USD' in header_text or 'U$' in header_text or 'DÓLAR' in header_text or 'DOLAR' in header_text:
+        detected_currency = 'USD'
+    elif 'R$' in header_text or ' BRL' in header_text or 'REAIS' in header_text:
+        detected_currency = 'BRL'
+    else:
+        detected_currency = None  # deixa _df_to_transactions decidir pelo filepath
+
+    # Tenta inferir o ano lendo as linhas de cabeçalho
+    year = None
+    for line in lines[:15]:
+        m = re.search(r'\b(20\d{2})\b', line)
+        if m:
+            year = m.group(1)
+            break
+    if not year:
+        year = str(datetime.date.today().year)
+
+    rows = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        # Ignora linhas de saldo/totais
+        if re.match(r'(?i)saldo|total|dinheiro em conta', line):
+            continue
+
+        date_match = date_full.search(line)
+        short_match = None
+        if not date_match:
+            short_match = date_short.search(line)
+            if not short_match:
+                continue
+
+        value_matches = value_pattern.findall(line)
+        if not value_matches:
+            continue
+
+        if date_match:
+            raw_date = date_match.group(1)
+            desc_start = date_match.end()
+        else:
+            day, month = short_match.group(1).split('/')
+            raw_date = f'{day}/{month}/{year}'
+            desc_start = short_match.end()
+
+        # Se a linha tem 2 datas (data lançamento + data-valor, ex: Revolut/Novo Banco),
+        # o último valor é o saldo contabilístico — usar o penúltimo (valor da transação).
+        # Detecta segunda data na parte restante da linha após a primeira data.
+        remaining = line[desc_start:]
+        has_second_date = bool(date_full.search(remaining))
+        if has_second_date and len(value_matches) >= 2:
+            chosen_value = value_matches[-2]
+            # A descrição fica entre a 2ª data e o valor da transação
+            second_date_match = date_full.search(remaining)
+            desc_start2 = desc_start + second_date_match.end()
+            chosen_val_pos = line.find(chosen_value, desc_start2)
+            description = line[desc_start2:chosen_val_pos].strip(' -|R$€')
+        else:
+            chosen_value = value_matches[-1]
+            last_val_pos = line.rfind(chosen_value)
+            description = line[desc_start:last_val_pos].strip(' -|R$€')
+
+        raw_value = chosen_value.replace('R$', '').replace('€', '').replace(' ', '').strip()
+        if not description:
+            description = line
+
+        rows.append({'data': raw_date, 'descricao': description, 'valor': raw_value})
+
+    if not rows:
+        return []
+
+    df = pd.DataFrame(rows)
+    if detected_currency:
+        df['moeda'] = detected_currency
+    return _df_to_transactions(df, filepath=filepath)
+
+
+def _parse_pdf_words(pdf, filepath=''):
+    """Parsing de PDFs com colunas de débito/crédito separadas usando posição X das palavras.
+    Detecta automaticamente quais colunas são 'retirado' (débito) e 'recebido' (crédito).
+    Retorna lista de transações ou [] se não conseguir detectar o formato.
+    """
+    import datetime
+    money_re = re.compile(r'^-?\d{1,3}(?:[.\s]\d{3})*[,\.]\d{2}[€$]?$')
+    date_re = re.compile(r'^\d{2}/\d{2}/\d{4}$')
+
+    def clean_spaces(s):
+        # Remove vários tipos de espaço especial
+        return s.replace('\xa0', '').replace('\u202f', '').replace('\u00a0', '').replace(' ', '')
+
+    # Detectar moeda no texto do PDF
+    header_text = ''
+    for page in pdf.pages[:1]:
+        t = page.extract_text() or ''
+        header_text = t[:500].upper()
+    if '\u20ac' in header_text or ' EUR' in header_text or 'EXTRATO DE EUR' in header_text:
+        detected_currency = 'EUR'
+    elif 'USD' in header_text or 'U$' in header_text:
+        detected_currency = 'USD'
+    elif 'R$' in header_text or ' BRL' in header_text:
+        detected_currency = 'BRL'
+    else:
+        detected_currency = None
+
+    # Detectar colunas de débito/crédito analisando palavras de todas as páginas
+    debit_x, credit_x = None, None
+    for page in pdf.pages:
+        for w in page.extract_words():
+            txt = w['text'].lower()
+            if txt in ('retirado', 'debito', 'saida', 'saída'):
+                debit_x = w['x0']
+            elif txt in ('recebido', 'credito', 'entrada', 'crédito'):
+                credit_x = w['x0']
+        if debit_x is not None:
+            break
+
+    if debit_x is None:
+        return []
+
+    rows = []
+    for page in pdf.pages:
+        words = page.extract_words()
+        # Agrupa palavras por linha usando 'top' (tolerância 3pt)
+        lines_map = {}
+        for w in words:
+            y = round(w['top'] / 3) * 3
+            lines_map.setdefault(y, []).append(w)
+
+        for y in sorted(lines_map.keys()):
+            wds = sorted(lines_map[y], key=lambda w: w['x0'])
+
+            # Linha de transação: tem pelo menos 2 datas
+            dates = [w for w in wds if date_re.match(w['text'])]
+            if len(dates) < 2:
+                continue
+
+            # Valores monetários na linha
+            money_words = []
+            for w in wds:
+                cleaned = clean_spaces(w['text'])
+                if money_re.match(cleaned):
+                    money_words.append((w['x0'], w['text']))
+
+            if not money_words:
+                continue
+
+            # Descrição: texto entre x1 da 2ª data e x0 do primeiro valor monetário
+            date2_x1 = dates[1]['x1']
+            first_money_x = money_words[0][0]
+            desc_words = [w['text'] for w in wds if w['x0'] > date2_x1 and w['x0'] < first_money_x - 5]
+            description = ' '.join(desc_words).strip()
+            if not description:
+                desc_set = {dates[0]['text'], dates[1]['text']}
+                description = ' '.join(
+                    w['text'] for w in wds
+                    if w['text'] not in desc_set
+                    and not money_re.match(clean_spaces(w['text']))
+                ).strip()
+
+            # Valor da transação = primeiro valor monetário; último = saldo contabilístico
+            val_x, val_raw = money_words[0]
+            val_clean = clean_spaces(val_raw).replace('€', '').replace('$', '').replace('.', '').replace(',', '.')
+            try:
+                val_float = abs(float(val_clean))
+            except Exception:
+                continue
+
+            if val_float == 0.0:
+                continue
+
+            # is_debit: posição X do valor mais próxima da coluna "retirado" que da "recebido"
+            if credit_x is not None:
+                is_debit = abs(val_x - debit_x) < abs(val_x - credit_x)
+            else:
+                is_debit = True
+
+            raw_date = dates[0]['text']
+            date_str = _parse_date(raw_date)
+
+            moeda = detected_currency or 'EUR'
+            rate = get_exchange_rate(date_str, moeda, 'EUR')
+            valor_eur = round(val_float * rate, 2)
+            categoria = guess_category(description)
+
+            rows.append({
+                'id': str(uuid.uuid4())[:8],
+                'data': date_str,
+                'descricao': description,
+                'valor_original': val_float,
+                'moeda': moeda,
+                'cambio': rate,
+                'valor_eur': valor_eur,
+                'pag1': round(val_float / 2, 2),
+                'pag2': round(val_float / 2, 2),
+                'categoria': categoria,
+                'is_debit': is_debit,
+            })
+
+    return rows
+
+
+def _read_ofx_xml(filepath):
+    """Lê arquivos XML no formato OFX/SGML bancário e retorna DataFrame."""
+    try:
+        import lxml.etree as ET
+        with open(filepath, 'rb') as f:
+            content = f.read()
+        # OFX moderno é XML válido
+        try:
+            root = ET.fromstring(content)
+        except ET.XMLSyntaxError:
+            return None
+        ns = {'': ''}
+        rows = []
+        for stmttrn in root.xpath('//*[local-name()="STMTTRN"]'):
+            def txt(tag):
+                el = stmttrn.find('.//*[local-name()='+"'"+tag+"'"+']')
+                return el.text.strip() if el is not None and el.text else ''
+            rows.append({
+                'data': txt('DTPOSTED') or txt('DTUSER'),
+                'descricao': txt('MEMO') or txt('NAME'),
+                'valor': txt('TRNAMT'),
+            })
+        if rows:
+            return pd.DataFrame(rows)
+    except Exception:
+        pass
+    return None
+
+
 def process_file(filepath):
     if filepath.lower().endswith('.csv'):
         try:
@@ -278,11 +521,19 @@ def process_file(filepath):
             return []
 
     elif filepath.lower().endswith(('.xls', '.xlsx', '.xml')):
+        # Tenta SpreadsheetML (Excel XML)
         df = _read_xml_xls(filepath)
         if df is not None:
             txns = _df_to_transactions(df, filepath=filepath)
             if txns:
                 return txns
+        # Tenta OFX/XML bancário
+        if filepath.lower().endswith('.xml'):
+            df = _read_ofx_xml(filepath)
+            if df is not None:
+                txns = _df_to_transactions(df, filepath=filepath)
+                if txns:
+                    return txns
         try:
             df = pd.read_excel(filepath)
             txns = _df_to_transactions(df, filepath=filepath)
@@ -320,6 +571,19 @@ def process_file(filepath):
                             if reconstructed_rows:
                                 df = pd.DataFrame(reconstructed_rows, columns=header)
                                 transactions.extend(_df_to_transactions(df, filepath=filepath))
+
+                # Fallback 1: parsing por posição X das palavras (detecta débito/crédito por coluna)
+                if not transactions:
+                    transactions = _parse_pdf_words(pdf, filepath)
+
+                # Fallback 2: extração de texto linha a linha quando não há tabelas detectáveis
+                if not transactions:
+                    all_lines = []
+                    for page in pdf.pages:
+                        text = page.extract_text()
+                        if text:
+                            all_lines.extend(text.split('\n'))
+                    transactions = _parse_pdf_text_lines(all_lines, filepath)
         except Exception:
             pass
         return transactions

@@ -92,4 +92,4 @@ app = create_app()
 _start_keep_alive()
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=False, port=5001)
