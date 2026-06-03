@@ -56,6 +56,23 @@ def _provider() -> str:
     return os.getenv('AI_PROVIDER', 'anthropic').lower()
 
 
+def _require_key(name: str) -> str:
+    """Lê a chave do ambiente. Se vier vazia (ex.: Claude Desktop injeta
+    ANTHROPIC_API_KEY='' nos processos filhos), recarrega o .env com override
+    e tenta de novo antes de falhar."""
+    key = os.environ.get(name)
+    if not key:
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(override=True)
+            key = os.environ.get(name)
+        except Exception:
+            pass
+    if not key:
+        raise ValueError(f"{name} não está configurada")
+    return key
+
+
 def _serialize(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
@@ -83,9 +100,7 @@ def _extract_json(text: str) -> dict:
 def _call_anthropic(model: str, user_content: str, max_tokens: int) -> dict:
     logger.info(f"[ANTHROPIC] Iniciando chamada com modelo {model}")
     import anthropic
-    api_key = os.environ.get('ANTHROPIC_API_KEY')
-    if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY não está configurada")
+    api_key = _require_key('ANTHROPIC_API_KEY')
     logger.info(f"[ANTHROPIC] API Key encontrada: {api_key[:20]}...")
     logger.info(f"[ANTHROPIC] Tamanho da mensagem: {len(user_content)} chars")
     try:
@@ -111,9 +126,7 @@ def _call_anthropic(model: str, user_content: str, max_tokens: int) -> dict:
 
 def _call_openai(model: str, user_content: str, max_tokens: int) -> dict:
     from openai import OpenAI
-    api_key = os.environ.get('OPENAI_API_KEY')
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY não está configurada")
+    api_key = _require_key('OPENAI_API_KEY')
     client = OpenAI(api_key=api_key)
     resp = client.chat.completions.create(
         model=model,
@@ -139,9 +152,7 @@ def _call(speed: str, user_content: str, max_tokens: int = 2048) -> dict:
 
 def _chat_anthropic(system: str, messages: list, max_tokens: int) -> str:
     import anthropic
-    api_key = os.environ.get('ANTHROPIC_API_KEY')
-    if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY não está configurada")
+    api_key = _require_key('ANTHROPIC_API_KEY')
     client = anthropic.Anthropic(api_key=api_key)
     resp = client.messages.create(
         model=_ANTHROPIC_DEEP,
@@ -154,9 +165,7 @@ def _chat_anthropic(system: str, messages: list, max_tokens: int) -> str:
 
 def _chat_openai(system: str, messages: list, max_tokens: int) -> str:
     from openai import OpenAI
-    api_key = os.environ.get('OPENAI_API_KEY')
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY não está configurada")
+    api_key = _require_key('OPENAI_API_KEY')
     client = OpenAI(api_key=api_key)
     full_messages = [{'role': 'system', 'content': system}] + messages
     resp = client.chat.completions.create(
