@@ -87,14 +87,47 @@ def _to_json(data) -> str:
     return json.dumps(data, default=_serialize, ensure_ascii=False, indent=2)
 
 
+def _repair_truncated_json(s: str) -> str:
+    """Repara JSON cortado a meio (ex.: resposta truncada por max_tokens):
+    fecha string aberta, remove vírgula/token pendente e fecha brackets."""
+    stack = []
+    in_str = esc = False
+    for ch in s:
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == '\\':
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch in '{[':
+            stack.append('}' if ch == '{' else ']')
+        elif ch in '}]' and stack:
+            stack.pop()
+    out = s + ('"' if in_str else '')
+    out = re.sub(r'[,\s]*$', '', out)          # remove vírgula/espaço pendente
+    out = re.sub(r':\s*$', ': null', out)       # chave sem valor → null
+    return out + ''.join(reversed(stack))
+
+
 def _extract_json(text: str) -> dict:
-    match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
-    if match:
-        return json.loads(match.group(1))
-    match = re.search(r'\{.*\}', text, re.DOTALL)
-    if match:
-        return json.loads(match.group(0))
-    raise ValueError(f"JSON não encontrado na resposta: {text[:300]}")
+    fence = re.search(r'```(?:json)?\s*(.*?)\s*```', text, re.DOTALL)
+    candidate = fence.group(1) if fence else text
+    start = candidate.find('{')
+    if start == -1:
+        raise ValueError(f"JSON não encontrado na resposta: {text[:300]}")
+    snippet = candidate[start:]
+    # 1) decodifica o primeiro valor JSON válido (ignora texto após o objeto)
+    try:
+        return json.JSONDecoder().raw_decode(snippet)[0]
+    except json.JSONDecodeError:
+        pass
+    # 2) fallback: tenta reparar JSON truncado
+    logger.warning("[JSON] resposta possivelmente truncada — a tentar reparar")
+    return json.loads(_repair_truncated_json(snippet))
 
 
 def _call_anthropic(model: str, user_content: str, max_tokens: int) -> dict:
@@ -115,6 +148,8 @@ def _call_anthropic(model: str, user_content: str, max_tokens: int) -> dict:
             messages=[{'role': 'user', 'content': user_content}],
         )
         logger.info("[ANTHROPIC] Mensagem recebida com sucesso")
+        if msg.stop_reason == 'max_tokens':
+            logger.warning(f"[ANTHROPIC] Resposta truncada por max_tokens={max_tokens} — JSON será reparado")
         logger.info(f"[ANTHROPIC] Response texto primeiras 100 chars: {msg.content[0].text[:100]}...")
         result = _extract_json(msg.content[0].text)
         logger.info(f"[ANTHROPIC] JSON extraído com sucesso")
@@ -229,7 +264,7 @@ Retorne APENAS este JSON:
 
 Dimensões obrigatórias: Controlo de Despesas, Taxa de Poupança, Carteira de Investimentos, Nível de Endividamento, Liquidez.
 Status: excellent(>=80)/good(>=60)/fair(>=40)/poor(<40). Grade: A(>=90)/B(>=75)/C(>=60)/D(>=45)/F(<45)."""
-    return _call('deep', prompt, max_tokens=2048)
+    return _call('deep', prompt, max_tokens=4096)
 
 
 def analyze_economy_tips(snapshot: dict) -> dict:
@@ -258,7 +293,7 @@ Retorne APENAS este JSON:
 }}
 
 Máximo 6 dicas. Baseie-se APENAS nos dados reais fornecidos."""
-    return _call('deep', prompt, max_tokens=2048)
+    return _call('deep', prompt, max_tokens=4096)
 
 
 def analyze_investment_tips(snapshot: dict) -> dict:
@@ -292,7 +327,7 @@ Retorne APENAS este JSON:
   }},
   "summary": "Avaliação geral da estratégia de investimentos"
 }}"""
-    return _call('deep', prompt, max_tokens=2048)
+    return _call('deep', prompt, max_tokens=4096)
 
 
 def analyze_portfolio(snapshot: dict) -> dict:
@@ -330,7 +365,7 @@ Retorne APENAS este JSON:
     {{"action": "comprar|vender|manter", "asset": "Ativo/tipo", "reason": "Justificativa"}}
   ]
 }}"""
-    return _call('deep', prompt, max_tokens=2500)
+    return _call('deep', prompt, max_tokens=4096)
 
 
 def analyze_budget_multicurrency(snapshot: dict) -> dict:
@@ -382,7 +417,7 @@ Retorne APENAS este JSON:
   ],
   "summary": "Resumo executivo do budget com números chave"
 }}"""
-    return _call('deep', prompt, max_tokens=2500)
+    return _call('deep', prompt, max_tokens=4096)
 
 
 def analyze_trader(snapshot: dict) -> dict:
@@ -429,7 +464,7 @@ Retorne APENAS este JSON:
   ],
   "overall_assessment": "Avaliação geral das operações de trading"
 }}"""
-    return _call('deep', prompt, max_tokens=2500)
+    return _call('deep', prompt, max_tokens=4096)
 
 
 def chat_with_analyst(snapshot: dict, history: list, user_message: str) -> dict:
