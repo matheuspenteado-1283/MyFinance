@@ -206,31 +206,63 @@
             position: relative; z-index: 100;
         }
 
+        /* Tela cheia: flex column ocupando a viewport.
+           h1 (topo) + tabela (rola H e V dentro) + botões (rodapé sempre visível) */
         #reviewSection.full-screen-mode {
-            position: absolute;
-            top: 0;
-            left: 0;
+            position: fixed;
+            inset: 0;
             z-index: 1000;
-            min-height: 100vh;
+            height: 100vh;
             width: 100vw;
             margin: 0;
             padding: 2rem;
+            box-sizing: border-box;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        /* Quando autenticado há a barra lateral (286px) e a topbar (68px) fixas:
+           o painel de revisão deve ocupar só a área de conteúdo, sem ficar atrás delas */
+        body.is-authenticated #reviewSection.full-screen-mode {
+            top: var(--bank-topbar-height, 68px);
+            left: var(--bank-sidebar-width, 286px);
+            right: 0;
+            bottom: 0;
+            width: auto;
+            height: auto;
+            padding: 1.25rem 1.5rem;
+        }
+        #reviewSection.full-screen-mode .table-container {
+            flex: 1 1 auto;
+            min-height: 0;           /* essencial p/ o contêiner encolher e gerar scroll interno */
+            overflow: auto;          /* rolagem horizontal E vertical confinadas na tabela */
+            max-height: none;
+            margin: 0;
+        }
+        #reviewSection.full-screen-mode .action-bar {
+            flex: 0 0 auto;          /* botões sempre visíveis no rodapé */
+            margin: 0;
         }
 
-        /* Contêiner de scroll confinado: rolagem horizontal E vertical dentro da tabela */
+        /* Contêiner de scroll da tabela de revisão */
         #reviewSection .table-container {
             width: 100%;
-            max-height: calc(100vh - 220px);
             overflow: auto;
             background: transparent;
-            margin: 0;
-            overscroll-behavior: contain;
+            margin: 0 0 2rem;
         }
 
         /* Tabela cresce conforme o conteúdo; o contêiner faz o scroll horizontal */
         #reviewSection #transactionsTable {
             width: max-content;
             min-width: 100%;
+        }
+
+        /* backdrop-filter em th sticky quebra a rolagem horizontal no Chrome/WebKit:
+           usar fundo opaco sem blur garante a barra horizontal funcionando nos dois sentidos */
+        #reviewSection #transactionsTable thead th {
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            background: #1e293b;
         }
 
         /* Scrollbar fina para indicar a rolagem horizontal */
@@ -616,19 +648,52 @@
         }
 
         /* Seletor de Período de Lançamento (input type=month) */
+        #reviewSection .period-field {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
         #reviewSection .review-period-input {
-            width: 150px;
-            min-width: 150px;
-            padding: 0.55rem 0.65rem;
-            background: rgba(0, 0, 0, 0.35);
+            width: 132px;
+            min-width: 132px;
+            padding: 0.55rem 1.9rem 0.55rem 0.7rem; /* espaço à direita para o ícone */
+            background: rgba(255, 255, 255, 0.12);
             border: 1px solid var(--glass-border);
             color: var(--text-light);
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-family: inherit;
             box-sizing: border-box;
-            color-scheme: dark;
             transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+        }
+        /* Botão calendário sobreposto ao campo */
+        #reviewSection .period-cal-btn {
+            position: absolute;
+            right: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 6px;
+            line-height: 1;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+        }
+        #reviewSection .period-cal-btn:hover { color: var(--primary); background: rgba(99,102,241,0.12); }
+        #reviewSection .period-cal-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+        /* Seletor nativo de mês escondido — usado só para abrir o calendário (branco) */
+        #reviewSection .period-hidden-picker {
+            position: absolute;
+            right: 4px;
+            bottom: 0;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+            color-scheme: light;
         }
         #reviewSection .review-period-input:focus {
             outline: none;
@@ -8043,6 +8108,42 @@
             }
         }
 
+        // Período de Lançamento — formato exibido MM/AAAA <-> interno AAAA-MM
+        function periodoToBR(ym) {
+            if (!ym) return '';
+            const m = String(ym).match(/^(\d{4})-(\d{2})$/);
+            return m ? `${m[2]}/${m[1]}` : ym;
+        }
+        function periodoToYM(br) {
+            if (!br) return '';
+            const m = String(br).trim().match(/^(\d{2})\/(\d{4})$/);
+            return m ? `${m[2]}-${m[1]}` : '';
+        }
+        // Máscara digitando: mantém só dígitos e insere a barra -> MM/AAAA
+        function maskPeriodo(el) {
+            let d = el.value.replace(/\D/g, '').slice(0, 6);
+            if (d.length > 2) d = d.slice(0, 2) + '/' + d.slice(2);
+            el.value = d;
+        }
+        // Abre o seletor de mês nativo (calendário branco) a partir do ícone
+        function openMonthPicker(id) {
+            const pick = document.getElementById('perpick_' + id);
+            const txt = document.getElementById('per_' + id);
+            if (!pick) return;
+            const ym = periodoToYM(txt && txt.value);
+            if (ym) pick.value = ym;
+            if (typeof pick.showPicker === 'function') {
+                try { pick.showPicker(); return; } catch (e) {}
+            }
+            pick.focus(); pick.click(); // fallback
+        }
+        // Sincroniza a escolha do calendário de volta para o campo MM/AAAA
+        function syncPeriodFromPicker(id) {
+            const pick = document.getElementById('perpick_' + id);
+            const txt = document.getElementById('per_' + id);
+            if (pick && txt && pick.value) txt.value = periodoToBR(pick.value);
+        }
+
         function removeReviewRow(id) {
             if(!confirm('Excluir esta linha da revisão? Ela não será lançada.')) return;
             const idx = parsedTransactions.findIndex(t => t.id === id);
@@ -8105,9 +8206,9 @@
                 const tr = document.querySelector(`tr[data-id="${trx.id}"]`);
                 if (!tr) return;
 
-                // Período de Lançamento escolhido pelo usuário (input type="month" => 'AAAA-MM')
+                // Período de Lançamento escolhido pelo usuário (campo MM/AAAA => interno 'AAAA-MM')
                 const perInput = tr.querySelector(`#per_${trx.id}`);
-                const trxMesRef = (perInput && perInput.value) ? perInput.value : fallbackMes;
+                const trxMesRef = periodoToYM(perInput && perInput.value) || fallbackMes;
 
                 rows.push({
                     data: trx.data,
@@ -8180,7 +8281,7 @@
 
         async function showReviewScreen() {
             uploadSection.style.display = 'none';
-            reviewSection.style.display = 'block';
+            reviewSection.style.display = 'flex';
             
             // Ativar modo Full Screen Real
             const extratosMod = document.getElementById('extratosModule');
@@ -8276,7 +8377,13 @@
                 tr.innerHTML = `
                     <td class="review-del-col" style="text-align:center;"><button type="button" class="review-del-btn" title="Excluir linha" onclick="removeReviewRow('${trx.id}')"><i class="fa-solid fa-trash"></i></button></td>
                     <td>${trx.data}</td>
-                    <td><input type="month" class="review-period-input" id="per_${trx.id}" value="${trx.periodo || currentMonth}"></td>
+                    <td>
+                        <div class="period-field">
+                            <input type="text" inputmode="numeric" maxlength="7" placeholder="MM/AAAA" class="review-period-input" id="per_${trx.id}" value="${periodoToBR(trx.periodo || currentMonth)}" oninput="maskPeriodo(this)">
+                            <button type="button" class="period-cal-btn" title="Escolher mês" onclick="openMonthPicker('${trx.id}')"><i class="fa-regular fa-calendar"></i></button>
+                            <input type="month" class="period-hidden-picker" id="perpick_${trx.id}" value="${trx.periodo || currentMonth}" onchange="syncPeriodFromPicker('${trx.id}')" tabindex="-1" aria-hidden="true">
+                        </div>
+                    </td>
                     <td style="min-width: 320px; max-width: 420px; white-space: normal; word-break: break-word; line-height: 1.3;" title="${trx.descricao}">${trx.descricao}</td>
                     <td>
                         <span class="${badgeClass}">${formatCurrency(trx.valor_original)}</span>
