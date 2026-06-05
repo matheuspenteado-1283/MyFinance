@@ -217,14 +217,28 @@
             padding: 2rem;
         }
 
+        /* Contêiner de scroll confinado: rolagem horizontal E vertical dentro da tabela */
         #reviewSection .table-container {
-            width: 100%; height: auto; max-height: none; overflow-x: auto; overflow-y: visible; background: transparent; margin: 0;
+            width: 100%;
+            max-height: calc(100vh - 220px);
+            overflow: auto;
+            background: transparent;
+            margin: 0;
+            overscroll-behavior: contain;
         }
 
-        /* Tabela com min-width para forçar scroll horizontal quando necessário */
+        /* Tabela cresce conforme o conteúdo; o contêiner faz o scroll horizontal */
         #reviewSection #transactionsTable {
-            min-width: 1800px;
+            width: max-content;
+            min-width: 100%;
         }
+
+        /* Scrollbar fina para indicar a rolagem horizontal */
+        #reviewSection .table-container { scrollbar-width: thin; scrollbar-color: rgba(99,102,241,0.5) transparent; }
+        #reviewSection .table-container::-webkit-scrollbar { height: 10px; width: 10px; }
+        #reviewSection .table-container::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.45); border-radius: 8px; }
+        #reviewSection .table-container::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.7); }
+        #reviewSection .table-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 8px; }
 
         /* H1 não-sticky: rola junto com a página normalmente */
         #reviewSection h1 { position: static; background: #0f172a; padding: 1rem 0; margin: 0; }
@@ -570,6 +584,57 @@
             position: relative;
             min-width: 210px;
             width: 210px;
+        }
+
+        /* Coluna de exclusão + botão lixeira */
+        #reviewSection .review-del-col { width: 44px; min-width: 44px; }
+        #reviewSection .review-del-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.25);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: color 0.18s, background 0.18s, border-color 0.18s, transform 0.12s;
+        }
+        #reviewSection .review-del-btn:hover {
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.14);
+            border-color: rgba(239, 68, 68, 0.5);
+            transform: translateY(-1px);
+        }
+        #reviewSection .review-del-btn:focus-visible {
+            outline: none;
+            border-color: var(--error);
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+        }
+
+        /* Seletor de Período de Lançamento (input type=month) */
+        #reviewSection .review-period-input {
+            width: 150px;
+            min-width: 150px;
+            padding: 0.55rem 0.65rem;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--glass-border);
+            color: var(--text-light);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            color-scheme: dark;
+            transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+        }
+        #reviewSection .review-period-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.08);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18);
         }
 
         #reviewSection .review-share-cell .val-input {
@@ -2018,17 +2083,19 @@
                 <table id="transactionsTable">
                     <thead>
                         <tr>
-                            <th>Data<br><input type="text" class="filter-input" data-col="0" placeholder="Filtrar..."></th>
-                            <th>Histórico<br><input type="text" class="filter-input" data-col="1" placeholder="Filtrar..."></th>
+                            <th class="review-del-col" aria-label="Excluir"></th>
+                            <th>Data<br><input type="text" class="filter-input" data-col="1" placeholder="Filtrar..."></th>
+                            <th>Período de Lançamento</th>
+                            <th>Histórico<br><input type="text" class="filter-input" data-col="3" placeholder="Filtrar..."></th>
                             <th>Original</th>
                             <th>Câmbio</th>
                             <th>Valor (EUR)</th>
                             <th><span id="reviewLabelPag1">Pag1</span><br><small style="font-weight:normal;font-size:0.7rem;">☐ <a href="#" onclick="applyAllUsr(1);return false;" style="color:var(--primary);text-decoration:none;">100%</a></small></th>
                             <th><span id="reviewLabelPag2">Pag2</span><br><small style="font-weight:normal;font-size:0.7rem;">☐ <a href="#" onclick="applyAllUsr(2);return false;" style="color:var(--primary);text-decoration:none;">100%</a></small></th>
                             <th>Diferença</th>
-                            <th>Status<br><input type="text" class="filter-input" data-col="8" placeholder="Filtrar..."></th>
+                            <th>Status<br><input type="text" class="filter-input" data-col="10" placeholder="Filtrar..."></th>
                             <th>Receita</th>
-                            <th>Categoria<br><input type="text" class="filter-input" data-col="10" placeholder="Filtrar..."></th>
+                            <th>Categoria<br><input type="text" class="filter-input" data-col="12" placeholder="Filtrar..."></th>
                             <th>Conta Bancária</th>
                             <th>Comentários</th>
                         </tr>
@@ -2038,7 +2105,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th colspan="2" style="text-align: right">Subtotal Visível:</th>
+                            <th colspan="4" style="text-align: right">Subtotal Visível:</th>
                             <th id="sumOrig">0,00</th>
                             <th></th>
                             <th id="sumEur">0,00</th>
@@ -7976,6 +8043,15 @@
             }
         }
 
+        function removeReviewRow(id) {
+            if(!confirm('Excluir esta linha da revisão? Ela não será lançada.')) return;
+            const idx = parsedTransactions.findIndex(t => t.id === id);
+            if(idx >= 0) parsedTransactions.splice(idx, 1);
+            const tr = document.querySelector(`tr[data-id="${id}"]`);
+            if(tr) tr.remove();
+            calcTotals();
+        }
+
         function applyTrxAllUsr(usrNum, id) {
             const trx = parsedTransactions.find(t => t.id === id);
             if(!trx) return;
@@ -8023,31 +8099,16 @@
             btn.innerText = 'Salvando...';
             
             const rows = [];
-            let mesRef = new Date().toISOString().substring(0, 7);
-            if(parsedTransactions.length > 0 && parsedTransactions[0].data) {
-                const firstData = parsedTransactions[0].data;
-                if (firstData.includes('-') && firstData.length >= 7) {
-                    mesRef = firstData.substring(0, 7);
-                } else if (firstData.includes('/')) {
-                    const parts = firstData.split('/');
-                    if(parts.length === 3) mesRef = `${parts[2]}-${parts[1]}`;
-                }
-            }
+            const fallbackMes = new Date().toISOString().substring(0, 7);
 
             parsedTransactions.forEach(trx => {
                 const tr = document.querySelector(`tr[data-id="${trx.id}"]`);
                 if (!tr) return;
-                
-                let trxMesRef = mesRef;
-                if(trx.data && trx.data.length >= 7) {
-                    if (trx.data.includes('-')) {
-                        trxMesRef = trx.data.substring(0, 7);
-                    } else if (trx.data.includes('/')) {
-                        const parts = trx.data.split('/');
-                        if(parts.length === 3) trxMesRef = `${parts[2]}-${parts[1]}`;
-                    }
-                }
-                
+
+                // Período de Lançamento escolhido pelo usuário (input type="month" => 'AAAA-MM')
+                const perInput = tr.querySelector(`#per_${trx.id}`);
+                const trxMesRef = (perInput && perInput.value) ? perInput.value : fallbackMes;
+
                 rows.push({
                     data: trx.data,
                     descricao: trx.descricao,
@@ -8196,6 +8257,7 @@
             });
             
             tableBody.innerHTML = '';
+            const currentMonth = new Date().toISOString().substring(0, 7);
             parsedTransactions.forEach((trx, i) => {
                 const tr = document.createElement('tr');
                 tr.setAttribute('data-id', trx.id);
@@ -8212,7 +8274,9 @@
                 const selectedCat = trx.categoria || 'Não Categorizado';
 
                 tr.innerHTML = `
+                    <td class="review-del-col" style="text-align:center;"><button type="button" class="review-del-btn" title="Excluir linha" onclick="removeReviewRow('${trx.id}')"><i class="fa-solid fa-trash"></i></button></td>
                     <td>${trx.data}</td>
+                    <td><input type="month" class="review-period-input" id="per_${trx.id}" value="${trx.periodo || currentMonth}"></td>
                     <td style="min-width: 320px; max-width: 420px; white-space: normal; word-break: break-word; line-height: 1.3;" title="${trx.descricao}">${trx.descricao}</td>
                     <td>
                         <span class="${badgeClass}">${formatCurrency(trx.valor_original)}</span>

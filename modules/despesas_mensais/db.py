@@ -88,7 +88,7 @@ def get_despesas_mensais(user_email, mes=None):
 def save_despesas_mensais_batch(user_email, rows_list):
     if not rows_list:
         return {'saved': 0, 'skipped_duplicates': 0}
-    mes = rows_list[0].get('mes_referencia', '')
+    mes_default = rows_list[0].get('mes_referencia', '')
     conn = get_connection()
     saved = 0
     skipped_duplicates = 0
@@ -115,7 +115,8 @@ def save_despesas_mensais_batch(user_email, rows_list):
             r.get('usr1', 0), r.get('usr2', 0), r.get('diferenca_original'),
             r.get('status_pago', 'Pendente'), r.get('categoria_final'),
             1 if r.get('receita') else 0,
-            r.get('comentarios'), r.get('conta_bancaria'), mes,
+            r.get('comentarios'), r.get('conta_bancaria'),
+            r.get('mes_referencia') or mes_default,
         ))
         saved += 1
     conn.commit()
