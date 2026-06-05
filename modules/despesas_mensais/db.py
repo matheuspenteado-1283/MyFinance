@@ -1,6 +1,20 @@
 import math
+import re
 
 from db.connection import get_connection
+
+_DDMM = re.compile(r'^(\d{2})/(\d{2})/(\d{4})$')
+
+
+def _norm_data(d):
+    """Normaliza data DD/MM/AAAA -> AAAA-MM-DD. Passa o resto inalterado."""
+    if not d:
+        return d
+    s = str(d).strip()
+    m = _DDMM.match(s)
+    if m:
+        return f'{m.group(3)}-{m.group(2)}-{m.group(1)}'
+    return s
 
 
 def _clean(row_dict):
@@ -59,7 +73,7 @@ def get_despesas_mensais(user_email, mes=None):
     conn = get_connection()
     if mes:
         rows = conn.execute(
-            'SELECT * FROM despesas_mensais WHERE user_email=%s AND SUBSTR(data, 1, 7)=%s ORDER BY data, id',
+            'SELECT * FROM despesas_mensais WHERE user_email=%s AND mes_referencia=%s ORDER BY data, id',
             (user_email, mes),
         ).fetchall()
     else:
@@ -96,7 +110,7 @@ def save_despesas_mensais_batch(user_email, rows_list):
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         ''', (
             user_email,
-            r.get('data'), r.get('descricao'), r.get('valor_original'),
+            _norm_data(r.get('data')), r.get('descricao'), r.get('valor_original'),
             r.get('moeda'), r.get('cambio_eur'), r.get('valor_eur'),
             r.get('usr1', 0), r.get('usr2', 0), r.get('diferenca_original'),
             r.get('status_pago', 'Pendente'), r.get('categoria_final'),
@@ -179,7 +193,7 @@ def add_despesa_mensal(user_email, row):
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     ''', (
         user_email,
-        row.get('data'), row.get('descricao'), row.get('valor_original'),
+        _norm_data(row.get('data')), row.get('descricao'), row.get('valor_original'),
         row.get('moeda'), row.get('cambio_eur'), row.get('valor_eur'),
         row.get('usr1', 0), row.get('usr2', 0), row.get('diferenca_original'),
         row.get('status_pago', 'Pendente'), row.get('categoria_final'),
@@ -199,7 +213,7 @@ def update_despesa_mensal(user_email, d_id, row):
         receita=%s, comentarios=%s, conta_bancaria=%s, mes_referencia=%s
         WHERE id=%s AND user_email=%s
     ''', (
-        row.get('data'), row.get('descricao'), row.get('valor_original'),
+        _norm_data(row.get('data')), row.get('descricao'), row.get('valor_original'),
         row.get('moeda'), row.get('cambio_eur'), row.get('valor_eur'),
         row.get('usr1', 0), row.get('usr2', 0), row.get('diferenca_original'),
         row.get('status_pago', 'Pendente'), row.get('categoria_final'),
@@ -230,7 +244,7 @@ def delete_despesas_mensais_batch(user_email, ids):
 def clear_despesas_mensais(user_email, mes=None):
     conn = get_connection()
     if mes:
-        conn.execute('DELETE FROM despesas_mensais WHERE user_email=%s AND SUBSTR(data, 1, 7)=%s', (user_email, mes))
+        conn.execute('DELETE FROM despesas_mensais WHERE user_email=%s AND mes_referencia=%s', (user_email, mes))
     else:
         conn.execute('DELETE FROM despesas_mensais WHERE user_email=%s', (user_email,))
     conn.commit()
@@ -268,7 +282,7 @@ def get_consolidacao_tipo_despesa(user_email, mes_referencia):
             SUM(dm.usr1) + SUM(dm.usr2) as total_geral
         FROM despesas_mensais dm
         LEFT JOIN cad_despesas cd ON cd.despesa = dm.categoria_final
-        WHERE dm.user_email = %s AND SUBSTR(dm.data, 1, 7) = %s AND dm.receita = 0
+        WHERE dm.user_email = %s AND dm.mes_referencia = %s AND dm.receita = 0
         GROUP BY cd.tipo_despesa, dm.moeda
         ORDER BY cd.tipo_despesa, dm.moeda
     ''', (user_email, mes_referencia)).fetchall()
@@ -302,7 +316,7 @@ def get_relatorio_mensal_v2(user_email, mes_referencia):
                COALESCE(SUM(CAST(usr2 AS NUMERIC)), 0) as total_usr2,
                COALESCE(SUM(valor_original), 0) as total_original
         FROM despesas_mensais
-        WHERE user_email=%s AND SUBSTR(data, 1, 7)=%s AND receita=0
+        WHERE user_email=%s AND mes_referencia=%s AND receita=0
         GROUP BY categoria_final, moeda
         ORDER BY categoria_final, moeda
     ''', (user_email, mes_referencia))

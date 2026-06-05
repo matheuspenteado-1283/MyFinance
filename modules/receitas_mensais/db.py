@@ -1,4 +1,19 @@
+import re
+
 from db.connection import get_connection
+
+_DDMM = re.compile(r'^(\d{2})/(\d{2})/(\d{4})$')
+
+
+def _norm_data(d):
+    """Normaliza data DD/MM/AAAA -> AAAA-MM-DD. Passa o resto inalterado."""
+    if not d:
+        return d
+    s = str(d).strip()
+    m = _DDMM.match(s)
+    if m:
+        return f'{m.group(3)}-{m.group(2)}-{m.group(1)}'
+    return s
 
 
 def init_tables():
@@ -57,7 +72,7 @@ def add_receita_mensal(user_email, row):
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     ''', (
         user_email,
-        row.get('data'), row.get('tipo_receita'), row.get('valor_original'),
+        _norm_data(row.get('data')), row.get('tipo_receita'), row.get('valor_original'),
         row.get('moeda_original'), row.get('cotacao', 1), row.get('valor_eur'),
         row.get('valor_brl'), row.get('conta_bancaria'), row.get('mes_referencia'),
         row.get('despesa_mensal_id'), row.get('comentarios'),
@@ -75,7 +90,7 @@ def update_receita_mensal(user_email, r_id, row):
         conta_bancaria=%s, mes_referencia=%s, comentarios=%s, pagador_usr=%s
         WHERE id=%s AND user_email=%s
     ''', (
-        row.get('data'), row.get('tipo_receita'), row.get('valor_original'),
+        _norm_data(row.get('data')), row.get('tipo_receita'), row.get('valor_original'),
         row.get('moeda_original'), row.get('cotacao', 1), row.get('valor_eur'),
         row.get('valor_brl'), row.get('conta_bancaria'), row.get('mes_referencia'),
         row.get('comentarios'), _normalize_pagador(row.get('pagador_usr')),
