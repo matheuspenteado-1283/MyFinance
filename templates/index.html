@@ -8423,21 +8423,21 @@
 
                 updateStatusUI(tr, trx);
 
-                new TomSelect(`#cat_${trx.id}`, {
-                    create: false,
-                    sortField: { field: "text", direction: "asc" },
-                    onChange: function(val) {
-                        trx.categoria = val;
-                        if(val !== 'Não Categorizado') saveCategoryRule(trx.descricao, val, trx.userId);
-                    },
-                    onFocus: function() {
-                        // Prevent browser from scrolling the table container to the left when TomSelect focuses its internal input
-                        const container = document.querySelector('#reviewSection .table-container');
-                        if (!container) return;
-                        const savedScroll = container.scrollLeft;
-                        requestAnimationFrame(() => { container.scrollLeft = savedScroll; });
-                    }
-                });
+                {
+                    const ts = new TomSelect(`#cat_${trx.id}`, {
+                        create: false,
+                        sortField: { field: "text", direction: "asc" },
+                        onChange: function(val) {
+                            trx.categoria = val;
+                            if(val !== 'Não Categorizado') saveCategoryRule(trx.descricao, val, trx.userId);
+                        }
+                    });
+                    // Prevent the browser from scrolling the table container when TomSelect focuses its internal input
+                    const origFocus = ts.control_input.focus.bind(ts.control_input);
+                    ts.control_input.focus = function(options) {
+                        origFocus({ preventScroll: true });
+                    };
+                }
 
                 tr.querySelector(`#p1_${trx.id}`).addEventListener('blur', (e) => { 
                     trx.pag1 = parseCurrencyBR(e.target.value);
