@@ -8423,12 +8423,19 @@
 
                 updateStatusUI(tr, trx);
 
-                new TomSelect(`#cat_${trx.id}`, { 
-                    create: false, 
+                new TomSelect(`#cat_${trx.id}`, {
+                    create: false,
                     sortField: { field: "text", direction: "asc" },
                     onChange: function(val) {
                         trx.categoria = val;
                         if(val !== 'Não Categorizado') saveCategoryRule(trx.descricao, val, trx.userId);
+                    },
+                    onFocus: function() {
+                        // Prevent browser from scrolling the table container to the left when TomSelect focuses its internal input
+                        const container = document.querySelector('#reviewSection .table-container');
+                        if (!container) return;
+                        const savedScroll = container.scrollLeft;
+                        requestAnimationFrame(() => { container.scrollLeft = savedScroll; });
                     }
                 });
 
