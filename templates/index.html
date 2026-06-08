@@ -8358,6 +8358,7 @@
             });
             
             tableBody.innerHTML = '';
+            ensureReviewScrollLock();
             const currentMonth = new Date().toISOString().substring(0, 7);
             parsedTransactions.forEach((trx, i) => {
                 const tr = document.createElement('tr');
@@ -8423,21 +8424,14 @@
 
                 updateStatusUI(tr, trx);
 
-                {
-                    const ts = new TomSelect(`#cat_${trx.id}`, {
-                        create: false,
-                        sortField: { field: "text", direction: "asc" },
-                        onChange: function(val) {
-                            trx.categoria = val;
-                            if(val !== 'Não Categorizado') saveCategoryRule(trx.descricao, val, trx.userId);
-                        }
-                    });
-                    // Prevent the browser from scrolling the table container when TomSelect focuses its internal input
-                    const origFocus = ts.control_input.focus.bind(ts.control_input);
-                    ts.control_input.focus = function(options) {
-                        origFocus({ preventScroll: true });
-                    };
-                }
+                new TomSelect(`#cat_${trx.id}`, {
+                    create: false,
+                    sortField: { field: "text", direction: "asc" },
+                    onChange: function(val) {
+                        trx.categoria = val;
+                        if(val !== 'Não Categorizado') saveCategoryRule(trx.descricao, val, trx.userId);
+                    }
+                });
 
                 tr.querySelector(`#p1_${trx.id}`).addEventListener('blur', (e) => { 
                     trx.pag1 = parseCurrencyBR(e.target.value);
@@ -8453,6 +8447,30 @@
                 });
             });
             calcTotals();
+        }
+
+        // Impede que o browser role a tabela de revisão para a esquerda ao focar
+        // o input interno do TomSelect (Categoria). O scroll do navegador acontece
+        // de forma síncrona durante o .focus(), disparado no mousedown — ANTES de
+        // qualquer callback do TomSelect. Por isso capturamos o scrollLeft no
+        // mousedown (fase de captura, antes do focus) e o fixamos durante uma
+        // janela curta para absorver o scroll automático.
+        function ensureReviewScrollLock() {
+            const container = document.querySelector('#reviewSection .table-container');
+            if (!container || container.dataset.scrollLockBound === '1') return;
+            container.dataset.scrollLockBound = '1';
+            container.addEventListener('mousedown', (e) => {
+                if (!e.target.closest('.ts-wrapper, .ts-control')) return;
+                const savedLeft = container.scrollLeft;
+                const savedTop = container.scrollTop;
+                const pin = () => {
+                    if (container.scrollLeft !== savedLeft) container.scrollLeft = savedLeft;
+                    if (container.scrollTop !== savedTop) container.scrollTop = savedTop;
+                };
+                pin();
+                const intId = setInterval(pin, 16);
+                setTimeout(() => clearInterval(intId), 400);
+            }, true);
         }
 
         function updateCatDropdown(id) {
