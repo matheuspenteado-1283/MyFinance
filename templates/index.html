@@ -2280,6 +2280,10 @@
                         <label>Data</label>
                         <input type="date" id="dm_data" class="auth-input" required>
                     </div>
+                    <div class="form-field" id="dm_periodo_field" style="display:none;">
+                        <label>Período de Competência</label>
+                        <input type="month" id="dm_periodo" class="auth-input" title="Altere para mover esta despesa para outro mês">
+                    </div>
                     <div class="form-field">
                         <label>Descrição</label>
                         <input type="text" id="dm_desc" class="auth-input" required>
@@ -5959,6 +5963,8 @@
                 document.getElementById('dmFormTitle').innerText = 'Editar Despesa';
                 document.getElementById('dm_id').value = id;
                 document.getElementById('dm_data').value = data.data.split('/').reverse().join('-');
+                document.getElementById('dm_periodo').value = data.mes_referencia || mesValue;
+                document.getElementById('dm_periodo_field').style.display = '';
                 document.getElementById('dm_desc').value = data.descricao;
                 document.getElementById('dm_valor_orig').value = data.valor_original;
                 document.getElementById('dm_moeda').value = data.moeda;
@@ -5977,6 +5983,7 @@
                 document.getElementById('dmFormTitle').innerText = 'Nova Despesa';
                 document.getElementById('dm_id').value = '';
                 document.getElementById('dm_data').value = `${mesValue}-01`;
+                document.getElementById('dm_periodo_field').style.display = 'none';
                 document.getElementById('dm_usr1').value = '';
                 document.getElementById('dm_usr2').value = '';
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
@@ -6001,7 +6008,9 @@
         async function saveDmRow(e) {
             e.preventDefault();
             const id = document.getElementById('dm_id').value;
-            const mesRef = document.getElementById('dmMesRef').value;
+            const mesRef = id
+                ? (document.getElementById('dm_periodo').value || document.getElementById('dmMesRef').value)
+                : document.getElementById('dmMesRef').value;
             
             const usr1Val = document.getElementById('dm_usr1').value;
             const usr2Val = document.getElementById('dm_usr2').value;
