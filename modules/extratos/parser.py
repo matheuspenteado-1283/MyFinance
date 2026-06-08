@@ -359,6 +359,162 @@ def _parse_pdf_text_lines(lines, filepath=''):
     return _df_to_transactions(df, filepath=filepath)
 
 
+def _parse_pdf_millennium(pdf, filepath=''):
+    """Parsing de extratos Millennium BCP (PT): colunas DÉBITO / CRÉDITO / SALDO
+    alinhadas à direita, datas no formato M.DD (ex.: 5.04) e milhar separado por espaço.
+
+    Função fortemente "gated": só retorna transações se o cabeçalho contiver
+    DÉBITO + CRÉDITO + SALDO juntos numa mesma linha. Para qualquer outro PDF
+    retorna [], deixando os fallbacks existentes (_parse_pdf_words / _parse_pdf_text_lines)
+    rodarem exatamente como antes.
+    """
+    import datetime
+
+    dotted_date_re = re.compile(r'^\d{1,2}\.\d{2}$')          # M.DD / MM.DD
+    decimal_re = re.compile(r'^-?\d{1,3}[.,]\d{2}$')           # parte decimal de um montante
+    thousand_re = re.compile(r'^\d{1,3}$')                     # grupo de milhar isolado
+
+    def group_lines(words):
+        lines_map = {}
+        for w in words:
+            y = round(w['top'] / 3) * 3
+            lines_map.setdefault(y, []).append(w)
+        return [sorted(lines_map[y], key=lambda w: w['x0']) for y in sorted(lines_map)]
+
+    # --- Gate: localizar cabeçalho DÉBITO/CRÉDITO/SALDO e suas âncoras (borda direita x1) ---
+    debit_x = credit_x = saldo_x = None
+    for page in pdf.pages:
+        for wds in group_lines(page.extract_words()):
+            anchors = {}
+            for w in wds:
+                t = w['text'].lower().strip()
+                if t in ('debito', 'débito') and 'debit' not in anchors:
+                    anchors['debit'] = w['x1']
+                elif t in ('credito', 'crédito') and 'credit' not in anchors:
+                    anchors['credit'] = w['x1']
+                elif t == 'saldo' and 'saldo' not in anchors:
+                    anchors['saldo'] = w['x1']
+            if 'debit' in anchors and 'credit' in anchors and 'saldo' in anchors:
+                debit_x, credit_x, saldo_x = anchors['debit'], anchors['credit'], anchors['saldo']
+                break
+        if debit_x is not None:
+            break
+
+    if debit_x is None:
+        return []
+
+    # --- Ano de referência (ex.: "EXTRATO DE 2026/05/04 A ...") ---
+    header_text = ''
+    for page in pdf.pages[:2]:
+        header_text += (page.extract_text() or '') + '\n'
+    m_year = re.search(r'\b(20\d{2})\b', header_text)
+    year = int(m_year.group(1)) if m_year else datetime.date.today().year
+
+    # --- Moeda (Millennium PT é EUR; confirmar pelo cabeçalho) ---
+    hu = header_text.upper()
+    if 'R$' in hu or ' BRL' in hu or 'REAIS' in hu:
+        moeda = 'BRL'
+    elif 'USD' in hu or 'U$' in hu:
+        moeda = 'USD'
+    else:
+        moeda = 'EUR'
+
+    # Limite à esquerda das colunas de montante: exclui as datas M.DD (que também
+    # casam decimal_re mas ficam bem à esquerda) usando as âncoras de coluna.
+    money_left = min(debit_x, credit_x, saldo_x) - 40
+
+    def reconstruct_amounts(wds):
+        """Retorna lista de (valor_float, x1) reconstruindo milhar separado por espaço."""
+        amounts = []
+        for i, w in enumerate(wds):
+            if decimal_re.match(w['text']) and w['x1'] >= money_left:
+                # absorve grupos de milhar imediatamente anteriores e adjacentes
+                parts = [w['text']]
+                j = i - 1
+                while j >= 0 and thousand_re.match(wds[j]['text']) and (wds[i]['x0'] - wds[j]['x1']) < 12:
+                    parts.insert(0, wds[j]['text'])
+                    i = j
+                    j -= 1
+                # Milhar separado por espaço já foi removido ao juntar; resta normalizar
+                # o separador decimal (sempre os 2 últimos dígitos) para '.'.
+                joined = ''.join(parts)
+                num = joined[:-3] + '.' + joined[-2:]
+                try:
+                    amounts.append((abs(float(num)), w['x1']))
+                except ValueError:
+                    continue
+        return amounts
+
+    rows = []
+    for page in pdf.pages:
+        for wds in group_lines(page.extract_words()):
+            # Remove tokens do rodapé vertical na margem esquerda (texto rotacionado
+            # ex.: "lacsif", "592-0004") que invadem o y-bucket da linha. O conteúdo
+            # real começa na coluna da data (x0 ~56).
+            wds = [w for w in wds if w['x0'] >= 50]
+            if not wds:
+                continue
+            # 1º token precisa ser data pontilhada (data de lançamento)
+            first = wds[0]['text'].strip()
+            if not dotted_date_re.match(first):
+                continue
+            month_s, day_s = first.split('.')
+            month, day = int(month_s), int(day_s)
+            if not (1 <= month <= 12 and 1 <= day <= 31):
+                continue
+
+            amounts = reconstruct_amounts(wds)
+            if not amounts:
+                continue
+
+            # Descarta o montante mais próximo da coluna SALDO; o restante é a transação
+            saldo_idx = min(range(len(amounts)), key=lambda k: abs(amounts[k][1] - saldo_x))
+            txn_amounts = [a for k, a in enumerate(amounts) if k != saldo_idx]
+            if not txn_amounts:
+                continue
+            val_float, val_x1 = txn_amounts[0]
+            if val_float == 0.0:
+                continue
+
+            is_debit = abs(val_x1 - debit_x) <= abs(val_x1 - credit_x)
+
+            # Descrição: tokens entre as datas iniciais e o primeiro montante
+            money_texts = {decimal_re.pattern}
+            desc_tokens = []
+            for w in wds[1:]:
+                t = w['text'].strip()
+                if dotted_date_re.match(t) and not desc_tokens:
+                    continue  # 2ª data (data-valor)
+                if decimal_re.match(t) or thousand_re.match(t):
+                    break
+                desc_tokens.append(t)
+            description = ' '.join(desc_tokens).strip(' -|R$€')
+            if not description:
+                continue
+
+            date_str = _parse_date(f'{year:04d}-{month:02d}-{day:02d}')
+            rate = get_exchange_rate(date_str, moeda, 'EUR')
+            valor_eur = round(val_float * rate, 2)
+            categoria = guess_category(description)
+
+            rows.append({
+                'id': str(uuid.uuid4())[:8],
+                'data': date_str,
+                'descricao': description,
+                'valor_original': val_float,
+                'moeda': moeda,
+                'cambio': rate,
+                'valor_eur': valor_eur,
+                'pag1': round(val_float / 2, 2),
+                'pag2': round(val_float / 2, 2),
+                'categoria': categoria,
+                'is_debit': is_debit,
+                'receita': not is_debit,
+            })
+
+    return rows
+
+
 def _parse_pdf_words(pdf, filepath=''):
     """Parsing de PDFs com colunas de débito/crédito separadas usando posição X das palavras.
     Detecta automaticamente quais colunas são 'retirado' (débito) e 'recebido' (crédito).
@@ -571,6 +727,10 @@ def process_file(filepath):
                             if reconstructed_rows:
                                 df = pd.DataFrame(reconstructed_rows, columns=header)
                                 transactions.extend(_df_to_transactions(df, filepath=filepath))
+
+                # Fallback 0: formato Millennium BCP (colunas DÉBITO/CRÉDITO/SALDO, data M.DD)
+                if not transactions:
+                    transactions = _parse_pdf_millennium(pdf, filepath)
 
                 # Fallback 1: parsing por posição X das palavras (detecta débito/crédito por coluna)
                 if not transactions:
