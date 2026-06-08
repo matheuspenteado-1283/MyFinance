@@ -24,6 +24,10 @@ app.log
 *.sqlite
 *.sqlite3
 
+# Backups de dados (dados pessoais — não versionar)
+scripts/backup_*.csv
+backup_*.csv
+
 # macOS
 .DS_Store
 
