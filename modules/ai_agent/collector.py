@@ -23,7 +23,7 @@ def collect_financial_snapshot(user_email: str, mes: str = None, ano: int = None
         get_dashboard_investments,
     )
     _safe('overview', get_dashboard_overview, user_email, mes, ano)
-    _safe('budget', get_dashboard_budget, user_email, mes, ano)
+    _safe('budget', get_dashboard_budget, user_email, mes, ano, 'usr1')
     _safe('cashflow', get_dashboard_cashflow, user_email, ano)
     _safe('net_worth', get_dashboard_net_worth, user_email, mes, ano)
     _safe('investments_summary', get_dashboard_investments, user_email, mes, ano)

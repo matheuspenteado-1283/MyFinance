@@ -1,4 +1,5 @@
 from db.connection import get_connection
+from modules.dashboard.db import _desp_value_expr
 
 MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',
           'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -193,13 +194,14 @@ def get_comparativo(user_email: str, mes_ano: str):
     ).fetchall()
     budget_rows = [dict(r) for r in budget_rows]
 
-    # Real despesas: sum valor_eur per categoria_final for the month
+    # Real despesas: sum usr1 (pagador principal) per categoria_final for the month.
+    # Pagador 2 é apenas exibição em outras telas, não entra na análise de planejamento.
     desp_real = conn.execute(
-        'SELECT LOWER(TRIM(COALESCE(categoria_final,\'\'))) AS cat_key, '
-        'SUM(valor_eur) AS total '
-        'FROM despesas_mensais '
-        'WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0) '
-        'GROUP BY LOWER(TRIM(COALESCE(categoria_final,\'\')))',
+        f'SELECT LOWER(TRIM(COALESCE(categoria_final,\'\'))) AS cat_key, '
+        f'SUM({_desp_value_expr("usr1")}) AS total '
+        f'FROM despesas_mensais '
+        f'WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0) '
+        f'GROUP BY LOWER(TRIM(COALESCE(categoria_final,\'\')))',
         (user_email, mes_ano)
     ).fetchall()
     desp_map = {r['cat_key']: r['total'] for r in desp_real}
