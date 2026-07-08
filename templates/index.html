@@ -1401,7 +1401,7 @@
                 <i class="fa-solid fa-chart-line"></i><span>Investimentos</span>
             </button>
             <button class="side-link" data-module="cad_usuarios" onclick="openModule('cad_usuarios')">
-                <i class="fa-solid fa-users"></i><span>Usuários</span>
+                <i class="fa-solid fa-users"></i><span>Pagadores</span>
             </button>
             <button class="side-link" data-module="cad_tipo_imposto" onclick="openModule('cad_tipo_imposto')">
                 <i class="fa-solid fa-percent"></i><span>Tipos de Impostos</span>
@@ -1671,7 +1671,7 @@
             </div>
             <div class="menu-card" onclick="openModule('cad_usuarios')">
                 <i class="fa-solid fa-users menu-icon"></i>
-                <div class="menu-title">Cadastro de Usuários</div>
+                <div class="menu-title">Configuração de Pagadores</div>
             </div>
             <div class="menu-card" onclick="openModule('cad_tipo_imposto')">
                 <i class="fa-solid fa-percent menu-icon"></i>
@@ -1864,75 +1864,31 @@
         </div>
     </div>
 
-    <!-- Módulo Cadastro de Usuários -->
+    <!-- Módulo Configuração de Pagadores -->
     <div class="container module-container module-fullscreen" id="cadUsuariosModule">
-        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-users" style="margin-right: 15px;"></i>Cadastro de Usuários</h1>
+        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-users" style="margin-right: 15px;"></i>Configuração de Pagadores</h1>
 
         <div class="form-panel">
-            <h3 id="cadUsuarioTitle"><i class="fa-solid fa-user-plus"></i> Novo Usuário do Sistema</h3>
-            <form id="cadUsuarioForm" onsubmit="saveUsuario(event)">
-                <input type="hidden" id="cu_id" value="">
+            <h3><i class="fa-solid fa-user-pen"></i> Rótulos dos Pagadores</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                Estes nomes substituem "USR1"/"USR2" nas telas de despesas, dashboard, relatórios e extração.
+            </p>
+            <form id="pagadorLabelsForm" onsubmit="savePagadorLabels(event)">
                 <div class="form-row-2">
                     <div class="form-field">
-                        <label>Nome</label>
-                        <input type="text" id="cu_nome" class="auth-input" placeholder="Nome completo" required>
+                        <label>Pagador 1</label>
+                        <input type="text" id="pl_usr1" class="auth-input" placeholder="USR1" maxlength="60">
                     </div>
                     <div class="form-field">
-                        <label>Fator de Pagamento</label>
-                        <select id="cu_fator" class="auth-input">
-                            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-                            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-                            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-                            <option value="10">10</option>
-                        </select>
-                    </div>
-                    <div class="form-field">
-                        <label>Chave Usr1</label>
-                        <input type="text" id="cu_usr1" class="auth-input" placeholder="Identificador 1">
-                    </div>
-                    <div class="form-field">
-                        <label>Chave Usr2</label>
-                        <input type="text" id="cu_usr2" class="auth-input" placeholder="Identificador 2">
+                        <label>Pagador 2</label>
+                        <input type="text" id="pl_usr2" class="auth-input" placeholder="USR2" maxlength="60">
                     </div>
                 </div>
                 <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm" id="cadUsuarioBtn"><i class="fa-solid fa-check"></i> Salvar Usuário</button>
-                    <button type="button" class="btn btn-sm secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
-                        <i class="fa-solid fa-xmark"></i> Cancelar
-                    </button>
+                    <button type="submit" class="btn btn-sm" id="pagadorLabelsBtn"><i class="fa-solid fa-check"></i> Salvar</button>
+                    <span id="pagadorLabelsStatus" style="font-size:0.85rem;color:var(--success);"></span>
                 </div>
             </form>
-        </div>
-
-        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-address-book"></i> Usuários Cadastrados</h3>
-        <div class="table-container table-full">
-            <table id="usuariosTable">
-                <thead><tr>
-                    <th onclick="sortTableGeneric('usuariosTable', 0)">Nome <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                    <th onclick="sortTableGeneric('usuariosTable', 1)">Chave Usr1 <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                    <th onclick="sortTableGeneric('usuariosTable', 2)">Chave Usr2 <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                    <th style="text-align:center;" onclick="sortTableGeneric('usuariosTable', 3)">Fator de Pagamento <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
-                    <th style="width:120px;text-align:center;">Ações</th>
-                </tr></thead>
-                <tbody id="usuariosTableBody"></tbody>
-            </table>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: stretch;">
-            <div class="upload-area" id="cu_dropZone" style="margin-bottom: 0;">
-                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
-                <div class="upload-text">Importar via Planilha</div>
-                <div class="upload-subtext">Arraste ou clique para sobrescrever tudo (CSV, Excel)</div>
-                <input type="file" id="cu_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadUsuariosFile(this)">
-                <div id="cu_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
-            </div>
-            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
-                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
-                <div style="font-weight: 600;">Exportar Dados</div>
-                <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_usuarios'" style="width: 100%;">
-                    <i class="fa-solid fa-download"></i> Baixar XLSX
-                </button>
-            </div>
         </div>
     </div>
 
@@ -3015,10 +2971,6 @@
                         <div class="rel-din-tabela-card" data-tabela="cad_investimentos" onclick="relDinToggleTabela(this)"
                              style="--card-color:#a78bfa; --card-bg:rgba(167,139,250,0.1);">
                             <i class="fa-solid fa-briefcase"></i> Cad. Investimentos
-                        </div>
-                        <div class="rel-din-tabela-card" data-tabela="cad_usuarios" onclick="relDinToggleTabela(this)"
-                             style="--card-color:#fbbf24; --card-bg:rgba(251,191,36,0.1);">
-                            <i class="fa-solid fa-users"></i> Cad. Usuários
                         </div>
                         <div class="rel-din-tabela-card" data-tabela="tb_tipo_imposto" onclick="relDinToggleTabela(this)"
                              style="--card-color:#fca5a5; --card-bg:rgba(252,165,165,0.1);">
@@ -4909,7 +4861,6 @@
                 'despesasTable': ['id', 'despesa', 'tipo_despesa', 'fator_divisao', 'prioridade'],
                 'contasTable': ['descricao', 'agencia', 'conta', 'dados_acesso', 'senha', 'comentarios'],
                 'receitasTable': ['descricao', 'tipo_receita', 'fator_divisao', 'prioridade'],
-                'usuariosTable': ['nome', 'chave_usr1', 'chave_usr2', 'fator_pagamento'],
                 'investimentosTable': ['descricao'],
                 'tipoImpostoTable': ['tp_imposto', 'alq_imposto', 'pagamento']
             };
@@ -4938,7 +4889,6 @@
                 'contasTable': renderContasTable,
                 'receitasTable': renderReceitasTable,
                 'investimentosTable': renderInvestimentosTable,
-                'usuariosTable': renderUsuariosTable,
                 'tipoImpostoTable': renderTipoImpostoTable
             };
             if (renderFn[tableId]) renderFn[tableId]();
@@ -5049,109 +4999,30 @@
         // Enter no campo de senha do modal
         document.getElementById('modalAppPassword').addEventListener('keydown', function(e){ if(e.key==='Enter') confirmRevealSenha(); });
 
-        // ── Usuários ─────────────────────────────────────────────────────────────
+        // ── Configuração de Pagadores ───────────────────────────────────────────
         async function loadUsuarios(){
-            const res = await fetch('/api/cad_usuarios');
+            const res = await fetch('/api/pagador_labels');
             const data = await res.json();
-            window.usuariosTableData = data;
-            renderUsuariosTable();
+            document.getElementById('pl_usr1').value = data.label_usr1 === 'USR1' ? '' : data.label_usr1;
+            document.getElementById('pl_usr2').value = data.label_usr2 === 'USR2' ? '' : data.label_usr2;
         }
 
-        function renderUsuariosTable() {
-            const tbody = document.getElementById('usuariosTableBody');
-            tbody.innerHTML = '';
-            if (!window.usuariosTableData || !window.usuariosTableData.length) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Nenhum usuário cadastrado.</td></tr>';
-                return;
-            }
-            window.usuariosTableData.forEach(u => {
-                tbody.innerHTML += `<tr>
-                    <td>${u.nome}</td>
-                    <td>${u.chave_usr1||'—'}</td>
-                    <td>${u.chave_usr2||'—'}</td>
-                    <td style="text-align:center;"><span class="val-badge">${u.fator_pagamento}</span></td>
-                    <td style="text-align:center;">
-                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
-                            onclick="editUsuario(${u.id},'${esc(u.nome)}','${esc(u.chave_usr1)}','${esc(u.chave_usr2)}','${u.fator_pagamento}')" title="Editar">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
-                            onclick="deleteUsuario(${u.id})" title="Remover">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>`;
-            });
-        }
-
-        function editUsuario(id,nome,usr1,usr2,fator){
-            document.getElementById('cu_id').value=id;
-            document.getElementById('cu_nome').value=nome;
-            document.getElementById('cu_usr1').value=usr1;
-            document.getElementById('cu_usr2').value=usr2;
-            document.getElementById('cu_fator').value=fator;
-            document.getElementById('cadUsuarioBtn').innerHTML='<i class="fa-solid fa-save"></i> Salvar';
-            document.getElementById('cadUsuarioCancelBtn').style.display='inline-flex';
-            document.getElementById('cadUsuarioTitle').innerText='Editando Usuário';
-            document.getElementById('cadUsuariosModule').scrollIntoView({behavior:'smooth',block:'start'});
-        }
-
-        function cancelEditUsuario(){
-            document.getElementById('cadUsuarioForm').reset();
-            document.getElementById('cu_id').value='';
-            document.getElementById('cadUsuarioBtn').innerHTML='<i class="fa-solid fa-plus"></i> Adicionar';
-            document.getElementById('cadUsuarioCancelBtn').style.display='none';
-            document.getElementById('cadUsuarioTitle').innerText='Novo Usuário';
-        }
-
-        async function saveUsuario(e){
+        async function savePagadorLabels(e){
             e.preventDefault();
-            const id = document.getElementById('cu_id').value;
             const payload = {
-                nome: document.getElementById('cu_nome').value,
-                chave_usr1: document.getElementById('cu_usr1').value,
-                chave_usr2: document.getElementById('cu_usr2').value,
-                fator_pagamento: document.getElementById('cu_fator').value
+                label_usr1: document.getElementById('pl_usr1').value,
+                label_usr2: document.getElementById('pl_usr2').value,
             };
-            const res = await fetch(id ? `/api/cad_usuarios/${id}` : '/api/cad_usuarios', {
-                method: id ? 'PUT' : 'POST',
+            const res = await fetch('/api/pagador_labels', {
+                method: 'POST',
                 headers:{'Content-Type':'application/json'},
                 body: JSON.stringify(payload)
             });
-            if(res.ok){ cancelEditUsuario(); loadUsuarios(); }
-        }
-
-        async function deleteUsuario(id){
-            if(!confirm('Remover este usuário?')) return;
-            await fetch(`/api/cad_usuarios/${id}`,{method:'DELETE'});
-            loadUsuarios();
-        }
-
-        async function uploadUsuariosFile(input){
-            if(!input.files.length) return;
-            const file = input.files[0];
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const statusDiv = document.getElementById('cu_upload_status');
-            statusDiv.innerText = 'Fazendo upload e processando...';
-            
-            try {
-                const res = await fetch('/api/upload_usuarios', { method: 'POST', body: formData });
-                const data = await res.json();
-                if(res.ok) {
-                    statusDiv.innerText = `${data.count} usuários cadastrados!`;
-                    statusDiv.style.color = 'var(--success)';
-                    loadUsuarios();
-                } else {
-                    statusDiv.innerText = data.error || 'Erro.';
-                    statusDiv.style.color = 'var(--error)';
-                }
-            } catch (e) {
-                statusDiv.innerText = 'Erro de conexão.';
-                statusDiv.style.color = 'var(--error)';
+            if(res.ok){
+                const status = document.getElementById('pagadorLabelsStatus');
+                status.innerText = 'Salvo!';
+                setTimeout(() => status.innerText = '', 2000);
             }
-            input.value = '';
         }
 
         function returnToMenu() {
@@ -5476,8 +5347,6 @@
         // ── Módulo Despesas Mensais ─────────────────────────────────────────────
         let dmDespesasCats = [];
         let dmReceitasCats = [];
-        let dmUsr1Keys = [];
-        let dmUsr2Keys = [];
         let dmUsr1Default = '';
         let dmUsr2Default = '';
 
@@ -5488,39 +5357,26 @@
                 mesInput.value = new Date().toISOString().substring(0, 7);
             }
             
-            // Carrega categorias, contas e usuários para os selects do formulário
+            // Carrega categorias, contas e labels de pagadores para os selects do formulário
             try {
-                const [cRes, dRes, rRes, uRes] = await Promise.all([fetch('/api/cad_contas'), fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/cad_usuarios')]);
+                const [cRes, dRes, rRes, plRes] = await Promise.all([fetch('/api/cad_contas'), fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/pagador_labels')]);
                 const contas = await cRes.json();
                 const despesas = await dRes.json();
                 const receitas = await rRes.json();
-                const usuarios = await uRes.json();
-                
-                console.log('Contas carregadas:', contas);
-                
-                console.log('Usuarios carregados:', usuarios);
-                
+                const pagadorLabels = await plRes.json();
+
                 dmDespesasCats = despesas.map(d => d.despesa);
                 dmReceitasCats = receitas.map(r => r.descricao);
-                
-                // Extrai chaves únicas da tabela de usuários
-                const allUsr1 = usuarios.map(u => u.chave_usr1).filter(k => k);
-                const allUsr2 = usuarios.map(u => u.chave_usr2).filter(k => k);
-                dmUsr1Keys = [...new Set(allUsr1)];
-                dmUsr2Keys = [...new Set(allUsr2)];
-                
-                // Armazena o primeiro valor não vazio como padrão
-                dmUsr1Default = dmUsr1Keys[0] || '';
-                document.getElementById('dmColUsr1').innerHTML = (dmUsr1Default || 'USR1') + ' <i class="sort-icon fa-solid fa-sort" data-col="5"></i>';
-                document.getElementById('dmConsColUsr1').innerText = dmUsr1Default || 'Total Usr1';
-                document.getElementById('ddColUsr1').innerText = dmUsr1Default || 'USR1';
-                dmUsr2Default = dmUsr2Keys[0] || '';
-                document.getElementById('dmColUsr2').innerHTML = (dmUsr2Default || 'USR2') + ' <i class="sort-icon fa-solid fa-sort" data-col="6"></i>';
-                document.getElementById('dmConsColUsr2').innerText = dmUsr2Default || 'Total Usr2';
-                document.getElementById('ddColUsr2').innerText = dmUsr2Default || 'USR2';
-                
-                console.log('USR1 Keys:', dmUsr1Keys, 'USR2 Keys:', dmUsr2Keys, 'Defaults:', dmUsr1Default, dmUsr2Default);
-                
+
+                dmUsr1Default = pagadorLabels.label_usr1 || 'USR1';
+                document.getElementById('dmColUsr1').innerHTML = dmUsr1Default + ' <i class="sort-icon fa-solid fa-sort" data-col="5"></i>';
+                document.getElementById('dmConsColUsr1').innerText = dmUsr1Default;
+                document.getElementById('ddColUsr1').innerText = dmUsr1Default;
+                dmUsr2Default = pagadorLabels.label_usr2 || 'USR2';
+                document.getElementById('dmColUsr2').innerHTML = dmUsr2Default + ' <i class="sort-icon fa-solid fa-sort" data-col="6"></i>';
+                document.getElementById('dmConsColUsr2').innerText = dmUsr2Default;
+                document.getElementById('ddColUsr2').innerText = dmUsr2Default;
+
                 const cSel = document.getElementById('dm_conta');
                 cSel.innerHTML = '<option value="">—</option>' + contas.map(c => `<option value="${c.descricao}">${c.descricao}</option>`).join('');
                 
@@ -6901,12 +6757,12 @@
         async function getUsrLabels() {
             if (usrLabelsCache) return usrLabelsCache;
             try {
-                const res = await fetch('/api/cad_usuarios');
+                const res = await fetch('/api/pagador_labels');
                 if (!res.ok) return { usr1: 'USR1', usr2: 'USR2' };
-                const usuarios = await res.json();
+                const data = await res.json();
                 usrLabelsCache = {
-                    usr1: usuarios.map(u => u.chave_usr1).find(k => k) || 'USR1',
-                    usr2: usuarios.map(u => u.chave_usr2).find(k => k) || 'USR2',
+                    usr1: data.label_usr1 || 'USR1',
+                    usr2: data.label_usr2 || 'USR2',
                 };
                 return usrLabelsCache;
             } catch (e) {
@@ -8295,18 +8151,16 @@
 
             const defaultConta = document.getElementById('uploadContaBancaria').value;
 
-            // Busca categorias, receitas e usuários para valores padrão de USR
+            // Busca categorias, receitas e labels de pagadores para valores padrão de USR
             let usr1Default = '';
             let usr2Default = '';
             try {
-                const [dRes, rRes, uRes] = await Promise.all([fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/cad_usuarios')]);
+                const [dRes, rRes, plRes] = await Promise.all([fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/pagador_labels')]);
                 window.DYNAMIC_CATEGORIES = (await dRes.json()).map(x => x.despesa);
                 window.DYNAMIC_RECEITAS = (await rRes.json()).map(x => x.descricao);
-                const usuarios = await uRes.json();
-                const allUsr1 = usuarios.map(u => u.chave_usr1).filter(k => k);
-                const allUsr2 = usuarios.map(u => u.chave_usr2).filter(k => k);
-                usr1Default = allUsr1[0] || '';
-                usr2Default = allUsr2[0] || '';
+                const pagadorLabels = await plRes.json();
+                usr1Default = pagadorLabels.label_usr1 || '';
+                usr2Default = pagadorLabels.label_usr2 || '';
                 // Fix: atualizar labels Pag1/Pag2 com nomes reais de USR1/USR2
                 const lbl1 = document.getElementById('reviewLabelPag1');
                 const lbl2 = document.getElementById('reviewLabelPag2');
@@ -8899,7 +8753,6 @@
             cad_contas:         [{ value: 'descricao',        label: 'Descrição (Contas)' }],
             cad_receitas:       [{ value: 'descricao',        label: 'Descrição (Receitas)' }],
             cad_investimentos:  [{ value: 'descricao',        label: 'Descrição (Invest.)' }],
-            cad_usuarios:       [{ value: 'nome',             label: 'Nome (Usuários)' }],
             tb_tipo_imposto:    [{ value: 'tp_imposto',       label: 'Tipo Imposto (Config)' }],
         };
         const REL_DIN_CAMPOS = {
@@ -8967,12 +8820,6 @@
             ],
             cad_receitas:       [{ value: 'descricao', label: 'Descrição' }],
             cad_investimentos:  [{ value: 'descricao', label: 'Descrição' }],
-            cad_usuarios:       [
-                { value: 'nome',             label: 'Nome' },
-                { value: 'chave_usr1',       label: 'Chave Usr1' },
-                { value: 'chave_usr2',       label: 'Chave Usr2' },
-                { value: 'fator_pagamento',  label: 'Fator Pagamento' },
-            ],
             tb_tipo_imposto:    [
                 { value: 'tp_imposto',  label: 'Tipo Imposto' },
                 { value: 'alq_imposto', label: 'Alíquota' },

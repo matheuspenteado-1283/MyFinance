@@ -1,5 +1,6 @@
 import math
 from db.connection import get_connection
+from modules.cadastros.db.usuarios import get_pagador_labels
 
 MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 MONTH_KEYS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -702,13 +703,9 @@ def get_relatorio_anual_despesas(user_email: str, ano: int):
     )
     all_cats = [dict(r) for r in c.fetchall()]
 
-    c.execute(
-        'SELECT chave_usr1, chave_usr2 FROM cad_usuarios WHERE user_email=%s ORDER BY id ASC',
-        (user_email,)
-    )
-    all_users = [dict(r) for r in c.fetchall()]
-    usr1_nome = next((r['chave_usr1'] for r in all_users if r.get('chave_usr1')), 'USR1')
-    usr2_nome = next((r['chave_usr2'] for r in all_users if r.get('chave_usr2')), 'USR2')
+    labels = get_pagador_labels(user_email)
+    usr1_nome = labels['label_usr1']
+    usr2_nome = labels['label_usr2']
 
     c.execute('''
         SELECT categoria_final, mes_referencia, moeda,
