@@ -68,7 +68,6 @@ def get_tabelas_campos():
         'cad_contas': ['id', 'descricao', 'agencia', 'conta', 'dados_acesso', 'senha', 'comentarios'],
         'cad_receitas': ['id', 'descricao'],
         'cad_investimentos': ['id', 'descricao'],
-        'cad_usuarios': ['id', 'chave_usr1', 'chave_usr2', 'nome', 'fator_pagamento'],
         'tb_tipo_imposto': ['id', 'tp_imposto', 'alq_imposto', 'pagamento'],
     }
 
@@ -225,17 +224,6 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
                 agrupadores_encontrados.add(agr)
                 if agr not in resultado:
                     resultado[agr] = {'valores': {}, 'moedas': set(), 'dados': {}}
-
-        elif tabela == 'cad_usuarios':
-            c.execute('SELECT nome, chave_usr1, chave_usr2, fator_pagamento FROM cad_usuarios')
-            for row in c.fetchall():
-                agr = row['nome'] or 'Sem Nome'
-                agrupadores_encontrados.add(agr)
-                if agr not in resultado:
-                    resultado[agr] = {'valores': {}, 'moedas': set(), 'dados': {}}
-                resultado[agr]['dados']['chave_usr1'] = row['chave_usr1']
-                resultado[agr]['dados']['chave_usr2'] = row['chave_usr2']
-                resultado[agr]['dados']['fator_pagamento'] = row['fator_pagamento']
 
         elif tabela == 'tb_tipo_imposto':
             c.execute('SELECT tp_imposto, alq_imposto, pagamento FROM tb_tipo_imposto')

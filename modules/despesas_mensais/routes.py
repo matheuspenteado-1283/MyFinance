@@ -13,6 +13,7 @@ from .db import (
     clear_despesas_mensais, consolidar_despesas_anuais, get_consolidacao_tipo_despesa,
     get_meses_disponiveis, check_duplicates_with_data, get_relatorio_mensal_v2,
 )
+from modules.cadastros.db.usuarios import get_pagador_labels
 
 
 @bp.route('/api/despesas_mensais/check_duplicates', methods=['POST'])
@@ -276,6 +277,10 @@ def export_despesas_mensais():
     if not mes:
         return jsonify({'error': 'Mês não informado'}), 400
 
+    labels = get_pagador_labels(session['user_email'])
+    label_usr1 = labels['label_usr1']
+    label_usr2 = labels['label_usr2']
+
     despesas = get_despesas_mensais(session['user_email'], mes)
     df = pd.DataFrame(despesas)
     if not df.empty:
@@ -283,13 +288,13 @@ def export_despesas_mensais():
         df.rename(columns={
             'data': 'Data', 'descricao': 'Descrição', 'valor_original': 'Valor Original',
             'moeda': 'Moeda Original', 'cambio_eur': 'Câmbio EUR', 'valor_eur': 'Valor Final (EUR)',
-            'usr1': 'USR1', 'usr2': 'USR2', 'diferenca_original': 'Diferença Original',
+            'usr1': label_usr1, 'usr2': label_usr2, 'diferenca_original': 'Diferença Original',
             'status_pago': 'Status Pago', 'categoria_final': 'Categoria Final',
             'receita': 'Receita', 'comentarios': 'Comentários', 'conta_bancaria': 'Conta Bancária',
         }, inplace=True)
         df['Receita'] = df['Receita'].map({1: 'Sim', 0: 'Não'})
 
-        num_cols = ['Valor Original', 'Câmbio EUR', 'Valor Final (EUR)', 'USR1', 'USR2', 'Diferença Original']
+        num_cols = ['Valor Original', 'Câmbio EUR', 'Valor Final (EUR)', label_usr1, label_usr2, 'Diferença Original']
         for col in num_cols:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(',', '.'), errors='coerce')
@@ -298,7 +303,7 @@ def export_despesas_mensais():
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Detalhes Lancamentos')
         worksheet = writer.sheets['Detalhes Lancamentos']
-        num_cols = ['Valor Original', 'Câmbio EUR', 'Valor Final (EUR)', 'USR1', 'USR2', 'Diferença Original']
+        num_cols = ['Valor Original', 'Câmbio EUR', 'Valor Final (EUR)', label_usr1, label_usr2, 'Diferença Original']
         for col in num_cols:
             if col in df.columns:
                 col_idx = df.columns.get_loc(col) + 1
@@ -323,6 +328,10 @@ def export_consolidacao():
     if not mes:
         return jsonify({'error': 'Mês não informado'}), 400
 
+    labels = get_pagador_labels(session['user_email'])
+    col_usr1 = f"Total {labels['label_usr1']}"
+    col_usr2 = f"Total {labels['label_usr2']}"
+
     despesas = get_despesas_mensais(session['user_email'], mes)
 
     sumMap = {}
@@ -334,12 +343,12 @@ def export_consolidacao():
         sumMap[cat]['usr2'] += d.get('usr2') or 0
         sumMap[cat]['total'] += (d.get('usr1') or 0) + (d.get('usr2') or 0)
 
-    rows = [{'Categoria': cat, 'Total Usr1': sumMap[cat]['usr1'],
-             'Total Usr2': sumMap[cat]['usr2'], 'Total Geral': sumMap[cat]['total']}
+    rows = [{'Categoria': cat, col_usr1: sumMap[cat]['usr1'],
+             col_usr2: sumMap[cat]['usr2'], 'Total Geral': sumMap[cat]['total']}
             for cat in sorted(sumMap.keys())]
 
     df = pd.DataFrame(rows)
-    num_cols = ['Total Usr1', 'Total Usr2', 'Total Geral']
+    num_cols = [col_usr1, col_usr2, 'Total Geral']
     for col in num_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
