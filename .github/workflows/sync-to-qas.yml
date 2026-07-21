@@ -1,0 +1,20 @@
+name: Sync to QAS
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to MyFinance_QAS
+        env:
+          QAS_TOKEN: ${{ secrets.QAS_DEPLOY_TOKEN }}
+        run: |
+          git remote add qas https://x-token-auth:${QAS_TOKEN}@github.com/matheuspenteado-1283/MyFinance_QAS.git
+          git push qas HEAD:main --force

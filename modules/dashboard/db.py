@@ -131,6 +131,57 @@ def _monthly_revenues(conn, user_email, mes, usr='all'):
     return _to_float(row['total'])
 
 
+def _monthly_expenses_native(conn, user_email, mes, usr='all'):
+    """Totais por moeda nativa (sem round-trip via taxa de câmbio do dia)."""
+    usr = _norm_usr(usr)
+    expr = _desp_value_expr(usr, value_col='valor_original')
+    row = conn.execute(f'''
+        SELECT
+            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) = 'EUR' THEN {expr} ELSE 0 END), 0) AS eur,
+            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) != 'EUR' THEN {expr} ELSE 0 END), 0) AS brl
+        FROM despesas_mensais
+        WHERE user_email=%s AND mes_referencia=%s AND (receita IS NULL OR receita=0)
+    ''', (user_email, mes)).fetchone()
+    return {'eur': _to_float(row['eur']), 'brl': _to_float(row['brl'])}
+
+
+def _monthly_revenues_native(conn, user_email, mes, usr='all'):
+    """Totais por moeda nativa (sem round-trip via taxa de câmbio do dia)."""
+    usr = _norm_usr(usr)
+    if usr == 'all':
+        row = conn.execute('''
+            SELECT
+                COALESCE(SUM(CASE WHEN UPPER(COALESCE(r.moeda_original, 'BRL')) = 'EUR' THEN r.valor_eur ELSE 0 END), 0) AS eur,
+                COALESCE(SUM(CASE WHEN UPPER(COALESCE(r.moeda_original, 'BRL')) != 'EUR' THEN r.valor_brl ELSE 0 END), 0) AS brl
+            FROM receitas_mensais r
+            WHERE r.user_email=%s AND r.mes_referencia=%s
+        ''', (user_email, mes)).fetchone()
+    else:
+        eur_linked = _desp_value_expr(usr, alias='d', value_col='valor_eur')
+        orig_linked = _desp_value_expr(usr, alias='d', value_col='valor_original')
+        rec_eur_expr = f"""CASE
+            WHEN r.despesa_mensal_id IS NULL AND UPPER(COALESCE(r.moeda_original, 'BRL')) = 'EUR' THEN r.valor_eur
+            WHEN r.despesa_mensal_id IS NOT NULL AND UPPER(COALESCE(d.moeda, 'BRL')) = 'EUR' THEN {eur_linked}
+            ELSE 0 END"""
+        rec_brl_expr = f"""CASE
+            WHEN r.despesa_mensal_id IS NULL AND UPPER(COALESCE(r.moeda_original, 'BRL')) != 'EUR' THEN r.valor_brl
+            WHEN r.despesa_mensal_id IS NOT NULL AND UPPER(COALESCE(d.moeda, 'BRL')) != 'EUR' THEN {orig_linked}
+            ELSE 0 END"""
+        row = conn.execute(f'''
+            SELECT COALESCE(SUM({rec_eur_expr}), 0) AS eur,
+                   COALESCE(SUM({rec_brl_expr}), 0) AS brl
+            FROM receitas_mensais r
+            LEFT JOIN despesas_mensais d
+              ON d.id = r.despesa_mensal_id AND d.user_email = r.user_email
+            WHERE r.user_email=%s AND r.mes_referencia=%s
+              AND (
+                (r.despesa_mensal_id IS NULL AND r.pagador_usr = %s)
+                OR r.despesa_mensal_id IS NOT NULL
+              )
+        ''', (user_email, mes, usr)).fetchone()
+    return {'eur': _to_float(row['eur']), 'brl': _to_float(row['brl'])}
+
+
 def _investment_summary(conn, user_email):
     row = conn.execute('''
         SELECT
@@ -622,6 +673,8 @@ def get_dashboard_overview(user_email: str, mes: str, ano: int, usr: str = 'all'
     conn = get_connection()
     receitas = _monthly_revenues(conn, user_email, mes, usr)
     despesas = _monthly_expenses(conn, user_email, mes, usr)
+    receitas_native = _monthly_revenues_native(conn, user_email, mes, usr)
+    despesas_native = _monthly_expenses_native(conn, user_email, mes, usr)
     investimentos = _investment_summary(conn, user_email)
     dividas = _debt_summary(conn, user_email)
     caixa = _cash_balance_until(conn, user_email, mes, usr)
@@ -659,6 +712,10 @@ def get_dashboard_overview(user_email: str, mes: str, ano: int, usr: str = 'all'
         'kpis': {
             'receitas': receitas,
             'despesas': despesas,
+            'receitas_eur': receitas_native['eur'],
+            'receitas_brl': receitas_native['brl'],
+            'despesas_eur': despesas_native['eur'],
+            'despesas_brl': despesas_native['brl'],
             'saldo': saldo,
             'budget_usado_pct': (despesas / budget_despesas * 100) if budget_despesas else 0,
             'budget_despesas': budget_despesas,

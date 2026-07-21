@@ -1,6 +1,8 @@
 """
 Camada de análise IA — suporta Anthropic e OpenAI.
 Selecção via variável de ambiente AI_PROVIDER=anthropic|openai (padrão: anthropic).
+No caminho padrão (AI_PROVIDER != openai), tenta primeiro a API da DeepSeek
+(DEEPSEEK_API_KEY) e, se falhar, cai automaticamente para o Anthropic.
 """
 import os
 import json
@@ -17,6 +19,7 @@ _ANTHROPIC_DEEP  = 'claude-sonnet-4-6'
 _ANTHROPIC_FAST  = 'claude-haiku-4-5-20251001'
 _OPENAI_DEEP     = 'gpt-4o'
 _OPENAI_FAST     = 'gpt-4o-mini'
+_DEEPSEEK_MODEL  = 'deepseek-chat'
 
 SYSTEM_PROMPT = """Você é o MyFinance Advisor — um consultor financeiro pessoal inteligente \
 integrado na plataforma MyFinance 2.0.
@@ -175,6 +178,22 @@ def _call_openai(model: str, user_content: str, max_tokens: int) -> dict:
     return json.loads(resp.choices[0].message.content)
 
 
+def _call_deepseek(model: str, user_content: str, max_tokens: int) -> dict:
+    from openai import OpenAI
+    api_key = _require_key('DEEPSEEK_API_KEY')
+    client = OpenAI(api_key=api_key, base_url='https://api.deepseek.com')
+    resp = client.chat.completions.create(
+        model=model,
+        max_tokens=max_tokens,
+        messages=[
+            {'role': 'system', 'content': SYSTEM_PROMPT},
+            {'role': 'user',   'content': user_content},
+        ],
+        response_format={'type': 'json_object'},
+    )
+    return json.loads(resp.choices[0].message.content)
+
+
 def _call(speed: str, user_content: str, max_tokens: int = 2048) -> dict:
     """speed: 'deep' (análises complexas) | 'fast' (alertas)"""
     if _provider() == 'openai':
@@ -182,7 +201,11 @@ def _call(speed: str, user_content: str, max_tokens: int = 2048) -> dict:
         return _call_openai(model, user_content, max_tokens)
     else:
         model = _ANTHROPIC_DEEP if speed == 'deep' else _ANTHROPIC_FAST
-        return _call_anthropic(model, user_content, max_tokens)
+        try:
+            return _call_deepseek(_DEEPSEEK_MODEL, user_content, max_tokens)
+        except Exception as e:
+            logger.warning(f"[FALLBACK] DeepSeek falhou ({e}); tentando Anthropic")
+            return _call_anthropic(model, user_content, max_tokens)
 
 
 def _chat_anthropic(system: str, messages: list, max_tokens: int) -> str:
@@ -205,6 +228,19 @@ def _chat_openai(system: str, messages: list, max_tokens: int) -> str:
     full_messages = [{'role': 'system', 'content': system}] + messages
     resp = client.chat.completions.create(
         model=_OPENAI_DEEP,
+        max_tokens=max_tokens,
+        messages=full_messages,
+    )
+    return resp.choices[0].message.content
+
+
+def _chat_deepseek(system: str, messages: list, max_tokens: int) -> str:
+    from openai import OpenAI
+    api_key = _require_key('DEEPSEEK_API_KEY')
+    client = OpenAI(api_key=api_key, base_url='https://api.deepseek.com')
+    full_messages = [{'role': 'system', 'content': system}] + messages
+    resp = client.chat.completions.create(
+        model=_DEEPSEEK_MODEL,
         max_tokens=max_tokens,
         messages=full_messages,
     )
@@ -488,7 +524,11 @@ def chat_with_analyst(snapshot: dict, history: list, user_message: str) -> dict:
     if _provider() == 'openai':
         reply = _chat_openai(system, messages, max_tokens=1024)
     else:
-        reply = _chat_anthropic(system, messages, max_tokens=1024)
+        try:
+            reply = _chat_deepseek(system, messages, max_tokens=1024)
+        except Exception as e:
+            logger.warning(f"[FALLBACK] DeepSeek falhou ({e}); tentando Anthropic")
+            reply = _chat_anthropic(system, messages, max_tokens=1024)
 
     all_suggestions = [
         "Como está minha taxa de poupança?",
