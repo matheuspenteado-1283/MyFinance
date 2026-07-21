@@ -14,6 +14,10 @@
     <!-- Chart.js para Dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Manual de Uso — aba Referencia -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='js/guia_referencia.js') }}" defer></script>
+
     <style>
         :root {
             --bg-color: #0f172a;
@@ -1188,6 +1192,145 @@
         }
         .ai-tab-content { display:none; }
         .ai-tab-content.active { display:block; }
+
+        /* ── Manual de Uso ──────────────────────────── */
+        .guia-home-cta {
+            display:flex; align-items:center; gap:1.25rem;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid var(--primary);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .guia-home-cta:hover {
+            background: rgba(59, 130, 246, 0.14);
+            transform: translateY(-2px);
+        }
+        .guia-home-cta-icon { font-size: 1.8rem; color: var(--primary); flex-shrink:0; }
+        .guia-home-cta-body { flex:1; }
+        .guia-home-cta-title { font-size: 1.1rem; font-weight: 700; color: var(--text-light); }
+        .guia-home-cta-desc { font-size: 0.85rem; color: var(--text-muted); margin-top:2px; line-height:1.4; }
+        .guia-home-cta-arrow { color: var(--primary); flex-shrink:0; }
+        .guia-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.25rem; }
+        .guia-tab {
+            padding:7px 14px; border-radius:8px; border:1px solid var(--glass-border);
+            background:var(--glass-bg); color:var(--text-muted); font-size:0.82rem;
+            font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+        }
+        .guia-tab:hover { border-color:var(--primary); color:var(--text-light); }
+        .guia-tab.active {
+            background:var(--primary-gradient); color:#fff;
+            border-color:transparent; box-shadow:0 2px 12px rgba(59,130,246,0.4);
+        }
+        .guia-tab-content { display:none; }
+        .guia-tab-content.active { display:block; }
+        .guia-intro { color:var(--text-muted); font-size:0.9rem; margin-bottom:1.25rem; line-height:1.5; }
+        .guia-step {
+            display:flex; align-items:flex-start; gap:12px;
+            background:var(--glass-bg); border:1px solid var(--glass-border);
+            border-radius:12px; padding:1rem 1.25rem; margin-bottom:0.85rem;
+            transition: all 0.2s;
+        }
+        .guia-step.done { opacity:0.6; border-color: var(--success, #10b981); }
+        .guia-step-check { margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; }
+        .guia-step-body { flex:1; }
+        .guia-step-title { font-weight:600; color:var(--text-light); margin-bottom:4px; }
+        .guia-step-desc { color:var(--text-muted); font-size:0.85rem; line-height:1.45; }
+        .guia-step-action {
+            flex-shrink:0; padding:7px 14px; border-radius:8px; border:none; cursor:pointer;
+            background:var(--primary-gradient); color:#fff; font-size:0.8rem; font-weight:600;
+            white-space:nowrap; transition:all 0.2s;
+        }
+        .guia-step-action:hover { opacity:0.88; transform:translateY(-1px); }
+
+        /* ── Fluxo Animado: Como o MyFinance funciona ─────────────────────── */
+        .mf-flow-wrap { margin-bottom: 2rem; }
+        .mf-flow-title {
+            font-size: 0.8rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;
+        }
+        .mf-flow {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem 0;
+        }
+        .mf-flow::before {
+            content: '';
+            position: absolute;
+            top: 32px;
+            left: 6%;
+            right: 6%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary) 0%, rgba(59,130,246,0.12) 100%);
+            z-index: 0;
+        }
+        .mf-flow-dot {
+            position: absolute;
+            top: 27px;
+            left: 6%;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px 3px rgba(59,130,246,0.7);
+            z-index: 1;
+            animation: mfDotMove 12s linear infinite;
+        }
+        .mf-flow-step {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            width: 12%; min-width: 88px; gap: 0.6rem;
+        }
+        .mf-flow-icon {
+            width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--glass-bg); border: 2px solid var(--glass-border);
+            font-size: 1.4rem; color: var(--text-muted);
+            animation: mfPulse 12s ease-in-out infinite;
+            animation-fill-mode: both;
+        }
+        .mf-flow-label {
+            font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+            line-height: 1.3;
+        }
+        .mf-flow-step:nth-child(1) .mf-flow-icon { animation-delay: 0s; }
+        .mf-flow-step:nth-child(2) .mf-flow-icon { animation-delay: 1.5s; }
+        .mf-flow-step:nth-child(3) .mf-flow-icon { animation-delay: 3s; }
+        .mf-flow-step:nth-child(4) .mf-flow-icon { animation-delay: 4.5s; }
+        .mf-flow-step:nth-child(5) .mf-flow-icon { animation-delay: 6s; }
+        .mf-flow-step:nth-child(6) .mf-flow-icon { animation-delay: 7.5s; }
+        .mf-flow-step:nth-child(7) .mf-flow-icon { animation-delay: 9s; }
+        .mf-flow-step:nth-child(8) .mf-flow-icon { animation-delay: 10.5s; }
+
+        @keyframes mfPulse {
+            0%, 4%   { transform: scale(1); background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-muted); box-shadow: none; }
+            7%       { transform: scale(1.14); background: var(--primary-gradient); border-color: transparent; color: #fff; box-shadow: 0 0 22px rgba(59,130,246,0.65); }
+            13%, 100% { transform: scale(1); background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-muted); box-shadow: none; }
+        }
+        @keyframes mfDotMove {
+            0%   { left: 6%; opacity: 0; }
+            4%   { opacity: 1; }
+            94%  { left: 94%; opacity: 1; }
+            100% { left: 94%; opacity: 0; }
+        }
+
+        @media (max-width: 860px) {
+            .mf-flow::before, .mf-flow-dot { display: none; }
+            .mf-flow {
+                flex-direction: column; align-items: stretch; gap: 0.85rem;
+            }
+            .mf-flow-step {
+                width: auto; flex-direction: row; text-align: left;
+                background: var(--glass-bg); border: 1px solid var(--glass-border);
+                border-radius: 12px; padding: 0.75rem 1rem;
+            }
+            .mf-flow-icon { width: 44px; height: 44px; font-size: 1.1rem; }
+            .mf-flow-label { font-size: 0.85rem; }
+        }
         .ai-analysis-btn {
             display:inline-flex; align-items:center; gap:8px;
             padding:10px 22px; border-radius:10px; border:none; cursor:pointer;
@@ -1406,6 +1549,9 @@
             <button class="side-link" data-module="cad_tipo_imposto" onclick="openModule('cad_tipo_imposto')">
                 <i class="fa-solid fa-percent"></i><span>Tipos de Impostos</span>
             </button>
+            <button class="side-link" data-module="guia_uso" onclick="openModule('guia_uso')">
+                <i class="fa-solid fa-book-open"></i><span>Manual de Uso</span>
+            </button>
             <button class="side-link" data-module="avancado" onclick="openModule('avancado')">
                 <i class="fa-solid fa-sliders"></i><span>Avançado</span>
             </button>
@@ -1474,6 +1620,54 @@
     <!-- Container Principal do Menu -->
     <div id="menuContainer">
         <h1 style="text-align: center; margin-bottom: 2rem;">MyFinance</h1>
+        <div class="guia-home-cta" onclick="openModule('guia_uso')">
+            <i class="fa-solid fa-book-open guia-home-cta-icon"></i>
+            <div class="guia-home-cta-body">
+                <div class="guia-home-cta-title">Manual de Uso</div>
+                <div class="guia-home-cta-desc">Novo por aqui? Siga o guia passo a passo: cadastros, despesas, upload de extratos, receitas, investimentos, relatórios, dashboards e Agente IA.</div>
+            </div>
+            <i class="fa-solid fa-chevron-right guia-home-cta-arrow"></i>
+        </div>
+
+        <div class="mf-flow-wrap">
+            <div class="mf-flow-title">Como o MyFinance funciona</div>
+            <div class="mf-flow">
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-users-gear"></i></div>
+                    <div class="mf-flow-label">Cadastros</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+                    <div class="mf-flow-label">Upload de Despesas + Classificação IA</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="mf-flow-label">Lançamento de Despesas</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-coins"></i></div>
+                    <div class="mf-flow-label">Lançamento de Receitas</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="mf-flow-label">Lançamento de Investimentos</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                    <div class="mf-flow-label">Relatórios</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div class="mf-flow-label">Dashboards</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="mf-flow-label">Análises do Agente IA</div>
+                </div>
+                <div class="mf-flow-dot"></div>
+            </div>
+        </div>
+
         <div class="menu-grid">
             <div class="menu-card" onclick="openModule('extratos')">
                 <i class="fa-solid fa-file-invoice-dollar menu-icon"></i>
@@ -1532,6 +1726,230 @@
                 <div class="menu-title">Configurações</div>
             </div>
         </div>
+    </div>
+
+    <!-- Módulo Manual de Uso -->
+    <div class="container module-container module-fullscreen" id="guiaUsoModule" style="display:none;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem;">
+            <div>
+                <h1 style="margin:0;display:flex;align-items:center;gap:10px;">
+                    <i class="fa-solid fa-book-open" style="color:var(--primary);"></i> Manual de Uso
+                </h1>
+                <small style="color:var(--text-muted);">Siga a ordem abaixo na primeira vez que usar o MyFinance — cada passo tem um botão para ir direto ao módulo</small>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div id="guiaProgressLabel" style="font-size:0.85rem;color:var(--text-muted);white-space:nowrap;"></div>
+                <a href="/guia" target="_blank" rel="noopener" class="btn btn-xs secondary"
+                   style="text-decoration:none;white-space:nowrap;"
+                   title="Abrir o guia completo em uma nova aba — com busca, modo claro e impressão">
+                    <i class="fa-solid fa-up-right-from-square"></i> Guia Completo MYFINANCE
+                </a>
+            </div>
+        </div>
+
+        <div class="guia-tabs" role="tablist" aria-label="Etapas do manual de uso">
+            <button class="guia-tab active" onclick="showGuiaTab('cadastros')">1. Cadastros</button>
+            <button class="guia-tab" onclick="showGuiaTab('despesas')">2. Despesas</button>
+            <button class="guia-tab" onclick="showGuiaTab('upload')">3. Upload de Extratos</button>
+            <button class="guia-tab" onclick="showGuiaTab('receitas')">4. Receitas &amp; Investimentos</button>
+            <button class="guia-tab" onclick="showGuiaTab('relatorios')">5. Relatórios</button>
+            <button class="guia-tab" onclick="showGuiaTab('dashboards')">6. Dashboards</button>
+            <button class="guia-tab" onclick="showGuiaTab('ia')">7. Agente IA</button>
+            <button class="guia-tab" onclick="showGuiaTab('referencia')"><i class="fa-solid fa-book"></i> Referência</button>
+        </div>
+
+        <!-- Referencia: conteudo vem de Docs/GUIA_DO_USUARIO_MYFINANCE.md via /api/guia -->
+        <div id="guiaTab-referencia" class="guia-tab-content"></div>
+
+        <!-- 1. Cadastros -->
+        <div id="guiaTab-cadastros" class="guia-tab-content active">
+            <p class="guia-intro">Comece por aqui. Os lançamentos (despesas, receitas, investimentos) dependem destes cadastros — sem eles, os formulários de lançamento ficam sem opções para selecionar.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-pagadores" onchange="guiaToggleStep('guia-cad-pagadores')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Pagadores</div>
+                    <div class="guia-step-desc">Cadastre quem paga as contas na sua casa/empresa. Esses nomes substituem "USR1"/"USR2" nas telas de despesas, dashboard, relatórios e extração.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_usuarios')">Ir para Pagadores</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-contas" onchange="guiaToggleStep('guia-cad-contas')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Contas Bancárias</div>
+                    <div class="guia-step-desc">Cadastre as contas/bancos usados nos lançamentos e nos uploads de extrato.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_contas')">Ir para Contas</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-despesas" onchange="guiaToggleStep('guia-cad-despesas')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Categorias de Despesas</div>
+                    <div class="guia-step-desc">Defina as categorias (tipo, fator de divisão, prioridade) usadas para classificar despesas mensais e extratos importados.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_despesas')">Ir para Cadastro de Despesas</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-receitas" onchange="guiaToggleStep('guia-cad-receitas')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Categorias de Receitas</div>
+                    <div class="guia-step-desc">Defina as categorias usadas para classificar as receitas mensais (salário, freelas, aluguel recebido, etc.).</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_receitas')">Ir para Cadastro de Receitas</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-investimentos" onchange="guiaToggleStep('guia-cad-investimentos')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Catálogo de Investimentos</div>
+                    <div class="guia-step-desc">Cadastre os tipos/ativos de investimento que você usa (renda fixa, ações, fundos, etc.) antes de lançar aportes.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_investimentos')">Ir para Cadastro de Investimentos</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-impostos" onchange="guiaToggleStep('guia-cad-impostos')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Tipos de Imposto</div>
+                    <div class="guia-step-desc">Opcional — cadastre os tipos de imposto que você acompanha (IPTU, IPVA, etc.) se for usar o módulo de Impostos.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_tipo_imposto')">Ir para Tipos de Imposto</button>
+            </div>
+        </div>
+
+        <!-- 2. Despesas -->
+        <div id="guiaTab-despesas" class="guia-tab-content">
+            <p class="guia-intro">Com os cadastros prontos, lance as despesas do mês manualmente. Cada lançamento usa o pagador, a conta e a categoria cadastrados na etapa anterior.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-desp-mensais" onchange="guiaToggleStep('guia-desp-mensais')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Despesas Mensais</div>
+                    <div class="guia-step-desc">Lance despesas do mês uma a uma (valor, categoria, pagador, conta). É a fonte usada pelos relatórios, dashboards e pelo Agente IA.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('despesas_mensais')">Ir para Despesas Mensais</button>
+            </div>
+        </div>
+
+        <!-- 3. Upload de Extratos -->
+        <div id="guiaTab-upload" class="guia-tab-content">
+            <p class="guia-intro">Alternativa mais rápida ao lançamento manual: envie o extrato do banco (PDF/CSV) e revise a categorização sugerida em vez de digitar cada despesa.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-upload-extrair" onchange="guiaToggleStep('guia-upload-extrair')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Extração do Extrato</div>
+                    <div class="guia-step-desc">Faça upload do PDF/CSV do banco. O sistema extrai as transações automaticamente.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('extratos')">Ir para Upload de Extratos</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-upload-revisar" onchange="guiaToggleStep('guia-upload-revisar')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Revisão e Categorização</div>
+                    <div class="guia-step-desc">Confira cada transação extraída e associe à categoria de despesa correta antes de confirmar a importação.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('extratos')">Ir para Revisão</button>
+            </div>
+        </div>
+
+        <!-- 4. Receitas & Investimentos -->
+        <div id="guiaTab-receitas" class="guia-tab-content">
+            <p class="guia-intro">Registre o outro lado do fluxo de caixa: o que entra (receitas) e o que é guardado/aplicado (investimentos).</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rec-mensais" onchange="guiaToggleStep('guia-rec-mensais')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Receitas Mensais</div>
+                    <div class="guia-step-desc">Lance as receitas do mês (salário, extras, etc.) usando as categorias cadastradas na etapa 1.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('receitas_mensais')">Ir para Receitas Mensais</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rec-investimentos" onchange="guiaToggleStep('guia-rec-investimentos')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Lançamentos de Investimentos</div>
+                    <div class="guia-step-desc">Registre aportes, resgates e posições usando o catálogo de investimentos cadastrado na etapa 1.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('lcto_investimentos')">Ir para Lançamentos de Investimentos</button>
+            </div>
+        </div>
+
+        <!-- 5. Relatórios -->
+        <div id="guiaTab-relatorios" class="guia-tab-content">
+            <p class="guia-intro">Depois de lançar alguns meses de dados, consulte os relatórios para ver o detalhe das movimentações.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rel-mensal" onchange="guiaToggleStep('guia-rel-mensal')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Relatório Mensal</div>
+                    <div class="guia-step-desc">Detalhe de receitas e despesas de um mês específico.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('relatorio_mes')">Ir para Relatório Mensal</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rel-anual" onchange="guiaToggleStep('guia-rel-anual')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Relatório Anual</div>
+                    <div class="guia-step-desc">Visão consolidada do ano, mês a mês.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('relatorio_ano')">Ir para Relatório Anual</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rel-dinamico" onchange="guiaToggleStep('guia-rel-dinamico')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Relatório Dinâmico</div>
+                    <div class="guia-step-desc">Monte suas próprias tabelas cruzando período, categoria, pagador e conta.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('relatorio_dinamico')">Ir para Relatório Dinâmico</button>
+            </div>
+        </div>
+
+        <!-- 6. Dashboards -->
+        <div id="guiaTab-dashboards" class="guia-tab-content">
+            <p class="guia-intro">O Dashboard reúne tudo em gráficos, organizado em abas: Visão Geral, Despesas, Receitas, Budget, Investimentos, P&amp;L, Fluxo de Caixa e Patrimônio.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-dash" onchange="guiaToggleStep('guia-dash')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Dashboard</div>
+                    <div class="guia-step-desc">Use os filtros de mês, pagador e moeda no topo, depois navegue pelas abas para ver evolução do ano, despesas por categoria, receitas, aderência ao orçamento, carteira de investimentos, P&amp;L, fluxo de caixa e patrimônio líquido.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('dashboard')">Ir para Dashboard</button>
+            </div>
+        </div>
+
+        <!-- 7. Agente IA -->
+        <div id="guiaTab-ia" class="guia-tab-content">
+            <p class="guia-intro">Com dados lançados, o Assistente IA analisa tudo e responde perguntas em linguagem natural sobre suas finanças.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-ia-analises" onchange="guiaToggleStep('guia-ia-analises')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Análises prontas</div>
+                    <div class="guia-step-desc">Nas abas Alertas, Saúde Financeira, Dicas de Economia, Dicas de Investimento e Análise de Carteira, clique em "Analisar"/"Gerar" para receber um diagnóstico automático do mês selecionado.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('ai_agent')">Ir para Assistente IA</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-ia-chat" onchange="guiaToggleStep('guia-ia-chat')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Chat livre</div>
+                    <div class="guia-step-desc">Na aba Chat, pergunte diretamente — por exemplo "Como está minha saúde financeira?" ou "Quais são meus maiores gastos?". O agente responde com base nos seus dados reais.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('ai_agent')">Ir para o Chat</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Módulo Assistente IA -->
@@ -2658,19 +3076,65 @@
             </form>
         </div>
 
+        <!-- Filter Toggle Bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+            <button id="rmFilterToggleBtn" onclick="toggleRmFilters()">
+                <i class="fa-solid fa-sliders"></i>
+                Filtros
+                <span id="rmFilterBadge" class="dm-filter-badge" style="display:none;">0</span>
+            </button>
+            <span id="rmFilterCount" style="font-size:0.75rem;color:var(--text-muted);"></span>
+        </div>
+
+        <!-- Filter Panel -->
+        <div id="rmFilterBar" class="dm-filter-panel">
+            <div class="dm-filter-grid">
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-calendar-day" style="margin-right:4px;"></i>Data</label>
+                    <input type="text" id="rmFilter0" class="filter-input" placeholder="ex: 2026-05" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-tag" style="margin-right:4px;"></i>Tipo de Receita</label>
+                    <input type="text" id="rmFilter1" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-coins" style="margin-right:4px;"></i>Valor</label>
+                    <input type="text" id="rmFilter2" class="filter-input" placeholder="ex: 100" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-money-bill-wave" style="margin-right:4px;"></i>Moeda</label>
+                    <input type="text" id="rmFilter3" class="filter-input" placeholder="EUR / BRL" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-building-columns" style="margin-right:4px;"></i>Conta</label>
+                    <input type="text" id="rmFilter7" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-comment" style="margin-right:4px;"></i>Comentários</label>
+                    <input type="text" id="rmFilter8" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+            </div>
+            <div class="dm-filter-footer">
+                <span class="dm-filter-count-text" id="rmFilterActiveLabel">Nenhum filtro ativo</span>
+                <button class="btn btn-xs" onclick="clearRmFilters()" style="background:#475569;padding:4px 14px;font-size:0.75rem;gap:6px;display:inline-flex;align-items:center;">
+                    <i class="fa-solid fa-xmark"></i> Limpar Filtros
+                </button>
+            </div>
+        </div>
+
         <div class="table-container table-full" style="margin-bottom: 1.5rem;">
             <table id="rmTable">
                 <thead><tr>
                     <th style="width:40px; text-align:center;"></th>
-                    <th onclick="sortRmTable(0)">Data <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                    <th onclick="sortRmTable(1)">Tipo de Receita <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                    <th style="text-align:right;" onclick="sortRmTable(2)">Valor Original <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                    <th style="text-align:center;" onclick="sortRmTable(3)">Moeda <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                    <th onclick="sortRmTable(0)">Data <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(0)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortRmTable(1)">Tipo de Receita <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(1)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th style="text-align:right;" onclick="sortRmTable(2)">Valor Original <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(2)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th style="text-align:center;" onclick="sortRmTable(3)">Moeda <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(3)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
                     <th style="text-align:center;" onclick="sortRmTable(4)">Cotação <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
                     <th style="text-align:right;" onclick="sortRmTable(5)">Valor EUR <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
                     <th style="text-align:right;" onclick="sortRmTable(6)">Valor BRL <i class="sort-icon fa-solid fa-sort" data-col="6"></i></th>
-                    <th onclick="sortRmTable(7)">Conta <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
-                    <th onclick="sortRmTable(8)">Comentários <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
+                    <th onclick="sortRmTable(7)">Conta <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(7)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
+                    <th onclick="sortRmTable(8)">Comentários <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(8)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
                     <th style="width:100px; text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="rmTableBody"></tbody>
@@ -4205,6 +4669,7 @@
             'cad_tipo_imposto': 'Cadastro de Tipos de Imposto',
             'avancado': 'Avançado',
             'ai_agent': 'Assistente IA',
+            'guia_uso': 'Manual de Uso',
         };
 
         function showGoodbyeMessage() {
@@ -4276,6 +4741,7 @@
                 'lcto_investimentos': () => { document.getElementById('lctoInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadLctoInvestimentos(); },
                 'avancado':          () => { document.getElementById('avancadoModule').style.display = 'block'; nav.style.maxWidth = '800px'; },
                 'ai_agent':          () => { document.getElementById('aiAgentModule').style.display = 'block'; nav.style.maxWidth = '1400px'; initAiAgent(); },
+                'guia_uso':          () => { document.getElementById('guiaUsoModule').style.display = 'block'; nav.style.maxWidth = '1300px'; initGuiaUso(); },
             };
 
             if (moduleMap[moduleKey]) {
@@ -5439,11 +5905,9 @@
                 const data = await res.json();
 
                 window.dmDataOriginal = [...data];
-                window.dmData = [...data];
-                renderDmTable(data);
-                clearDmFilters();
+                applyDmFilters();
+                updateDmFilterUI();
                 updateDmSumTable(data);
-                updateDmCards();
             } catch(e) {
                 if(e.name === 'AbortError') return;
                 console.error('Erro ao carregar despesas:', e);
@@ -5453,7 +5917,14 @@
         function renderDmTable(data) {
             const tbody = document.getElementById('dmTableBody');
             tbody.innerHTML = '';
-            
+
+            if(!data || data.length === 0) {
+                tbody.innerHTML = dmFiltersActive()
+                    ? '<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum registro corresponde aos filtros ativos. <a href="#" onclick="clearDmFilters();return false;" style="color:var(--primary);">Limpar Filtros</a></td></tr>'
+                    : '<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma despesa encontrada para este período</td></tr>';
+                return;
+            }
+
             data.forEach(d => {
                 const usr1Val = parseFloat(d.usr1) || 0;
                 const usr2Val = parseFloat(d.usr2) || 0;
@@ -5578,6 +6049,14 @@
                 const input = document.getElementById('dmFilter' + filterId);
                 if(input) input.focus();
             }, 80);
+        }
+
+        function dmFiltersActive() {
+            const filterIds = [0, 1, 2, 3, 8, 9, 10, 11, 12, 13];
+            return filterIds.some(id => {
+                const input = document.getElementById('dmFilter' + id);
+                return input && input.value.trim();
+            });
         }
 
         function applyDmFilters() {
@@ -6379,16 +6858,22 @@
         async function loadReceitasMensais() {
             const mesValue = document.getElementById('rmMesRef').value;
             if(!mesValue) return;
-            
+
             const [ano, mes] = mesValue.split('-');
             const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
             document.getElementById('rmHeaderMes').innerText = mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1);
-            
+
             const res = await fetch(`/api/receitas_mensais?mes=${mesValue}`);
             const data = await res.json();
-            
+
+            window.rmDataOriginal = [...data];
+            applyRmFilters();
+            updateRmFilterUI();
+        }
+
+        function updateRmTotals(data) {
             document.getElementById('rmTotalRegistros').innerText = data.length;
-            
+
             let totalEur = 0, totalBrl = 0;
             data.forEach(r => {
                 totalEur += r.valor_eur || 0;
@@ -6396,16 +6881,133 @@
             });
             document.getElementById('rmTotalEur').innerText = '€ ' + formatCurrency(totalEur);
             document.getElementById('rmTotalBrl').innerText = 'R$ ' + formatCurrency(totalBrl);
-            
-            window.rmData = data;
-            renderRmTable(data);
+        }
+
+        function rmFiltersActive() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            return filterIds.some(id => {
+                const input = document.getElementById('rmFilter' + id);
+                return input && input.value.trim();
+            });
+        }
+
+        function applyRmFilters() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            const filters = filterIds.map(id => {
+                const input = document.getElementById('rmFilter' + id);
+                return input ? input.value.trim().toLowerCase() : '';
+            });
+
+            const filtered = window.rmDataOriginal ? window.rmDataOriginal.filter(r => {
+                const row = [
+                    (r.data || ''),
+                    (r.tipo_receita || ''),
+                    String(r.valor_original || ''),
+                    (r.moeda_original || ''),
+                    (r.conta_bancaria || ''),
+                    (r.comentarios || '')
+                ];
+                const rowLC = row.map(v => (v || '').toString().toLowerCase());
+                return filters.every((f, idx) => !f || rowLC[idx].includes(f));
+            }) : [];
+
+            window.rmData = filtered;
+            renderRmTable(filtered);
+            updateRmTotals(filtered);
+        }
+
+        function filterRmTable() {
+            if(!window.rmDataOriginal) return;
+            applyRmFilters();
+        }
+
+        function focusRmFilter(colIdx) {
+            const colToFilterId = {0:0, 1:1, 2:2, 3:3, 7:7, 8:8};
+            const filterId = colToFilterId[colIdx];
+            if(filterId === undefined) return;
+            const bar = document.getElementById('rmFilterBar');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            if(!bar.classList.contains('open')) {
+                bar.classList.add('open');
+                btn.classList.add('dm-filters-on');
+            }
+            setTimeout(() => {
+                const input = document.getElementById('rmFilter' + filterId);
+                if(input) input.focus();
+            }, 80);
+        }
+
+        function toggleRmFilters() {
+            const bar = document.getElementById('rmFilterBar');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            const isOpen = bar.classList.contains('open');
+            if (isOpen) {
+                bar.classList.remove('open');
+                bar.style.paddingTop = '0';
+                bar.style.paddingBottom = '0';
+                btn.classList.remove('dm-filters-on');
+            } else {
+                bar.classList.add('open');
+                bar.style.paddingTop = '';
+                bar.style.paddingBottom = '';
+                btn.classList.add('dm-filters-on');
+                setTimeout(() => document.getElementById('rmFilter1').focus(), 80);
+            }
+        }
+
+        function updateRmFilterUI() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            let active = 0;
+            filterIds.forEach(id => {
+                const el = document.getElementById('rmFilter' + id);
+                if (!el) return;
+                if (el.value.trim()) {
+                    el.classList.add('dm-filter-active');
+                    active++;
+                } else {
+                    el.classList.remove('dm-filter-active');
+                }
+            });
+            const badge = document.getElementById('rmFilterBadge');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            const label = document.getElementById('rmFilterActiveLabel');
+            const count = document.getElementById('rmFilterCount');
+            if (active > 0) {
+                badge.style.display = 'inline-flex';
+                badge.textContent = active;
+                btn.classList.add('dm-filters-on');
+                label.textContent = active + (active === 1 ? ' filtro ativo' : ' filtros ativos');
+                label.style.color = '#a5b4fc';
+            } else {
+                badge.style.display = 'none';
+                if (!document.getElementById('rmFilterBar').classList.contains('open')) {
+                    btn.classList.remove('dm-filters-on');
+                }
+                label.textContent = 'Nenhum filtro ativo';
+                label.style.color = '';
+            }
+            if (count) count.textContent = active > 0 ? `${active} filtro${active > 1 ? 's' : ''} aplicado${active > 1 ? 's' : ''}` : '';
+        }
+
+        function clearRmFilters() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            filterIds.forEach(i => {
+                const input = document.getElementById('rmFilter'+i);
+                if(input) { input.value = ''; input.classList.remove('dm-filter-active'); }
+            });
+            window.rmData = window.rmDataOriginal ? [...window.rmDataOriginal] : [];
+            renderRmTable(window.rmData);
+            updateRmTotals(window.rmData);
+            updateRmFilterUI();
         }
 
         function renderRmTable(data) {
             const tbody = document.getElementById('rmTableBody');
             tbody.innerHTML = '';
             if(!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma receita encontrada para este período</td></tr>';
+                tbody.innerHTML = rmFiltersActive()
+                    ? '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum registro corresponde aos filtros ativos. <a href="#" onclick="clearRmFilters();return false;" style="color:var(--primary);">Limpar Filtros</a></td></tr>'
+                    : '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma receita encontrada para este período</td></tr>';
                 return;
             }
             data.forEach(r => {
@@ -6927,9 +7529,9 @@
                 const k = data.kpis || {};
                 dashRender(`
                     <div class="dash-kpi-grid">
-                        ${dashKpi('fa-solid fa-coins', 'Receitas do mês', dashMoney(k.receitas), 'Entradas consolidadas', 'positive', 'revenues')}
-                        ${dashKpi('fa-solid fa-receipt', 'Despesas do mês', dashMoney(k.despesas), `${dashPct(k.budget_usado_pct)} do budget`, dashTone((k.budget_despesas || 0) - (k.despesas || 0)), 'expenses')}
-                        ${dashKpi('fa-solid fa-scale-balanced', 'Saldo do mês', dashMoney(k.saldo), 'Receitas - despesas', dashTone(k.saldo), 'cashflow')}
+                        ${dashKpi('fa-solid fa-coins', 'Receitas do mês', dashMoneyInv(k.receitas_eur, k.receitas_brl), 'Entradas consolidadas', 'positive', 'revenues')}
+                        ${dashKpi('fa-solid fa-receipt', 'Despesas do mês', dashMoneyInv(k.despesas_eur, k.despesas_brl), `${dashPct(k.budget_usado_pct)} do budget`, dashTone((k.budget_despesas || 0) - (k.despesas || 0)), 'expenses')}
+                        ${dashKpi('fa-solid fa-scale-balanced', 'Saldo do mês', dashMoneyInv((k.receitas_eur||0)-(k.despesas_eur||0), (k.receitas_brl||0)-(k.despesas_brl||0)), 'Receitas - despesas', dashTone(k.saldo), 'cashflow')}
                         ${dashKpi('fa-solid fa-bullseye', 'Budget usado', dashPct(k.budget_usado_pct), dashMoney(k.budget_despesas || 0), (k.budget_usado_pct || 0) <= 100 ? 'positive' : 'negative', 'budget')}
                         ${dashKpi('fa-solid fa-chart-pie', 'Investimentos', dashMoneyInv(k.investimentos_eur, k.investimentos_brl), dashInvHint(k.investimentos_eur, k.investimentos_brl), 'neutral', 'investments')}
                         ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L investimentos', dashMoneyInv(k.pnl_eur, k.pnl_brl), dashInvHint(k.pnl_eur, k.pnl_brl), dashTone(k.pnl), 'pnl')}
@@ -9925,6 +10527,59 @@
             const content = document.getElementById('aiTab-' + tab);
             if (content) { content.style.display = 'block'; content.classList.add('active'); }
             event.currentTarget.classList.add('active');
+        }
+
+        // ── Manual de Uso ───────────────────────────────────────────────────────
+        const GUIA_PROGRESS_KEY = 'mf_guia_progress';
+
+        function showGuiaTab(tab) {
+            document.querySelectorAll('.guia-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.guia-tab-content').forEach(c => {
+                c.classList.remove('active'); c.style.display = 'none';
+            });
+            const content = document.getElementById('guiaTab-' + tab);
+            if (content) { content.style.display = 'block'; content.classList.add('active'); }
+            event.currentTarget.classList.add('active');
+        }
+
+        function guiaLoadProgress() {
+            try { return JSON.parse(localStorage.getItem(GUIA_PROGRESS_KEY)) || {}; }
+            catch(e) { return {}; }
+        }
+
+        function guiaToggleStep(stepId) {
+            const checkbox = document.getElementById(stepId);
+            const progress = guiaLoadProgress();
+            progress[stepId] = checkbox.checked;
+            localStorage.setItem(GUIA_PROGRESS_KEY, JSON.stringify(progress));
+            checkbox.closest('.guia-step').classList.toggle('done', checkbox.checked);
+            updateGuiaProgress();
+        }
+
+        function updateGuiaProgress() {
+            const checks = document.querySelectorAll('.guia-step-check');
+            const done = document.querySelectorAll('.guia-step-check:checked').length;
+            const label = document.getElementById('guiaProgressLabel');
+            if (label) label.innerText = `${done} de ${checks.length} passos concluídos`;
+        }
+
+        // Carrega a aba Referencia sob demanda (guia_referencia.js)
+        (function wrapShowGuiaTab() {
+            const _orig = window.showGuiaTab;
+            window.showGuiaTab = function(tab) {
+                if (_orig) _orig.apply(this, arguments);
+                if (tab === 'referencia' && window.initGuiaReferencia) window.initGuiaReferencia();
+            };
+        })();
+
+        function initGuiaUso() {
+            const progress = guiaLoadProgress();
+            document.querySelectorAll('.guia-step-check').forEach(cb => {
+                const checked = !!progress[cb.id];
+                cb.checked = checked;
+                cb.closest('.guia-step').classList.toggle('done', checked);
+            });
+            updateGuiaProgress();
         }
 
         async function loadAiAnalysis(key, endpoint, renderFn) {

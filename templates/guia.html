@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia do Usuário — MyFinance</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<style>
+:root{
+  --bg:#0f172a; --panel:rgba(30,41,59,0.7); --border:rgba(255,255,255,0.1);
+  --primary:#3b82f6; --text:#f8fafc; --muted:#94a3b8; --body:#cbd5e1;
+  --code-bg:rgba(15,23,42,0.85); --code-fg:#a5b4fc; --mark:rgba(250,204,21,0.32);
+}
+html[data-theme="light"]{
+  --bg:#f6f7fb; --panel:#ffffff; --border:#e2e8f0;
+  --primary:#2563eb; --text:#0f172a; --muted:#64748b; --body:#334155;
+  --code-bg:#f1f5f9; --code-fg:#4338ca; --mark:rgba(250,204,21,0.5);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;line-height:1.6}
+h1,h2,h3,h4{font-family:'Outfit','Inter',sans-serif}
+
+/* ── Topo ─────────────────────────────────────────────── */
+.g-top{position:sticky;top:0;z-index:20;background:var(--bg);
+  border-bottom:1px solid var(--border);padding:12px 24px}
+.g-top-in{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.g-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.02rem;white-space:nowrap}
+.g-brand i{color:var(--primary)}
+.g-brand small{display:block;font-weight:400;font-size:0.72rem;color:var(--muted)}
+.g-search{flex:1;min-width:200px;position:relative}
+.g-search input{width:100%;padding:9px 12px 9px 34px;border-radius:8px;font-size:0.88rem;
+  background:var(--panel);border:1px solid var(--border);color:var(--text)}
+.g-search input:focus{outline:none;border-color:var(--primary)}
+.g-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--muted);font-size:0.85rem}
+.g-btn{background:var(--panel);border:1px solid var(--border);color:var(--text);
+  padding:8px 13px;border-radius:8px;font-size:0.82rem;cursor:pointer;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+.g-btn:hover{border-color:var(--primary);color:var(--primary)}
+.g-count{font-size:0.78rem;color:var(--muted);white-space:nowrap}
+
+/* ── Layout ───────────────────────────────────────────── */
+.g-wrap{max-width:1240px;margin:0 auto;padding:22px 24px 60px;
+  display:flex;gap:26px;align-items:flex-start}
+.g-toc{width:262px;flex-shrink:0;position:sticky;top:86px;max-height:calc(100vh - 110px);
+  overflow-y:auto;background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;padding:14px}
+.g-toc::-webkit-scrollbar{width:6px}
+.g-toc::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.5);border-radius:4px}
+.g-toc-title{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;
+  color:var(--muted);margin-bottom:9px}
+.g-toc a{display:block;padding:5px 8px;border-radius:6px;font-size:0.82rem;
+  color:var(--muted);text-decoration:none;line-height:1.35;cursor:pointer}
+.g-toc a:hover{background:rgba(127,127,127,0.12);color:var(--text)}
+.g-toc a.lvl2{padding-left:18px;font-size:0.78rem}
+.g-doc{flex:1;min-width:0}
+
+/* ── Conteúdo ─────────────────────────────────────────── */
+.g-sec{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:20px 26px;margin-bottom:14px;scroll-margin-top:88px}
+.g-sec>h1:first-child,.g-sec>h2:first-child{margin-top:0}
+.g-sec h1{font-size:1.5rem;margin:0 0 12px}
+.g-sec h2{font-size:1.18rem;margin:0 0 12px}
+.g-sec h3{font-size:1rem;color:var(--primary);margin:18px 0 8px}
+.g-sec h4{font-size:0.9rem;margin:14px 0 6px}
+.g-sec p,.g-sec li{font-size:0.9rem;line-height:1.7;color:var(--body)}
+.g-sec ul,.g-sec ol{padding-left:22px;margin:9px 0}
+.g-sec li{margin-bottom:5px}
+.g-sec strong{color:var(--text)}
+.g-sec a{color:var(--primary)}
+.g-sec code{background:rgba(127,127,127,0.16);padding:1px 5px;border-radius:4px;font-size:0.84rem}
+.g-sec pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;
+  padding:14px;overflow-x:auto;margin:12px 0}
+.g-sec pre code{background:none;padding:0;font-size:0.82rem;line-height:1.6;color:var(--code-fg)}
+.g-sec table{width:100%;border-collapse:collapse;font-size:0.84rem;margin:12px 0}
+.g-sec th{text-align:left;padding:8px 10px;background:rgba(59,130,246,0.14);
+  color:var(--text);border-bottom:1px solid var(--border);font-weight:600}
+.g-sec td{padding:8px 10px;border-bottom:1px solid rgba(127,127,127,0.16);vertical-align:top}
+.g-sec blockquote{border-left:3px solid var(--primary);background:rgba(59,130,246,0.08);
+  margin:12px 0;padding:10px 16px;border-radius:0 8px 8px 0}
+.g-sec blockquote p{margin:0;font-size:0.87rem}
+.g-sec hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+.g-sec img{max-width:100%;border-radius:8px}
+mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 2px}
+.g-state{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:0.92rem}
+
+/* ── Impressão ────────────────────────────────────────── */
+@media print{
+  .g-top,.g-toc{display:none!important}
+  body{background:#fff;color:#000}
+  .g-wrap{display:block;max-width:none;padding:0}
+  .g-sec{background:none;border:none;border-radius:0;padding:0 0 6px;
+    margin:0 0 10px;break-inside:avoid}
+  .g-sec h1{break-before:page;font-size:20pt}
+  .g-sec:first-child h1{break-before:auto}
+  .g-sec h2{font-size:14pt}
+  .g-sec p,.g-sec li,.g-sec td,.g-sec th{color:#000;font-size:10.5pt}
+  .g-sec pre{background:#f4f4f4;border:1px solid #ddd}
+  .g-sec pre code{color:#222}
+  .g-sec th{background:#eee;color:#000}
+  mark{background:none;font-weight:700}
+  a{color:#000;text-decoration:none}
+}
+@media(max-width:900px){
+  .g-wrap{flex-direction:column}
+  .g-toc{width:100%;position:static;max-height:230px}
+}
+</style>
+</head>
+<body>
+
+<header class="g-top">
+  <div class="g-top-in">
+    <div class="g-brand">
+      <i class="fa-solid fa-book-open"></i>
+      <div>MyFinance<small>Guia do Usuário</small></div>
+    </div>
+    <div class="g-search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" id="gSearch" placeholder="Buscar — ex.: NOK, budget, câmbio, patrimônio" autocomplete="off">
+    </div>
+    <span class="g-count" id="gCount"></span>
+    <button class="g-btn" id="gTheme" title="Alternar tema"><i class="fa-solid fa-sun"></i><span>Modo claro</span></button>
+    <button class="g-btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>
+    <a class="g-btn" href="/"><i class="fa-solid fa-arrow-left"></i> Voltar ao sistema</a>
+  </div>
+</header>
+
+<div class="g-wrap">
+  <nav class="g-toc" id="gToc"></nav>
+  <main class="g-doc" id="gDoc">
+    <div class="g-state"><i class="fa-solid fa-spinner fa-spin"></i> A carregar o guia...</div>
+  </main>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var THEME_KEY = 'mf_guia_theme';
+  var sections = [], query = '';
+
+  // ── Tema ────────────────────────────────────────────────
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    var b = document.getElementById('gTheme');
+    var light = t === 'light';
+    b.innerHTML = '<i class="fa-solid fa-' + (light ? 'moon' : 'sun') + '"></i><span>' +
+      (light ? 'Modo escuro' : 'Modo claro') + '</span>';
+    try { localStorage.setItem(THEME_KEY, t); } catch(e){}
+  }
+  var saved = 'dark';
+  try { saved = localStorage.getItem(THEME_KEY) || 'dark'; } catch(e){}
+  applyTheme(saved);
+  document.getElementById('gTheme').addEventListener('click', function(){
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+
+  // ── Utilidades ──────────────────────────────────────────
+  function esc(t){
+    return String(t).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function norm(t){
+    return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  }
+  function slug(t){
+    return norm(t).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+  }
+
+  /* Divide o Markdown pelos titulos de nivel 1 e 2, ignorando
+     o que estiver dentro de blocos de codigo. */
+  function split(md){
+    var lines = md.split('\n'), out = [], cur = null, fence = false;
+    for (var i=0;i<lines.length;i++){
+      var line = lines[i];
+      if (/^```/.test(line)) fence = !fence;
+      var m = !fence && line.match(/^(#{1,2})\s+(.*)$/);
+      if (m){
+        if (cur) out.push(cur);
+        cur = {level:m[1].length, title:m[2].trim(), lines:[line]};
+        cur.id = 'g-' + slug(cur.title) + '-' + out.length;
+      } else if (cur) cur.lines.push(line);
+    }
+    if (cur) out.push(cur);
+    return out.map(function(s){
+      s.md = s.lines.join('\n');
+      s.hay = norm(s.md);
+      delete s.lines;
+      return s;
+    });
+  }
+
+  function render(md){
+    var o = {headerIds:false, mangle:false};
+    if (window.marked) return marked.parse ? marked.parse(md,o) : marked(md,o);
+    return '<pre>' + esc(md) + '</pre>';
+  }
+
+  // Destaca o termo sem tocar no interior das tags HTML
+  function hl(html, q){
+    if (!q || q.length < 2) return html;
+    var rx = norm(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    var parts = html.split(/(<[^>]*>)/g);
+    for (var i=0;i<parts.length;i++){
+      if (parts[i].charAt(0) === '<' || !parts[i].trim()) continue;
+      parts[i] = parts[i].replace(new RegExp('('+rx+')','gi'), '<mark>$1</mark>');
+    }
+    return parts.join('');
+  }
+
+  // ── Desenho ─────────────────────────────────────────────
+  function draw(){
+    var toc = document.getElementById('gToc');
+    var doc = document.getElementById('gDoc');
+    var cnt = document.getElementById('gCount');
+    var vis = (query.length >= 2)
+      ? sections.filter(function(s){ return s.hay.indexOf(norm(query)) !== -1; })
+      : sections;
+
+    cnt.textContent = query.length >= 2
+      ? vis.length + (vis.length === 1 ? ' resultado' : ' resultados')
+      : sections.length + ' seções';
+
+    if (!vis.length){
+      toc.innerHTML = '';
+      doc.innerHTML = '<div class="g-state">Nenhum resultado para <strong>' + esc(query) +
+        '</strong>.<br>Tente outro termo — por exemplo "budget", "NOK" ou "câmbio".</div>';
+      return;
+    }
+
+    toc.innerHTML = '<div class="g-toc-title">Conteúdo</div>' + vis.map(function(s){
+      return '<a class="'+(s.level===2?'lvl2':'')+'" data-t="'+s.id+'">'+esc(s.title)+'</a>';
+    }).join('');
+
+    doc.innerHTML = vis.map(function(s){
+      return '<section class="g-sec" id="'+s.id+'">' + hl(render(s.md), query) + '</section>';
+    }).join('');
+
+    toc.querySelectorAll('a').forEach(function(a){
+      a.addEventListener('click', function(){
+        var el = document.getElementById(a.dataset.t);
+        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  }
+
+  function debounce(fn, ms){
+    var t;
+    return function(){
+      var a = arguments, c = this;
+      clearTimeout(t);
+      t = setTimeout(function(){ fn.apply(c,a); }, ms);
+    };
+  }
+
+  document.getElementById('gSearch').addEventListener('input', debounce(function(e){
+    query = e.target.value.trim();
+    draw();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }, 180));
+
+  // Atalho: "/" foca a busca
+  document.addEventListener('keydown', function(e){
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT'){
+      e.preventDefault();
+      document.getElementById('gSearch').focus();
+    }
+  });
+
+  // ── Carregamento ────────────────────────────────────────
+  fetch('/api/guia')
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
+    .then(function(res){
+      if (!res.ok) throw new Error(res.d.error || 'Falha ao carregar o guia');
+      sections = split(res.d.content);
+      draw();
+      // ?q=termo abre a pagina ja com a busca feita
+      var q = new URLSearchParams(location.search).get('q');
+      if (q){
+        document.getElementById('gSearch').value = q;
+        query = q.trim();
+        draw();
+      }
+    })
+    .catch(function(err){
+      document.getElementById('gDoc').innerHTML =
+        '<div class="g-state"><i class="fa-solid fa-triangle-exclamation"></i> ' +
+        esc(err.message) + '</div>';
+    });
+})();
+</script>
+</body>
+</html>
