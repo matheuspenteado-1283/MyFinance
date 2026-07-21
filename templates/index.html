@@ -2658,19 +2658,65 @@
             </form>
         </div>
 
+        <!-- Filter Toggle Bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+            <button id="rmFilterToggleBtn" onclick="toggleRmFilters()">
+                <i class="fa-solid fa-sliders"></i>
+                Filtros
+                <span id="rmFilterBadge" class="dm-filter-badge" style="display:none;">0</span>
+            </button>
+            <span id="rmFilterCount" style="font-size:0.75rem;color:var(--text-muted);"></span>
+        </div>
+
+        <!-- Filter Panel -->
+        <div id="rmFilterBar" class="dm-filter-panel">
+            <div class="dm-filter-grid">
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-calendar-day" style="margin-right:4px;"></i>Data</label>
+                    <input type="text" id="rmFilter0" class="filter-input" placeholder="ex: 2026-05" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-tag" style="margin-right:4px;"></i>Tipo de Receita</label>
+                    <input type="text" id="rmFilter1" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-coins" style="margin-right:4px;"></i>Valor</label>
+                    <input type="text" id="rmFilter2" class="filter-input" placeholder="ex: 100" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-money-bill-wave" style="margin-right:4px;"></i>Moeda</label>
+                    <input type="text" id="rmFilter3" class="filter-input" placeholder="EUR / BRL" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-building-columns" style="margin-right:4px;"></i>Conta</label>
+                    <input type="text" id="rmFilter7" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-comment" style="margin-right:4px;"></i>Comentários</label>
+                    <input type="text" id="rmFilter8" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+            </div>
+            <div class="dm-filter-footer">
+                <span class="dm-filter-count-text" id="rmFilterActiveLabel">Nenhum filtro ativo</span>
+                <button class="btn btn-xs" onclick="clearRmFilters()" style="background:#475569;padding:4px 14px;font-size:0.75rem;gap:6px;display:inline-flex;align-items:center;">
+                    <i class="fa-solid fa-xmark"></i> Limpar Filtros
+                </button>
+            </div>
+        </div>
+
         <div class="table-container table-full" style="margin-bottom: 1.5rem;">
             <table id="rmTable">
                 <thead><tr>
                     <th style="width:40px; text-align:center;"></th>
-                    <th onclick="sortRmTable(0)">Data <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                    <th onclick="sortRmTable(1)">Tipo de Receita <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                    <th style="text-align:right;" onclick="sortRmTable(2)">Valor Original <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                    <th style="text-align:center;" onclick="sortRmTable(3)">Moeda <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                    <th onclick="sortRmTable(0)">Data <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(0)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortRmTable(1)">Tipo de Receita <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(1)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th style="text-align:right;" onclick="sortRmTable(2)">Valor Original <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(2)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th style="text-align:center;" onclick="sortRmTable(3)">Moeda <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(3)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
                     <th style="text-align:center;" onclick="sortRmTable(4)">Cotação <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
                     <th style="text-align:right;" onclick="sortRmTable(5)">Valor EUR <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
                     <th style="text-align:right;" onclick="sortRmTable(6)">Valor BRL <i class="sort-icon fa-solid fa-sort" data-col="6"></i></th>
-                    <th onclick="sortRmTable(7)">Conta <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
-                    <th onclick="sortRmTable(8)">Comentários <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
+                    <th onclick="sortRmTable(7)">Conta <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(7)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
+                    <th onclick="sortRmTable(8)">Comentários <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(8)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
                     <th style="width:100px; text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="rmTableBody"></tbody>
@@ -5439,11 +5485,9 @@
                 const data = await res.json();
 
                 window.dmDataOriginal = [...data];
-                window.dmData = [...data];
-                renderDmTable(data);
-                clearDmFilters();
+                applyDmFilters();
+                updateDmFilterUI();
                 updateDmSumTable(data);
-                updateDmCards();
             } catch(e) {
                 if(e.name === 'AbortError') return;
                 console.error('Erro ao carregar despesas:', e);
@@ -5453,7 +5497,14 @@
         function renderDmTable(data) {
             const tbody = document.getElementById('dmTableBody');
             tbody.innerHTML = '';
-            
+
+            if(!data || data.length === 0) {
+                tbody.innerHTML = dmFiltersActive()
+                    ? '<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum registro corresponde aos filtros ativos. <a href="#" onclick="clearDmFilters();return false;" style="color:var(--primary);">Limpar Filtros</a></td></tr>'
+                    : '<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma despesa encontrada para este período</td></tr>';
+                return;
+            }
+
             data.forEach(d => {
                 const usr1Val = parseFloat(d.usr1) || 0;
                 const usr2Val = parseFloat(d.usr2) || 0;
@@ -5578,6 +5629,14 @@
                 const input = document.getElementById('dmFilter' + filterId);
                 if(input) input.focus();
             }, 80);
+        }
+
+        function dmFiltersActive() {
+            const filterIds = [0, 1, 2, 3, 8, 9, 10, 11, 12, 13];
+            return filterIds.some(id => {
+                const input = document.getElementById('dmFilter' + id);
+                return input && input.value.trim();
+            });
         }
 
         function applyDmFilters() {
@@ -6379,16 +6438,22 @@
         async function loadReceitasMensais() {
             const mesValue = document.getElementById('rmMesRef').value;
             if(!mesValue) return;
-            
+
             const [ano, mes] = mesValue.split('-');
             const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
             document.getElementById('rmHeaderMes').innerText = mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1);
-            
+
             const res = await fetch(`/api/receitas_mensais?mes=${mesValue}`);
             const data = await res.json();
-            
+
+            window.rmDataOriginal = [...data];
+            applyRmFilters();
+            updateRmFilterUI();
+        }
+
+        function updateRmTotals(data) {
             document.getElementById('rmTotalRegistros').innerText = data.length;
-            
+
             let totalEur = 0, totalBrl = 0;
             data.forEach(r => {
                 totalEur += r.valor_eur || 0;
@@ -6396,16 +6461,133 @@
             });
             document.getElementById('rmTotalEur').innerText = '€ ' + formatCurrency(totalEur);
             document.getElementById('rmTotalBrl').innerText = 'R$ ' + formatCurrency(totalBrl);
-            
-            window.rmData = data;
-            renderRmTable(data);
+        }
+
+        function rmFiltersActive() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            return filterIds.some(id => {
+                const input = document.getElementById('rmFilter' + id);
+                return input && input.value.trim();
+            });
+        }
+
+        function applyRmFilters() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            const filters = filterIds.map(id => {
+                const input = document.getElementById('rmFilter' + id);
+                return input ? input.value.trim().toLowerCase() : '';
+            });
+
+            const filtered = window.rmDataOriginal ? window.rmDataOriginal.filter(r => {
+                const row = [
+                    (r.data || ''),
+                    (r.tipo_receita || ''),
+                    String(r.valor_original || ''),
+                    (r.moeda_original || ''),
+                    (r.conta_bancaria || ''),
+                    (r.comentarios || '')
+                ];
+                const rowLC = row.map(v => (v || '').toString().toLowerCase());
+                return filters.every((f, idx) => !f || rowLC[idx].includes(f));
+            }) : [];
+
+            window.rmData = filtered;
+            renderRmTable(filtered);
+            updateRmTotals(filtered);
+        }
+
+        function filterRmTable() {
+            if(!window.rmDataOriginal) return;
+            applyRmFilters();
+        }
+
+        function focusRmFilter(colIdx) {
+            const colToFilterId = {0:0, 1:1, 2:2, 3:3, 7:7, 8:8};
+            const filterId = colToFilterId[colIdx];
+            if(filterId === undefined) return;
+            const bar = document.getElementById('rmFilterBar');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            if(!bar.classList.contains('open')) {
+                bar.classList.add('open');
+                btn.classList.add('dm-filters-on');
+            }
+            setTimeout(() => {
+                const input = document.getElementById('rmFilter' + filterId);
+                if(input) input.focus();
+            }, 80);
+        }
+
+        function toggleRmFilters() {
+            const bar = document.getElementById('rmFilterBar');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            const isOpen = bar.classList.contains('open');
+            if (isOpen) {
+                bar.classList.remove('open');
+                bar.style.paddingTop = '0';
+                bar.style.paddingBottom = '0';
+                btn.classList.remove('dm-filters-on');
+            } else {
+                bar.classList.add('open');
+                bar.style.paddingTop = '';
+                bar.style.paddingBottom = '';
+                btn.classList.add('dm-filters-on');
+                setTimeout(() => document.getElementById('rmFilter1').focus(), 80);
+            }
+        }
+
+        function updateRmFilterUI() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            let active = 0;
+            filterIds.forEach(id => {
+                const el = document.getElementById('rmFilter' + id);
+                if (!el) return;
+                if (el.value.trim()) {
+                    el.classList.add('dm-filter-active');
+                    active++;
+                } else {
+                    el.classList.remove('dm-filter-active');
+                }
+            });
+            const badge = document.getElementById('rmFilterBadge');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            const label = document.getElementById('rmFilterActiveLabel');
+            const count = document.getElementById('rmFilterCount');
+            if (active > 0) {
+                badge.style.display = 'inline-flex';
+                badge.textContent = active;
+                btn.classList.add('dm-filters-on');
+                label.textContent = active + (active === 1 ? ' filtro ativo' : ' filtros ativos');
+                label.style.color = '#a5b4fc';
+            } else {
+                badge.style.display = 'none';
+                if (!document.getElementById('rmFilterBar').classList.contains('open')) {
+                    btn.classList.remove('dm-filters-on');
+                }
+                label.textContent = 'Nenhum filtro ativo';
+                label.style.color = '';
+            }
+            if (count) count.textContent = active > 0 ? `${active} filtro${active > 1 ? 's' : ''} aplicado${active > 1 ? 's' : ''}` : '';
+        }
+
+        function clearRmFilters() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            filterIds.forEach(i => {
+                const input = document.getElementById('rmFilter'+i);
+                if(input) { input.value = ''; input.classList.remove('dm-filter-active'); }
+            });
+            window.rmData = window.rmDataOriginal ? [...window.rmDataOriginal] : [];
+            renderRmTable(window.rmData);
+            updateRmTotals(window.rmData);
+            updateRmFilterUI();
         }
 
         function renderRmTable(data) {
             const tbody = document.getElementById('rmTableBody');
             tbody.innerHTML = '';
             if(!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma receita encontrada para este período</td></tr>';
+                tbody.innerHTML = rmFiltersActive()
+                    ? '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum registro corresponde aos filtros ativos. <a href="#" onclick="clearRmFilters();return false;" style="color:var(--primary);">Limpar Filtros</a></td></tr>'
+                    : '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma receita encontrada para este período</td></tr>';
                 return;
             }
             data.forEach(r => {
