@@ -2707,9 +2707,15 @@
                         </label>
                     </div>
                 </div>
-                <div class="form-field" style="margin-top:1rem;">
-                    <label>Comentários</label>
-                    <input type="text" id="dm_comments" class="auth-input" placeholder="Observações livres...">
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label>Período do Lançamento (Mês)</label>
+                        <input type="month" id="dm_mes_ref" class="auth-input" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Comentários</label>
+                        <input type="text" id="dm_comments" class="auth-input" placeholder="Observações livres...">
+                    </div>
                 </div>
 <div style="display:flex;gap:12px;margin-top:1.2rem;">
                     <button type="submit" class="btn btn-xs secondary" id="dmSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
@@ -6307,6 +6313,7 @@
                 document.getElementById('dm_comments').value = data.comentarios;
                 updateDmCategorySelect(!!data.receita);
                 document.getElementById('dm_cat').value = data.categoria_final;
+                document.getElementById('dm_mes_ref').value = data.mes_referencia || mesValue;
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-save"></i> Salvar Alteração';
             } else {
                 document.getElementById('dmFormTitle').innerText = 'Nova Despesa';
@@ -6314,6 +6321,7 @@
                 document.getElementById('dm_data').value = `${mesValue}-01`;
                 document.getElementById('dm_usr1').value = '';
                 document.getElementById('dm_usr2').value = '';
+                document.getElementById('dm_mes_ref').value = mesValue;
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
             }
             document.getElementById('dmFormPanel').scrollIntoView({behavior:'smooth'});
@@ -6336,8 +6344,8 @@
         async function saveDmRow(e) {
             e.preventDefault();
             const id = document.getElementById('dm_id').value;
-            const mesRef = document.getElementById('dmMesRef').value;
-            
+            const mesRef = document.getElementById('dm_mes_ref').value || document.getElementById('dmMesRef').value;
+
             const usr1Val = document.getElementById('dm_usr1').value;
             const usr2Val = document.getElementById('dm_usr2').value;
             const usr1Num = parseFloat(usr1Val) || 0;
