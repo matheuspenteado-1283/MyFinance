@@ -542,15 +542,27 @@ def _parse_pdf_words(pdf, filepath=''):
     else:
         detected_currency = None
 
-    # Detectar colunas de débito/crédito analisando palavras de todas as páginas
-    debit_x, credit_x = None, None
+    # Detectar colunas de débito/crédito a partir da linha de cabeçalho.
+    # Exige que os dois rótulos apareçam juntos na mesma linha, para não confundir
+    # com a palavra "débito"/"crédito" aparecendo dentro da descrição de uma
+    # transação (ex.: "DEBITO AUT. FATURA CARTAO").
+    debit_x = credit_x = None
     for page in pdf.pages:
+        lines_map = {}
         for w in page.extract_words():
-            txt = w['text'].lower()
-            if txt in ('retirado', 'debito', 'saida', 'saída'):
-                debit_x = w['x0']
-            elif txt in ('recebido', 'credito', 'entrada', 'crédito'):
-                credit_x = w['x0']
+            y = round(w['top'] / 3) * 3
+            lines_map.setdefault(y, []).append(w)
+        for y in sorted(lines_map.keys()):
+            line_debit_x = line_credit_x = None
+            for w in sorted(lines_map[y], key=lambda w: w['x0']):
+                txt = w['text'].lower()
+                if line_debit_x is None and txt in ('retirado', 'debito', 'débito', 'saida', 'saída'):
+                    line_debit_x = w['x0']
+                elif line_credit_x is None and txt in ('recebido', 'credito', 'entrada', 'crédito'):
+                    line_credit_x = w['x0']
+            if line_debit_x is not None and line_credit_x is not None:
+                debit_x, credit_x = line_debit_x, line_credit_x
+                break
         if debit_x is not None:
             break
 
@@ -566,12 +578,42 @@ def _parse_pdf_words(pdf, filepath=''):
             y = round(w['top'] / 3) * 3
             lines_map.setdefault(y, []).append(w)
 
-        for y in sorted(lines_map.keys()):
-            wds = sorted(lines_map[y], key=lambda w: w['x0'])
+        # Quando a data/descrição e os valores de uma mesma linha visual caem em
+        # y-buckets adjacentes (diferença de fração de ponto no 'top' que cruza a
+        # fronteira do arredondamento), a linha ficaria "data sem valor" seguida de
+        # "valor sem data" e seria descartada por ambos os ramos abaixo. Funde
+        # buckets adjacentes próximos nesse padrão antes de processar.
+        sorted_ys = sorted(lines_map.keys())
+        merged_lines = []
+        skip_next = False
+        for i, y in enumerate(sorted_ys):
+            if skip_next:
+                skip_next = False
+                continue
+            wds = lines_map[y]
+            has_date = any(date_re.match(w['text']) for w in wds)
+            has_money = any(money_re.match(clean_spaces(w['text'])) for w in wds)
+            if (has_date != has_money) and i + 1 < len(sorted_ys):
+                next_y = sorted_ys[i + 1]
+                next_wds = lines_map[next_y]
+                next_has_date = any(date_re.match(w['text']) for w in next_wds)
+                next_has_money = any(money_re.match(clean_spaces(w['text'])) for w in next_wds)
+                # Complementar: um bucket só tem data, o outro só tem valor —
+                # provavelmente a mesma linha visual dividida pelo arredondamento.
+                complementary = (has_date and next_has_money and not next_has_date) or \
+                                 (has_money and next_has_date and not next_has_money)
+                if complementary and abs(next_y - y) <= 5:
+                    wds = wds + next_wds
+                    skip_next = True
+            merged_lines.append(wds)
 
-            # Linha de transação: tem pelo menos 2 datas
+        for wds in merged_lines:
+            wds = sorted(wds, key=lambda w: w['x0'])
+
+            # Linha de transação: tem pelo menos 1 data (data lançamento; 2ª data
+            # opcional, ex.: formatos com data-valor separada como Revolut/Novo Banco)
             dates = [w for w in wds if date_re.match(w['text'])]
-            if len(dates) < 2:
+            if len(dates) < 1:
                 continue
 
             # Valores monetários na linha
@@ -584,18 +626,24 @@ def _parse_pdf_words(pdf, filepath=''):
             if not money_words:
                 continue
 
-            # Descrição: texto entre x1 da 2ª data e x0 do primeiro valor monetário
-            date2_x1 = dates[1]['x1']
+            # Descrição: texto entre x1 da última data (lançamento ou data-valor) e
+            # x0 do primeiro valor monetário
+            last_date_x1 = dates[-1]['x1']
             first_money_x = money_words[0][0]
-            desc_words = [w['text'] for w in wds if w['x0'] > date2_x1 and w['x0'] < first_money_x - 5]
+            desc_words = [w['text'] for w in wds if w['x0'] > last_date_x1 and w['x0'] < first_money_x - 5]
             description = ' '.join(desc_words).strip()
             if not description:
-                desc_set = {dates[0]['text'], dates[1]['text']}
+                desc_set = {d['text'] for d in dates}
                 description = ' '.join(
                     w['text'] for w in wds
                     if w['text'] not in desc_set
                     and not money_re.match(clean_spaces(w['text']))
                 ).strip()
+
+            # Sem descrição (só data + valor(es)): tipicamente uma linha de
+            # "saldo anterior"/resumo, não uma transação real — descarta.
+            if not description:
+                continue
 
             # Valor da transação = primeiro valor monetário; último = saldo contabilístico
             val_x, val_raw = money_words[0]

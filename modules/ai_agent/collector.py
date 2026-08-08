@@ -2,14 +2,16 @@ from collections import defaultdict
 from datetime import datetime
 
 
-def collect_financial_snapshot(user_email: str, mes: str = None, ano: int = None) -> dict:
+def collect_financial_snapshot(user_email: str, mes: str = None, ano: int = None, usr: str = 'usr1') -> dict:
     """Agrega dados financeiros de todos os módulos para análise de IA."""
     if not mes:
         mes = datetime.now().strftime('%Y-%m')
     if not ano:
         ano = int(mes[:4])
+    if usr not in ('usr1', 'usr2', 'all'):
+        usr = 'usr1'
 
-    snapshot = {'period': {'mes': mes, 'ano': ano}}
+    snapshot = {'period': {'mes': mes, 'ano': ano, 'usr': usr}}
 
     def _safe(key, fn, *args):
         try:
@@ -22,14 +24,11 @@ def collect_financial_snapshot(user_email: str, mes: str = None, ano: int = None
         get_dashboard_cashflow, get_dashboard_net_worth,
         get_dashboard_investments,
     )
-    _safe('overview', get_dashboard_overview, user_email, mes, ano)
-    _safe('budget', get_dashboard_budget, user_email, mes, ano, 'usr1')
-    _safe('cashflow', get_dashboard_cashflow, user_email, ano)
-    _safe('net_worth', get_dashboard_net_worth, user_email, mes, ano)
+    _safe('overview', get_dashboard_overview, user_email, mes, ano, usr)
+    _safe('budget', get_dashboard_budget, user_email, mes, ano, usr)
+    _safe('cashflow', get_dashboard_cashflow, user_email, ano, usr)
+    _safe('net_worth', get_dashboard_net_worth, user_email, mes, ano, usr)
     _safe('investments_summary', get_dashboard_investments, user_email, mes, ano)
-
-    from modules.investimentos.db import get_all_lcto_investimentos
-    _safe('investments', lambda: get_all_lcto_investimentos(user_email)[:30])
 
     from modules.trader.db import get_all_trader_positions
     def _trader():

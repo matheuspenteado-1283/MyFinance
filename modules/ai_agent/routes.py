@@ -17,23 +17,26 @@ def _auth():
 
 def _period():
     mes = request.args.get('mes', datetime.now().strftime('%Y-%m'))
-    return mes, int(mes[:4])
+    usr = (request.args.get('usr') or 'usr1').lower()
+    if usr not in ('usr1', 'usr2', 'all'):
+        usr = 'usr1'
+    return mes, int(mes[:4]), usr
 
 
 # ── Cache helpers — falham silenciosamente se BD offline ─────────────────────
 
-def _get_cache(user_email, analysis_type, mes):
+def _get_cache(user_email, analysis_type, mes, usr):
     try:
         from .db import get_cached_analysis
-        return get_cached_analysis(user_email, analysis_type, mes)
+        return get_cached_analysis(user_email, analysis_type, mes, usr)
     except Exception:
         return None
 
 
-def _save_cache(user_email, analysis_type, result, mes, ttl_hours):
+def _save_cache(user_email, analysis_type, result, mes, ttl_hours, usr):
     try:
         from .db import save_analysis
-        save_analysis(user_email, analysis_type, result, period=mes, ttl_hours=ttl_hours)
+        save_analysis(user_email, analysis_type, result, period=mes, ttl_hours=ttl_hours, usr=usr)
     except Exception:
         pass  # cache indisponível — continua sem guardar
 
@@ -63,12 +66,12 @@ def _analysis_endpoint(analysis_type: str, analyzer_fn, ttl_hours: int = 6):
         logger.warning(f"[_analysis_endpoint] Falha na autenticação")
         return err
     user_email = session['user_email']
-    mes, ano = _period()
+    mes, ano, usr = _period()
     force = request.args.get('refresh', '').lower() == 'true'
-    logger.info(f"[_analysis_endpoint] user_email={user_email}, mes={mes}, ano={ano}")
+    logger.info(f"[_analysis_endpoint] user_email={user_email}, mes={mes}, ano={ano}, usr={usr}")
 
     if not force:
-        cached = _get_cache(user_email, analysis_type, mes)
+        cached = _get_cache(user_email, analysis_type, mes, usr)
         if cached:
             logger.info(f"[_analysis_endpoint] Cache hit para {analysis_type}")
             cached['_cached'] = True
@@ -76,12 +79,12 @@ def _analysis_endpoint(analysis_type: str, analyzer_fn, ttl_hours: int = 6):
 
     try:
         logger.info(f"[_analysis_endpoint] Coletando snapshot para {user_email}...")
-        snapshot = collect_financial_snapshot(user_email, mes, ano)
+        snapshot = collect_financial_snapshot(user_email, mes, ano, usr)
         logger.info(f"[_analysis_endpoint] Snapshot coletado, chamando {analyzer_fn.__name__}...")
         result = analyzer_fn(snapshot)
         result['_period'] = mes
         result['_generated_at'] = datetime.utcnow().isoformat()
-        _save_cache(user_email, analysis_type, result, mes, ttl_hours)
+        _save_cache(user_email, analysis_type, result, mes, ttl_hours, usr)
         logger.info(f"[_analysis_endpoint] {analysis_type} concluído com sucesso")
         return jsonify(result)
     except ValueError as e:
@@ -152,9 +155,12 @@ def api_ai_chat():
         return jsonify({'error': 'Mensagem não pode ser vazia'}), 400
     mes = data.get('mes', datetime.now().strftime('%Y-%m'))
     ano = int(mes[:4])
+    usr = (data.get('usr') or 'usr1').lower()
+    if usr not in ('usr1', 'usr2', 'all'):
+        usr = 'usr1'
     try:
         history = _get_history(user_email, limit=10)
-        snapshot = collect_financial_snapshot(user_email, mes, ano)
+        snapshot = collect_financial_snapshot(user_email, mes, ano, usr)
         _save_msg(user_email, 'user', message)
         result = analyst.chat_with_analyst(snapshot, history, message)
         _save_msg(user_email, 'assistant', result['reply'])
