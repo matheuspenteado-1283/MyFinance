@@ -14,10 +14,12 @@ def _norm_usr(usr):
 def _desp_value_expr(usr: str, alias: str = '', value_col: str = 'valor_eur') -> str:
     p = f'{alias}.' if alias else ''
     # Treat NULL and PostgreSQL NaN (stored in REAL columns) as 0
-    col_safe = (
-        f"CASE WHEN {p}{value_col} IS NULL OR ({p}{value_col})::text = 'NaN' "
-        f"THEN 0::numeric ELSE {p}{value_col}::numeric END"
-    )
+    def _num_safe(col):
+        return (
+            f"CASE WHEN {p}{col} IS NULL OR ({p}{col})::text = 'NaN' "
+            f"THEN 0::numeric ELSE {p}{col}::numeric END"
+        )
+    col_safe = _num_safe(value_col)
     if usr == 'all':
         return col_safe
     # Safe TEXT→NUMERIC: strip 'nan' strings (pandas artifact) before casting
@@ -25,10 +27,16 @@ def _desp_value_expr(usr: str, alias: str = '', value_col: str = 'valor_eur') ->
         return (
             f"COALESCE(CAST(NULLIF(NULLIF(LOWER(TRIM(COALESCE({p}{col}::TEXT, ''))), ''), 'nan') AS NUMERIC), 0)"
         )
-    u1 = _usr_cast('usr1')
-    u2 = _usr_cast('usr2')
     target = _usr_cast(usr)
-    return f'{col_safe} * COALESCE({target} / NULLIF({u1} + {u2}, 0), 0)'
+    # usr1/usr2 são valores literais na moeda ORIGINAL do lançamento (não em
+    # EUR — ex.: uma assinatura em BRL tem usr1 preenchido em BRL, igual a
+    # valor_original) e podem somar menos que o total quando o lançamento é
+    # dividido com terceiros fora do casal. A proporção correta é sempre
+    # contra valor_original, não contra usr1+usr2 (senão usr2=0 atribuiria
+    # 100% a usr1) nem contra valor_eur (senão a proporção fica errada para
+    # lançamentos em BRL, já que usr1 não está nessa moeda).
+    valor_original_safe = _num_safe('valor_original')
+    return f'{col_safe} * COALESCE({target} / NULLIF({valor_original_safe}, 0), 0)'
 
 
 def init_tables():
@@ -183,42 +191,51 @@ def _monthly_revenues_native(conn, user_email, mes, usr='all'):
 
 
 def _investment_summary(conn, user_email):
-    row = conn.execute('''
-        SELECT
-            COALESCE(SUM(COALESCE(valor_atual, 0)), 0) AS valor_atual,
-            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) = 'EUR'
-                THEN COALESCE(valor_atual, 0) ELSE 0 END), 0) AS valor_atual_eur,
-            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) != 'EUR'
-                THEN COALESCE(valor_atual, 0) ELSE 0 END), 0) AS valor_atual_brl,
-            COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) AS valor_investido,
-            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) = 'EUR'
-                THEN COALESCE(valor_inv, 0) * COALESCE(qtd, 0) ELSE 0 END), 0) AS valor_investido_eur,
-            COALESCE(SUM(CASE WHEN UPPER(COALESCE(moeda, 'BRL')) != 'EUR'
-                THEN COALESCE(valor_inv, 0) * COALESCE(qtd, 0) ELSE 0 END), 0) AS valor_investido_brl,
-            COALESCE(SUM(COALESCE(taxa, 0)), 0) AS taxas,
-            COALESCE(SUM(COALESCE(aporte, 0)), 0) AS aportes
-        FROM lcto_investimentos
-        WHERE user_email=%s
-    ''', (user_email,)).fetchone()
-    valor_atual = _to_float(row['valor_atual'])
-    valor_atual_eur = _to_float(row['valor_atual_eur'])
-    valor_atual_brl = _to_float(row['valor_atual_brl'])
-    valor_investido = _to_float(row['valor_investido'])
-    valor_investido_eur = _to_float(row['valor_investido_eur'])
-    valor_investido_brl = _to_float(row['valor_investido_brl'])
-    taxas = _to_float(row['taxas'])
-    pnl = valor_atual - valor_investido - taxas
+    """Consulta investimentos_posicoes + investimentos_mensal (série histórica por
+    posição) via modules.investimentos.db, que já resolve custo acumulado e P&L
+    corretamente. Moedas ficam separadas (BRL/EUR) — nunca somadas sem conversão."""
+    from modules.investimentos.db import get_all_posicoes
+    posicoes = get_all_posicoes(user_email)
+
+    valor_atual_eur = valor_atual_brl = 0.0
+    valor_investido_eur = valor_investido_brl = 0.0
+    taxas = aportes = 0.0
+    for pos in posicoes:
+        moeda = (pos.get('moeda') or 'BRL').upper()
+        va = _to_float(pos.get('valor_atual'))
+        vi = _to_float(pos.get('custo_acumulado'))
+        taxas += _to_float(pos.get('taxas_acumuladas'))
+        aportes += _to_float(pos.get('aportes_acumulados')) + _to_float(pos.get('valor_investido_inicial'))
+        if moeda == 'EUR':
+            valor_atual_eur += va
+            valor_investido_eur += vi
+        else:
+            valor_atual_brl += va
+            valor_investido_brl += vi
+
+    valor_atual = valor_atual_eur + valor_atual_brl
+    valor_investido = valor_investido_eur + valor_investido_brl
     pnl_eur = valor_atual_eur - valor_investido_eur
     pnl_brl = valor_atual_brl - valor_investido_brl
+    pnl = pnl_eur + pnl_brl
+    try:
+        from exchange_api import get_exchange_rate
+        brl_eur_rate = get_exchange_rate('latest', 'BRL', 'EUR')
+    except Exception:
+        brl_eur_rate = 0.1667
+    valor_atual_eur_convertido = valor_atual_eur + valor_atual_brl * brl_eur_rate
     return {
+        # ATENÇÃO: `valor_atual` soma EUR + BRL sem conversão cambial — não usar
+        # como "total em EUR". Use `valor_atual_eur_convertido` para isso.
         'valor_atual': valor_atual,
         'valor_atual_eur': valor_atual_eur,
         'valor_atual_brl': valor_atual_brl,
+        'valor_atual_eur_convertido': valor_atual_eur_convertido,
         'valor_investido': valor_investido,
         'valor_investido_eur': valor_investido_eur,
         'valor_investido_brl': valor_investido_brl,
         'taxas': taxas,
-        'aportes': _to_float(row['aportes']),
+        'aportes': aportes,
         'pnl': pnl,
         'pnl_eur': pnl_eur,
         'pnl_brl': pnl_brl,
@@ -506,67 +523,59 @@ def get_dashboard_budget(user_email: str, mes: str, ano: int, usr: str = 'all'):
 
 
 def get_dashboard_investments(user_email: str, mes: str, ano: int):
+    from modules.investimentos.db import get_all_posicoes
     conn = get_connection()
     c = conn.cursor()
     summary = _investment_summary(conn, user_email)
+    posicoes = get_all_posicoes(user_email)
 
-    c.execute('''
-        SELECT COALESCE(tp_investimento, 'Sem Tipo') AS tipo,
-               COALESCE(SUM(valor_atual), 0) AS valor_atual,
-               COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) AS valor_investido
-        FROM lcto_investimentos
-        WHERE user_email=%s
-        GROUP BY COALESCE(tp_investimento, 'Sem Tipo')
-        ORDER BY valor_atual DESC
-    ''', (user_email,))
-    by_type = [dict(r) for r in c.fetchall()]
+    by_type_map = {}
+    by_bank_map = {}
+    for pos in posicoes:
+        tipo = pos.get('tp_investimento') or 'Sem Tipo'
+        banco = pos.get('banco') or 'Sem Banco'
+        va = _to_float(pos.get('valor_atual'))
+        vi = _to_float(pos.get('custo_acumulado'))
+        t = by_type_map.setdefault(tipo, {'tipo': tipo, 'valor_atual': 0.0, 'valor_investido': 0.0})
+        t['valor_atual'] += va
+        t['valor_investido'] += vi
+        b = by_bank_map.setdefault(banco, {'banco': banco, 'valor_atual': 0.0})
+        b['valor_atual'] += va
 
-    c.execute('''
-        SELECT COALESCE(banco, 'Sem Banco') AS banco, COALESCE(SUM(valor_atual), 0) AS valor_atual
-        FROM lcto_investimentos
-        WHERE user_email=%s
-        GROUP BY COALESCE(banco, 'Sem Banco')
-        ORDER BY valor_atual DESC
-    ''', (user_email,))
-    by_bank = [dict(r) for r in c.fetchall()]
-
-    c.execute('''
-        SELECT tp_investimento, banco, moeda, valor_atual,
-               COALESCE(valor_inv, 0) * COALESCE(qtd, 0) AS valor_investido,
-               COALESCE(valor_atual, 0) - (COALESCE(valor_inv, 0) * COALESCE(qtd, 0)) - COALESCE(taxa, 0) AS pnl
-        FROM lcto_investimentos
-        WHERE user_email=%s
-        ORDER BY valor_atual DESC
-        LIMIT 10
-    ''', (user_email,))
-    positions = [dict(r) for r in c.fetchall()]
+    by_type = sorted(by_type_map.values(), key=lambda r: r['valor_atual'], reverse=True)
+    by_bank = sorted(by_bank_map.values(), key=lambda r: r['valor_atual'], reverse=True)
+    positions = sorted([{
+        'tp_investimento': pos.get('tp_investimento'),
+        'banco': pos.get('banco'),
+        'moeda': pos.get('moeda'),
+        'valor_atual': _to_float(pos.get('valor_atual')),
+        'valor_investido': _to_float(pos.get('custo_acumulado')),
+        'pnl': _to_float(pos.get('pnl_total')),
+    } for pos in posicoes], key=lambda r: r['valor_atual'], reverse=True)[:10]
     conn.close()
     return {'mes': mes, 'ano': ano, 'summary': summary, 'by_type': by_type, 'by_bank': by_bank, 'positions': positions}
 
 
 def get_dashboard_pnl(user_email: str, mes: str, ano: int):
+    from modules.investimentos.db import get_all_posicoes
     conn = get_connection()
     c = conn.cursor()
-    c.execute('''
-        SELECT COALESCE(tp_investimento, 'Investimentos') AS grupo,
-               COALESCE(SUM(valor_atual), 0) - COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) - COALESCE(SUM(taxa), 0) AS pnl
-        FROM lcto_investimentos
-        WHERE user_email=%s
-        GROUP BY COALESCE(tp_investimento, 'Investimentos')
-        ORDER BY pnl DESC
-    ''', (user_email,))
-    investment_pnl = [dict(r) for r in c.fetchall()]
+    posicoes = get_all_posicoes(user_email)
 
-    pnl_by_cur = conn.execute('''
-        SELECT
-            CASE WHEN UPPER(COALESCE(moeda, 'BRL')) = 'EUR' THEN 'EUR' ELSE 'BRL' END AS moeda_group,
-            COALESCE(SUM(valor_atual), 0) - COALESCE(SUM(COALESCE(valor_inv, 0) * COALESCE(qtd, 0)), 0) - COALESCE(SUM(taxa), 0) AS pnl
-        FROM lcto_investimentos
-        WHERE user_email=%s
-        GROUP BY moeda_group
-    ''', (user_email,)).fetchall()
-    pnl_invest_eur = sum(_to_float(r['pnl']) for r in pnl_by_cur if r['moeda_group'] == 'EUR')
-    pnl_invest_brl = sum(_to_float(r['pnl']) for r in pnl_by_cur if r['moeda_group'] == 'BRL')
+    pnl_by_type = {}
+    pnl_invest_eur = pnl_invest_brl = 0.0
+    for pos in posicoes:
+        tipo = pos.get('tp_investimento') or 'Investimentos'
+        pnl = _to_float(pos.get('pnl_total'))
+        pnl_by_type[tipo] = pnl_by_type.get(tipo, 0.0) + pnl
+        if (pos.get('moeda') or 'BRL').upper() == 'EUR':
+            pnl_invest_eur += pnl
+        else:
+            pnl_invest_brl += pnl
+    investment_pnl = sorted(
+        [{'grupo': k, 'pnl': v} for k, v in pnl_by_type.items()],
+        key=lambda r: r['pnl'], reverse=True,
+    )
 
     c.execute('''
         SELECT COALESCE(symbol, 'Sem Ativo') AS grupo, COALESCE(SUM(gross_pl), 0) AS pnl

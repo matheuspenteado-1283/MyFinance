@@ -1965,6 +1965,11 @@
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <select id="aiMesSel" style="background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-light);padding:6px 10px;border-radius:8px;font-size:0.83rem;" onchange="aiOnMonthChange()"></select>
+                <select id="aiUsrFilter" style="background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-light);padding:6px 10px;border-radius:8px;font-size:0.83rem;" onchange="aiOnUsrChange()">
+                    <option value="usr1" selected>USR1</option>
+                    <option value="usr2">USR2</option>
+                    <option value="all">Ambos (USR1+USR2)</option>
+                </select>
                 <button class="ai-analysis-btn" style="padding:7px 16px;font-size:0.82rem;" onclick="aiClearCache()">
                     <i class="fa-solid fa-rotate"></i> Atualizar Cache
                 </button>
@@ -2518,7 +2523,12 @@
             <h1>Revisão e Categorização</h1>
             <p>Revise suas categorias, ajuste os filtros e as cotas "Pag1/Pag2".</p>
 
-            <div class="table-container table-full">
+            <div id="reviewLoadingState" style="display:none; flex-direction:column; align-items:center; justify-content:center; gap:1rem; padding: 5rem 0; color: var(--text-muted);">
+                <div class="loader" style="display:block; width:40px; height:40px; border-width:4px;"></div>
+                <div>Carregando transações...</div>
+            </div>
+
+            <div class="table-container table-full" id="reviewTableContainer">
                 <table id="transactionsTable">
                     <thead>
                         <tr>
@@ -2560,6 +2570,9 @@
             <div class="btn-group action-bar" style="justify-content: center;">
                 <button class="btn btn-xs secondary" id="exportBtn">
                     <i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX
+                </button>
+                <button class="btn btn-xs secondary" id="exportDespesasBtn">
+                    <i class="fa-solid fa-file-arrow-down"></i> Exportar para Despesas (Arquivo)
                 </button>
                 <button class="btn btn-xs secondary" style="background: linear-gradient(135deg, #10b981, #059669);" id="saveMensaisBtn" onclick="saveDespesasMensais()">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar Despesas Mensais
@@ -3054,7 +3067,7 @@
                     </div>
                     <div class="form-field">
                         <label>Valor BRL</label>
-                        <input type="number" step="0.01" id="rm_valor_brl" class="auth-input">
+                        <input type="number" step="0.01" id="rm_valor_brl" class="auth-input" readonly>
                     </div>
                     <div class="form-field">
                         <label>Conta Bancária</label>
@@ -4293,159 +4306,137 @@
 
     <!-- Módulo Lançamento Investimentos -->
     <div class="container module-container module-fullscreen" id="lctoInvestimentosModule" style="display:none;">
-        <h1 style="text-align:center; margin-bottom:1.5rem;"><i class="fa-solid fa-chart-line" style="margin-right:15px; color:var(--primary);"></i>Lançamentos de Investimentos</h1>
-        
-        <!-- Cards de Resumo -->
-        <div class="summary-grid" style="margin-bottom: 2rem;">
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_investido_brl" style="color: var(--text-light);">R$ 0,00</div>
-                <div class="stat-label">Valor Investido em BRL</div>
-                <i class="fa-solid fa-money-bill-1 stat-icon" style="color: var(--primary);"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_investido_eur" style="color: var(--text-light);">€ 0,00</div>
-                <div class="stat-label">Valor Investido em EUR</div>
-                <i class="fa-solid fa-euro-sign stat-icon" style="color: #10b981;"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_total_brl" style="color: var(--primary);">R$ 0,00</div>
-                <div class="stat-label">Total Investido em BRL</div>
-                <i class="fa-solid fa-scale-balanced stat-icon" style="color: var(--primary);"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_total_eur" style="color: #10b981;">€ 0,00</div>
-                <div class="stat-label">Total Investido em EUR</div>
-                <i class="fa-solid fa-globe stat-icon" style="color: #10b981;"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_cotacao" style="color: var(--warning);">0,00</div>
-                <div class="stat-label">Cotação EUR/BRL</div>
-                <i class="fa-solid fa-coins stat-icon" style="color: var(--warning);"></i>
-            </div>
-        </div>
-        
-        <!-- Formulário -->
+        <h1 style="text-align:center; margin-bottom:1.5rem;"><i class="fa-solid fa-chart-line" style="margin-right:15px; color:var(--primary);"></i>Investimentos</h1>
+
+        <!-- Cards de Resumo (um bloco por moeda) -->
+        <div id="liSummaryCards"></div>
+
+        <!-- Formulário: Nova Posição -->
         <div class="form-panel">
-            <h3 id="liFormTitle"><i class="fa-solid fa-pen-to-square" style="margin-right:10px;"></i>Novo Lançamento</h3>
-            <form id="liForm" onsubmit="saveLctoInvestimento(event)">
-                <input type="hidden" id="li_id" value="">
+            <h3 id="liPosFormTitle"><i class="fa-solid fa-plus-circle" style="margin-right:10px;"></i>Nova Posição</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1rem;">Cadastro único por ativo: banco, tipo, moeda e o valor investido inicial. As atualizações mensais de valor de mercado, aporte e resgate são feitas depois, na tabela abaixo.</p>
+            <form id="liPosForm" onsubmit="savePosicao(event)">
+                <input type="hidden" id="lp_id" value="">
                 <div class="form-row-2">
                     <div class="form-field">
                         <label><i class="fa-solid fa-building-columns"></i> Banco</label>
-                        <select id="li_banco" class="auth-input" required></select>
+                        <select id="lp_banco" class="auth-input" required></select>
                     </div>
                     <div class="form-field">
                         <label><i class="fa-solid fa-tags"></i> Tipo Investimento</label>
-                        <select id="li_tp_investimento" class="auth-input" required></select>
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-calendar-day"></i> Data Investimento</label>
-                        <input type="date" id="li_data_inv" class="auth-input" required>
+                        <select id="lp_tp_investimento" class="auth-input" required></select>
                     </div>
                     <div class="form-field">
                         <label><i class="fa-solid fa-coins"></i> Moeda</label>
-                        <select id="li_moeda" class="auth-input">
+                        <select id="lp_moeda" class="auth-input">
                             <option value="BRL">BRL</option>
                             <option value="USD">USD</option>
                             <option value="EUR">EUR</option>
                         </select>
                     </div>
-                </div>
-                <div class="form-row-2">
                     <div class="form-field">
-                        <label><i class="fa-solid fa-dollar-sign"></i> Valor Unitário</label>
-                        <input type="number" step="0.01" id="li_valor_inv" class="auth-input" placeholder="0,00" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-list-ol"></i> Quantidade</label>
-                        <input type="number" step="0.0001" id="li_qtd" class="auth-input" placeholder="0,0000" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-receipt"></i> Taxas (R$)</label>
-                        <input type="number" step="0.01" id="li_taxa" class="auth-input" value="0" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-hand-holding-dollar"></i> Aporte Mensal (R$)</label>
-                        <input type="number" step="0.01" id="li_aporte" class="auth-input" value="0">
+                        <label><i class="fa-solid fa-calendar-day"></i> Data de Início</label>
+                        <input type="date" id="lp_data_inicio" class="auth-input" required>
                     </div>
                 </div>
                 <div class="form-row-2">
                     <div class="form-field">
-                        <label><i class="fa-solid fa-chart-line"></i> Valor de Mercado Atual (Un.)</label>
-                        <input type="number" step="0.01" id="li_valor_atual" class="auth-input" placeholder="0,00" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-clock-rotate-left"></i> Valor Mês Anterior</label>
-                        <input type="number" step="0.01" id="li_val_mes_ant" class="auth-input" value="0" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-calculator"></i> Valor Total Investido</label>
-                        <input type="text" id="li_valor_tot_inv" class="auth-input" style="opacity:0.7; background: rgba(0,0,0,0.2);" readonly>
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-sack-dollar"></i> Valor Líquido Mês</label>
-                        <input type="text" id="li_valor_liq_mes" class="auth-input" style="opacity:0.7; background: rgba(0,0,0,0.2);" readonly>
+                        <label><i class="fa-solid fa-sack-dollar"></i> Valor Investido Inicial</label>
+                        <input type="number" step="0.01" id="lp_valor_inicial" class="auth-input" placeholder="0,00" required>
                     </div>
                 </div>
-                <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="liSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar Lançamento</button>
-                    <button type="button" class="btn btn-sm" id="liCancelBtn" style="display:none; background: var(--error);" onclick="cancelEditLctoInvest()">
+                <div style="display:flex;gap:15px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary" id="liPosSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar Posição</button>
+                    <button type="button" class="btn btn-sm" id="liPosCancelBtn" style="display:none; background: var(--error);" onclick="cancelEditPosicao()">
                         <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- Tabela -->
-        <h3 style="margin: 2.5rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-check"></i> Lançamentos Cadastrados</h3>
-        
+        <!-- Formulário: Atualizar Mês (aparece ao clicar em "Atualizar Mês" numa posição) -->
+        <div class="form-panel" id="liMensalPanel" style="display:none; border: 1px solid var(--primary);">
+            <h3><i class="fa-solid fa-calendar-check" style="margin-right:10px;"></i> Atualizar Mês — <span id="mu_pos_label"></span></h3>
+            <form id="liMensalForm" onsubmit="saveMensal(event)">
+                <input type="hidden" id="mu_pos_id" value="">
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-calendar"></i> Mês de Referência</label>
+                        <input type="month" id="mu_mes_referencia" class="auth-input" required>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-chart-line"></i> Valor de Mercado (total)</label>
+                        <input type="number" step="0.01" id="mu_valor_mercado" class="auth-input" placeholder="0,00" oninput="calcMuPreview()" required>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-hand-holding-dollar"></i> Aporte no Mês</label>
+                        <input type="number" step="0.01" id="mu_aporte_mes" class="auth-input" value="0" oninput="calcMuPreview()">
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-money-bill-transfer"></i> Resgate no Mês</label>
+                        <input type="number" step="0.01" id="mu_resgate_mes" class="auth-input" value="0" oninput="calcMuPreview()">
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-receipt"></i> Taxas do Mês</label>
+                        <input type="number" step="0.01" id="mu_taxa_mes" class="auth-input" value="0">
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-calculator"></i> P&amp;L do Mês (prévia)</label>
+                        <input type="text" id="mu_pnl_preview" class="auth-input" style="opacity:0.8; background: rgba(0,0,0,0.2);" readonly>
+                    </div>
+                </div>
+                <div style="display:flex;gap:15px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary"><i class="fa-solid fa-floppy-disk"></i> Salvar Mês</button>
+                    <button type="button" class="btn btn-sm" style="background: var(--error);" onclick="closeMensalPanel()">
+                        <i class="fa-solid fa-xmark"></i> Fechar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela de Posições -->
+        <h3 style="margin: 2.5rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-check"></i> Posições</h3>
+
         <div class="search-area" style="margin-bottom: 1.5rem; display: flex; gap: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
             <div style="flex:1; position:relative;">
                 <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
-                <input type="text" class="auth-input" style="padding-left:40px; margin:0;" placeholder="Pesquisar em bancos, ativos ou datas..." oninput="filterTableGeneric('lctoInvestTable', this.value)">
+                <input type="text" class="auth-input" style="padding-left:40px; margin:0;" placeholder="Pesquisar em bancos ou tipos..." oninput="filterTableGeneric('posicoesTable', this.value)">
             </div>
-            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_lcto_investimentos'"><i class="fa-solid fa-file-excel"></i> Exportar Excel (XLSX)</button>
+            <button class="btn btn-sm secondary" onclick="exportLctoInvestimentos()"><i class="fa-solid fa-file-excel"></i> Exportar Excel (XLSX)</button>
         </div>
 
         <div class="table-container table-full">
-            <table id="lctoInvestTable">
+            <table id="posicoesTable">
                 <thead>
                     <tr>
-                        <th style="width:40px;"><input type="checkbox" onclick="toggleAllDm(this)"></th>
-                        <th onclick="sortTableGeneric('lctoInvestTable', 0)">Banco <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                        <th onclick="sortTableGeneric('lctoInvestTable', 1)">Tipo Investimento <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                        <th onclick="sortTableGeneric('lctoInvestTable', 2)">Data <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                        <th style="text-align:right;">Valor Unit.</th>
+                        <th onclick="sortTableGeneric('posicoesTable', 0)">Banco <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                        <th onclick="sortTableGeneric('posicoesTable', 1)">Tipo Investimento <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
                         <th style="text-align:center;">Moeda</th>
-                        <th style="text-align:right;">Qtd</th>
-                        <th style="text-align:right;">Taxa</th>
-                        <th style="text-align:right;">Total Investido</th>
+                        <th onclick="sortTableGeneric('posicoesTable', 3)">Início <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                        <th style="text-align:right;">Investido Inicial</th>
                         <th style="text-align:right;">Valor Atual</th>
-                        <th style="text-align:right;">Liq. Mês</th>
-                        <th style="text-align:right;">Mês Ant.</th>
-                        <th style="text-align:right;">Aporte</th>
-                        <th style="text-align:right;">Lucro Op.</th>
-                        <th style="text-align:right;">Lucro Mês</th>
+                        <th style="text-align:right;">P&amp;L Mês</th>
+                        <th style="text-align:right;">P&amp;L Total</th>
                         <th style="text-align:right;">% Rent.</th>
-                        <th style="width:100px;text-align:center;">Ações</th>
+                        <th style="text-align:center;">Último Mês</th>
+                        <th style="width:190px;text-align:center;">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="lctoInvestTableBody"></tbody>
+                <tbody id="posicoesTableBody"></tbody>
             </table>
         </div>
 
         <!-- Upload e Export -->
-        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 1.5rem;">
             <div class="upload-area" id="li_dropZone" style="flex: 1;">
                 <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever todas as posições</b></div>
                 <div class="upload-subtext">CSV, Excel</div>
                 <input type="file" id="li_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadLctoInvestFile(this)">
                 <div id="li_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-xs secondary" onclick="exportLctoInvestimentos()">
-                <i class="fa-solid fa-file-excel"></i> Exportar Excel
-            </button>
         </div>
     </div>
 
@@ -6833,6 +6824,7 @@
 
         // ── Módulo Receitas Mensais ─────────────────────────────────────────────
         let rmReceitasCats = [];
+        let rmCotacaoAtual = null; // cotação EUR por 1 BRL, buscada na API
 
         async function initReceitasMensais() {
             const mesInput = document.getElementById('rmMesRef');
@@ -6856,7 +6848,8 @@
                 const rateRes = await fetch(`/api/cotacao?from=BRL&to=EUR`);
                 if(rateRes.ok) {
                     const rateData = await rateRes.json();
-                    document.getElementById('rm_cotacao').value = rateData.cotacao.toFixed(4);
+                    rmCotacaoAtual = rateData.cotacao;
+                    document.getElementById('rm_cotacao').value = rmCotacaoAtual.toFixed(4);
                 }
             } catch(e) {}
             
@@ -7074,7 +7067,11 @@
             document.getElementById('rmForm').reset();
             applyUsrLabels('rm_pagador');
             const mesValue = document.getElementById('rmMesRef').value;
-            
+
+            // reset() reverte o campo Cotação para o valor fixo do HTML — repõe a cotação real buscada da API
+            const cotacaoPadrao = rmCotacaoAtual || 1;
+            document.getElementById('rm_cotacao').value = cotacaoPadrao.toFixed(4);
+
             if(id) {
                 document.getElementById('rmFormTitle').innerText = 'Editar Receita';
                 document.getElementById('rm_id').value = id;
@@ -7082,9 +7079,6 @@
                 document.getElementById('rm_tipo').value = data.tipo_receita;
                 document.getElementById('rm_valor_orig').value = data.valor_original;
                 document.getElementById('rm_moeda').value = data.moeda_original;
-                document.getElementById('rm_cotacao').value = data.cotacao;
-                document.getElementById('rm_valor_eur').value = data.valor_eur;
-                document.getElementById('rm_valor_brl').value = data.valor_brl;
                 document.getElementById('rm_conta').value = data.conta_bancaria;
                 document.getElementById('rm_comments').value = data.comentarios;
                 document.getElementById('rm_pagador').value = data.pagador_usr || '';
@@ -7095,6 +7089,7 @@
                 document.getElementById('rm_data').value = `${mesValue}-01`;
                 document.getElementById('rmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
             }
+            calcRmEur();
             document.getElementById('rmFormPanel').scrollIntoView({behavior:'smooth'});
         }
 
@@ -7107,9 +7102,12 @@
             const c = parseFloat(document.getElementById('rm_cotacao').value) || 1;
             const moeda = document.getElementById('rm_moeda').value;
             let valorEur = v;
-            if(moeda === 'BRL') valorEur = v / c;
+            if(moeda === 'BRL') valorEur = v * c;
             else if(moeda === 'USD') valorEur = v * c;
             document.getElementById('rm_valor_eur').value = valorEur.toFixed(2);
+            // rm_cotacao representa EUR por 1 BRL, então BRL = EUR / cotação
+            const valorBrl = c ? valorEur / c : valorEur;
+            document.getElementById('rm_valor_brl').value = valorBrl.toFixed(2);
         }
 
         function formatDateBR(dateStr) {
@@ -7392,6 +7390,7 @@
 
         async function dashLoadUsrLabels() {
             await applyUsrLabels('dashUsrFilter');
+            await applyUsrLabels('aiUsrFilter');
         }
 
         function dashSetLoading(message = 'Carregando dashboard...') {
@@ -8353,6 +8352,7 @@
         const uploadSection = document.getElementById('uploadSection');
         const reviewSection = document.getElementById('reviewSection');
         const exportBtn     = document.getElementById('exportBtn');
+        const exportDespesasBtn = document.getElementById('exportDespesasBtn');
         // ─────────────────────────────────────────────────────────────────────
 
         const CATEGORIES = [
@@ -8748,7 +8748,12 @@
         async function showReviewScreen() {
             uploadSection.style.display = 'none';
             reviewSection.style.display = 'flex';
-            
+
+            const reviewLoadingEl = document.getElementById('reviewLoadingState');
+            const reviewTableContainerEl = document.getElementById('reviewTableContainer');
+            reviewLoadingEl.style.display = 'flex';
+            reviewTableContainerEl.style.display = 'none';
+
             // Ativar modo Full Screen Real
             const extratosMod = document.getElementById('extratosModule');
             extratosMod.classList.add('no-limits');
@@ -8903,7 +8908,7 @@
                     updateStatusUI(tr, trx);
                     calcTotals();
                 });
-                tr.querySelector(`#p2_${trx.id}`).addEventListener('blur', (e) => { 
+                tr.querySelector(`#p2_${trx.id}`).addEventListener('blur', (e) => {
                     trx.pag2 = parseCurrencyBR(e.target.value);
                     e.target.value = formatCurrency(trx.pag2);
                     updateStatusUI(tr, trx);
@@ -8911,6 +8916,9 @@
                 });
             });
             calcTotals();
+
+            reviewLoadingEl.style.display = 'none';
+            reviewTableContainerEl.style.display = '';
         }
 
         // Impede que o browser role a tabela de revisão para a esquerda ao focar
@@ -9034,8 +9042,55 @@
                 a.download = "Extratos_Processados.xlsx"; a.click();
             })
             .finally(() => {
-                exportBtn.innerHTML = '<i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX'; 
+                exportBtn.innerHTML = '<i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX';
                 exportBtn.disabled = false;
+            });
+        });
+
+        exportDespesasBtn.addEventListener('click', () => {
+            const visibleIds = [];
+            document.querySelectorAll('#tableBody tr').forEach((tr) => {
+                if(tr.style.display !== 'none') visibleIds.push(tr.getAttribute('data-id'));
+            });
+
+            const rows = [];
+            parsedTransactions.filter(t => visibleIds.includes(t.id)).forEach(trx => {
+                const tr = document.querySelector(`tr[data-id="${trx.id}"]`);
+                if (!tr) return;
+                rows.push({
+                    data: trx.data,
+                    descricao: trx.descricao,
+                    valor_original: trx.valor_original,
+                    moeda: trx.moeda,
+                    cambio_eur: trx.cambio,
+                    valor_eur: trx.valor_eur,
+                    usr1: trx.pag1,
+                    usr2: trx.pag2,
+                    status_pago: tr.querySelector(`#st_${trx.id}`)?.textContent || 'Pendente',
+                    categoria_final: tr.querySelector(`#cat_${trx.id}`)?.value || trx.categoria,
+                    receita: tr.querySelector(`#rec_${trx.id}`)?.checked ? 1 : 0,
+                    conta_bancaria: tr.querySelector(`#cta_${trx.id}`)?.value || '',
+                    comentarios: tr.querySelector(`#com_${trx.id}`)?.value || '',
+                });
+            });
+
+            if (!rows.length) { alert('Nenhuma linha para exportar.'); return; }
+
+            exportDespesasBtn.innerHTML = 'Gerando XLSX...'; exportDespesasBtn.disabled = true;
+            fetch('/export_despesas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rows })
+            })
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url;
+                a.download = "Despesas_Para_Importar.xlsx"; a.click();
+            })
+            .finally(() => {
+                exportDespesasBtn.innerHTML = '<i class="fa-solid fa-file-arrow-down"></i> Exportar para Despesas (Arquivo)';
+                exportDespesasBtn.disabled = false;
             });
         });
         // Setup Drag and Drop styling for all config upload areas
@@ -9160,170 +9215,277 @@
         async function loadLctoInvestimentos() {
             try {
                 await Promise.all([
-                    loadContasIntoSelect('li_banco'),
-                    loadInvestTypesIntoSelect('li_tp_investimento')
+                    loadContasIntoSelect('lp_banco'),
+                    loadInvestTypesIntoSelect('lp_tp_investimento')
                 ]);
-                const res = await fetch('/api/lcto_investimentos');
+                const res = await fetch('/api/investimentos/posicoes');
                 lctoInvestData = await res.json();
+                lctoInvestHistorico = {};
                 renderLctoInvestTable();
+                renderLiSummaryCards();
             } catch(e) { console.error(e); }
         }
 
-        async function renderLctoInvestTable() {
-            const tbody = document.getElementById('lctoInvestTableBody');
-            tbody.innerHTML = '';
+        function moedaSymbol(moeda) {
+            return moeda === 'EUR' ? '€ ' : (moeda === 'USD' ? '$ ' : 'R$ ');
+        }
+
+        function renderLiSummaryCards() {
+            const porMoeda = {};
             lctoInvestData.forEach(d => {
-                const valTotInv = (d.valor_inv || 0) * (d.qtd || 0);
-                const valorLiqMes = (d.valor_atual || 0) - (valTotInv + (d.taxa || 0));
-                const lucroOp = (d.valor_atual || 0) - valTotInv;
-                const lucroMes = (d.valor_atual || 0) - (d.val_mes_ant || 0);
-                const pctRent = valTotInv > 0 ? (lucroOp / valTotInv * 100) : 0;
-                const badgeClass = pctRent >= 0 ? 'val-badge' : 'val-badge debit';
-                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
+                const m = (d.moeda || 'BRL').toUpperCase();
+                const acc = porMoeda[m] || (porMoeda[m] = { valorInicial: 0, valorAtual: 0, pnlMes: 0, pnlTotal: 0 });
+                acc.valorInicial += (d.custo_acumulado || 0);
+                acc.valorAtual += (d.valor_atual || 0);
+                acc.pnlMes += (d.pnl_mensal || 0);
+                acc.pnlTotal += (d.pnl_total || 0);
+            });
+            const container = document.getElementById('liSummaryCards');
+            const moedas = Object.keys(porMoeda);
+            if (!moedas.length) {
+                container.innerHTML = '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Nenhuma posição cadastrada ainda.</p>';
+                return;
+            }
+            container.innerHTML = moedas.map(m => {
+                const s = porMoeda[m];
+                const sym = moedaSymbol(m);
+                const pct = s.valorInicial ? (s.pnlTotal / s.valorInicial * 100) : 0;
+                const cls = v => v >= 0 ? 'val-badge' : 'val-badge debit';
+                return `
+                <h4 style="margin: 0 0 0.8rem; color: var(--text-muted); font-size: 0.9rem; letter-spacing: 0.03em;">${m}</h4>
+                <div class="summary-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <div class="stat-value">${sym}${formatCurrency(s.valorInicial)}</div>
+                        <div class="stat-label">Custo Acumulado</div>
+                        <i class="fa-solid fa-sack-dollar stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${sym}${formatCurrency(s.valorAtual)}</div>
+                        <div class="stat-label">Valor Atual</div>
+                        <i class="fa-solid fa-chart-pie stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(s.pnlMes)}">${sym}${formatCurrency(s.pnlMes)}</span></div>
+                        <div class="stat-label">P&amp;L do Mês</div>
+                        <i class="fa-solid fa-calendar-check stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(s.pnlTotal)}">${sym}${formatCurrency(s.pnlTotal)}</span></div>
+                        <div class="stat-label">P&amp;L Total</div>
+                        <i class="fa-solid fa-arrow-trend-up stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(pct)}">${pct.toFixed(2)}%</span></div>
+                        <div class="stat-label">% Rentabilidade</div>
+                        <i class="fa-solid fa-percent stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderLctoInvestTable() {
+            const tbody = document.getElementById('posicoesTableBody');
+            tbody.innerHTML = '';
+            if (!lctoInvestData.length) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);">Nenhuma posição cadastrada.</td></tr>';
+                return;
+            }
+            lctoInvestData.forEach(d => {
+                const cls = v => (v || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+                tbody.innerHTML += `<tr>
                     <td>${d.banco || ''}</td>
                     <td>${d.tp_investimento || ''}</td>
-                    <td>${d.data_inv || ''}</td>
-                    <td style="text-align:right;">${formatCurrency(d.valor_inv)}</td>
                     <td style="text-align:center;"><span class="currency-badge">${d.moeda}</span></td>
-                    <td style="text-align:right;">${d.qtd || 0}</td>
-                    <td style="text-align:right;">${formatCurrency(d.taxa)}</td>
-                    <td style="text-align:right;">${formatCurrency(valTotInv)}</td>
+                    <td>${d.data_inicio || ''}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_investido_inicial)}</td>
                     <td style="text-align:right;">${formatCurrency(d.valor_atual)}</td>
-                    <td style="text-align:right;">${formatCurrency(valorLiqMes)}</td>
-                    <td style="text-align:right;">${formatCurrency(d.val_mes_ant)}</td>
-                    <td style="text-align:right;">${formatCurrency(d.aporte)}</td>
-                    <td style="text-align:right;">${formatCurrency(lucroOp)}</td>
-                    <td style="text-align:right;">${formatCurrency(lucroMes)}</td>
-                    <td style="text-align:right;"><span class="${badgeClass}">${pctRent.toFixed(2)}%</span></td>
+                    <td style="text-align:right;"><span class="${cls(d.pnl_mensal)}">${formatCurrency(d.pnl_mensal)}</span></td>
+                    <td style="text-align:right;"><span class="${cls(d.pnl_total)}">${formatCurrency(d.pnl_total)}</span></td>
+                    <td style="text-align:right;"><span class="${cls(d.pct_rentabilidade)}">${(d.pct_rentabilidade || 0).toFixed(2)}%</span></td>
+                    <td style="text-align:center;">${d.ultimo_mes || '—'}</td>
                     <td style="text-align:center;">
-                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;"
-                            onclick="editLctoInvest(${d.id})" title="Editar">
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="openMensalPanel(${d.id})" title="Atualizar mês">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </button>
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="toggleHistorico(${d.id})" title="Ver histórico mensal">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </button>
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="editPosicao(${d.id})" title="Editar posição">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
-                            onclick="deleteLctoInvest(${d.id})" title="Excluir">
+                        <button class="btn" style="padding:0.3rem 0.5rem;font-size:0.75rem;background:var(--error);"
+                            onclick="deletePosicao(${d.id})" title="Excluir posição">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
+                </tr>
+                <tr id="li_hist_row_${d.id}" style="display:none;">
+                    <td colspan="11" style="background: rgba(0,0,0,0.15);"><div id="li_hist_${d.id}">Carregando...</div></td>
                 </tr>`;
             });
-            await calcLctoInvestSummary();
         }
 
-        let currentExchangeRate = 0; // BRL -> EUR
+        let lctoInvestHistorico = {};
 
-        async function calcLctoInvestSummary() {
-            let valorInvestBRL = 0; 
-            let valorInvestEUR = 0; 
-            
-            lctoInvestData.forEach(d => {
-                const totalLinha = (d.valor_inv || 0) * (d.qtd || 0);
-                if (d.moeda === 'EUR') {
-                    valorInvestEUR += totalLinha;
-                } else if (d.moeda === 'BRL') {
-                    valorInvestBRL += totalLinha;
-                }
-            });
-
-            // Buscar cotação atual EUR -> BRL se não tiver
-            if (currentExchangeRate === 0) {
-                try {
-                    const res = await fetch('/api/cotacao?from=EUR&to=BRL');
-                    const data = await res.json();
-                    currentExchangeRate = data.cotacao || 6.00; // Fallback 6.00
-                } catch(e) { currentExchangeRate = 6.00; }
+        async function toggleHistorico(posId) {
+            const row = document.getElementById(`li_hist_row_${posId}`);
+            const isHidden = row.style.display === 'none';
+            row.style.display = isHidden ? 'table-row' : 'none';
+            if (isHidden && !lctoInvestHistorico[posId]) {
+                const res = await fetch(`/api/investimentos/posicoes/${posId}/mensal`);
+                lctoInvestHistorico[posId] = await res.json();
+                renderHistorico(posId);
             }
-
-            const totalConvertidoBRL = valorInvestBRL + (valorInvestEUR * currentExchangeRate);
-            const totalConvertidoEUR = valorInvestEUR + (valorInvestBRL / currentExchangeRate);
-
-            document.getElementById('li_sum_investido_brl').innerText = formatCurrency(valorInvestBRL);
-            document.getElementById('li_sum_investido_eur').innerText = '€ ' + formatCurrency(valorInvestEUR);
-            document.getElementById('li_sum_total_brl').innerText = formatCurrency(totalConvertidoBRL);
-            document.getElementById('li_sum_total_eur').innerText = '€ ' + formatCurrency(totalConvertidoEUR);
-            document.getElementById('li_sum_cotacao').innerText = currentExchangeRate.toFixed(4).replace('.', ',');
         }
 
-        function calcLiTotais() {
-            const valor = parseFloat(document.getElementById('li_valor_inv').value) || 0;
-            const qtd = parseFloat(document.getElementById('li_qtd').value) || 0;
-            const taxa = parseFloat(document.getElementById('li_taxa').value) || 0;
-            const valAtual = parseFloat(document.getElementById('li_valor_atual').value) || 0;
-            const valMesAnt = parseFloat(document.getElementById('li_val_mes_ant').value) || 0;
-            
-            const totalInv = valor * qtd;
-            const liqMes = valAtual - (totalInv + taxa);
-            
-            document.getElementById('li_valor_tot_inv').value = formatCurrency(totalInv);
-            document.getElementById('li_valor_liq_mes').value = formatCurrency(liqMes);
+        function renderHistorico(posId) {
+            const snaps = lctoInvestHistorico[posId] || [];
+            const container = document.getElementById(`li_hist_${posId}`);
+            if (!snaps.length) {
+                container.innerHTML = '<p style="color:var(--text-muted);padding:0.5rem;">Nenhum mês lançado ainda.</p>';
+                return;
+            }
+            const cls = v => (v || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+            container.innerHTML = `<table style="width:100%;">
+                <thead><tr>
+                    <th>Mês</th><th style="text-align:right;">Valor de Mercado</th>
+                    <th style="text-align:right;">Aporte</th><th style="text-align:right;">Resgate</th>
+                    <th style="text-align:right;">Custo Acumulado</th><th style="text-align:right;">P&amp;L Mês</th>
+                    <th style="width:50px;"></th>
+                </tr></thead>
+                <tbody>
+                ${snaps.slice().reverse().map(s => `<tr>
+                    <td>${s.mes_referencia}</td>
+                    <td style="text-align:right;">${formatCurrency(s.valor_mercado)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.aporte_mes)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.resgate_mes)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.custo_acumulado)}</td>
+                    <td style="text-align:right;"><span class="${cls(s.pnl_mensal)}">${formatCurrency(s.pnl_mensal)}</span></td>
+                    <td style="text-align:center;"><button class="btn" style="padding:0.2rem 0.4rem;font-size:0.7rem;background:var(--error);" onclick="deleteMensal(${s.id}, ${posId})"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`).join('')}
+                </tbody>
+            </table>`;
         }
 
-        async function saveLctoInvestimento(e) {
+        async function deleteMensal(snapshotId, posId) {
+            if(!confirm('Remover este mês do histórico?')) return;
+            await fetch(`/api/investimentos/mensal/${snapshotId}`, { method: 'DELETE' });
+            delete lctoInvestHistorico[posId];
+            await loadLctoInvestimentos();
+            await toggleHistorico(posId);
+        }
+
+        async function savePosicao(e) {
             e.preventDefault();
-            const id = document.getElementById('li_id').value;
+            const id = document.getElementById('lp_id').value;
             const data = {
-                banco: document.getElementById('li_banco').value,
-                tp_investimento: document.getElementById('li_tp_investimento').value,
-                data_inv: document.getElementById('li_data_inv').value,
-                valor_inv: parseFloat(document.getElementById('li_valor_inv').value) || 0,
-                moeda: document.getElementById('li_moeda').value,
-                qtd: parseFloat(document.getElementById('li_qtd').value) || 0,
-                taxa: parseFloat(document.getElementById('li_taxa').value) || 0,
-                valor_atual: parseFloat(document.getElementById('li_valor_atual').value) || 0,
-                val_mes_ant: parseFloat(document.getElementById('li_val_mes_ant').value) || 0,
-                aporte: parseFloat(document.getElementById('li_aporte').value) || 0
+                banco: document.getElementById('lp_banco').value,
+                tp_investimento: document.getElementById('lp_tp_investimento').value,
+                moeda: document.getElementById('lp_moeda').value,
+                data_inicio: document.getElementById('lp_data_inicio').value,
+                valor_investido_inicial: parseFloat(document.getElementById('lp_valor_inicial').value) || 0
             };
-            
+
             const method = id ? 'PUT' : 'POST';
-            const url = id ? `/api/lcto_investimentos/${id}` : '/api/lcto_investimentos';
-            
+            const url = id ? `/api/investimentos/posicoes/${id}` : '/api/investimentos/posicoes';
+
             const res = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            
+
             if(res.ok) {
-                document.getElementById('liForm').reset();
-                document.getElementById('li_id').value = '';
-                document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
-                document.getElementById('liCancelBtn').style.display = 'none';
+                cancelEditPosicao();
                 loadLctoInvestimentos();
             }
         }
 
-        function editLctoInvest(id) {
+        function editPosicao(id) {
             const d = lctoInvestData.find(x => x.id === id);
             if(!d) return;
-            document.getElementById('li_id').value = d.id;
-            document.getElementById('li_banco').value = d.banco || '';
-            document.getElementById('li_tp_investimento').value = d.tp_investimento || '';
-            document.getElementById('li_data_inv').value = d.data_inv || '';
-            document.getElementById('li_valor_inv').value = d.valor_inv || '';
-            document.getElementById('li_moeda').value = d.moeda || 'BRL';
-            document.getElementById('li_qtd').value = d.qtd || '';
-            document.getElementById('li_taxa').value = d.taxa || '';
-            document.getElementById('li_valor_atual').value = d.valor_atual || '';
-            document.getElementById('li_val_mes_ant').value = d.val_mes_ant || '';
-            document.getElementById('li_aporte').value = d.aporte || '';
-            document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
-            document.getElementById('liCancelBtn').style.display = 'inline-block';
-            calcLiTotais();
+            document.getElementById('lp_id').value = d.id;
+            document.getElementById('lp_banco').value = d.banco || '';
+            document.getElementById('lp_tp_investimento').value = d.tp_investimento || '';
+            document.getElementById('lp_moeda').value = d.moeda || 'BRL';
+            document.getElementById('lp_data_inicio').value = d.data_inicio || '';
+            document.getElementById('lp_valor_inicial').value = d.valor_investido_inicial || '';
+            document.getElementById('liPosSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+            document.getElementById('liPosCancelBtn').style.display = 'inline-block';
         }
 
-        function cancelEditLctoInvest() {
-            document.getElementById('li_id').value = '';
-            document.getElementById('liForm').reset();
-            loadContasIntoSelect('li_banco');
-            loadInvestTypesIntoSelect('li_tp_investimento');
-            document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
-            document.getElementById('liCancelBtn').style.display = 'none';
+        function cancelEditPosicao() {
+            document.getElementById('lp_id').value = '';
+            document.getElementById('liPosForm').reset();
+            loadContasIntoSelect('lp_banco');
+            loadInvestTypesIntoSelect('lp_tp_investimento');
+            document.getElementById('liPosSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar Posição';
+            document.getElementById('liPosCancelBtn').style.display = 'none';
         }
 
-        async function deleteLctoInvest(id) {
-            if(!confirm('Confirmar exclusão?')) return;
-            await fetch(`/api/lcto_investimentos/${id}`, { method: 'DELETE' });
+        async function deletePosicao(id) {
+            if(!confirm('Excluir esta posição e todo o histórico mensal dela?')) return;
+            await fetch(`/api/investimentos/posicoes/${id}`, { method: 'DELETE' });
             loadLctoInvestimentos();
+        }
+
+        function openMensalPanel(posId) {
+            const d = lctoInvestData.find(x => x.id === posId);
+            if(!d) return;
+            document.getElementById('mu_pos_id').value = posId;
+            document.getElementById('mu_pos_label').innerText = `${d.banco || ''} - ${d.tp_investimento || ''}`;
+            const now = new Date();
+            document.getElementById('mu_mes_referencia').value = d.ultimo_mes && d.ultimo_mes > now.toISOString().slice(0,7)
+                ? d.ultimo_mes : now.toISOString().slice(0, 7);
+            document.getElementById('mu_valor_mercado').value = d.valor_atual || '';
+            document.getElementById('mu_aporte_mes').value = 0;
+            document.getElementById('mu_resgate_mes').value = 0;
+            document.getElementById('mu_taxa_mes').value = 0;
+            document.getElementById('liMensalPanel').style.display = 'block';
+            document.getElementById('liMensalPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            calcMuPreview();
+        }
+
+        function closeMensalPanel() {
+            document.getElementById('liMensalPanel').style.display = 'none';
+            document.getElementById('liMensalForm').reset();
+        }
+
+        function calcMuPreview() {
+            const posId = parseInt(document.getElementById('mu_pos_id').value);
+            const d = lctoInvestData.find(x => x.id === posId);
+            if(!d) return;
+            const valorAnterior = d.valor_atual || 0;
+            const valorMercado = parseFloat(document.getElementById('mu_valor_mercado').value) || 0;
+            const aporte = parseFloat(document.getElementById('mu_aporte_mes').value) || 0;
+            const resgate = parseFloat(document.getElementById('mu_resgate_mes').value) || 0;
+            const pnlMes = valorMercado - valorAnterior - aporte + resgate;
+            document.getElementById('mu_pnl_preview').value = formatCurrency(pnlMes);
+        }
+
+        async function saveMensal(e) {
+            e.preventDefault();
+            const posId = document.getElementById('mu_pos_id').value;
+            const data = {
+                mes_referencia: document.getElementById('mu_mes_referencia').value,
+                valor_mercado: parseFloat(document.getElementById('mu_valor_mercado').value) || 0,
+                aporte_mes: parseFloat(document.getElementById('mu_aporte_mes').value) || 0,
+                resgate_mes: parseFloat(document.getElementById('mu_resgate_mes').value) || 0,
+                taxa_mes: parseFloat(document.getElementById('mu_taxa_mes').value) || 0
+            };
+            const res = await fetch(`/api/investimentos/posicoes/${posId}/mensal`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if(res.ok) {
+                delete lctoInvestHistorico[posId];
+                closeMensalPanel();
+                loadLctoInvestimentos();
+            }
         }
 
         async function uploadLctoInvestFile(input) {
@@ -10501,6 +10663,7 @@
 
         function initAiAgent() {
             _aiPopulateMonths();
+            applyUsrLabels('aiUsrFilter');
             // load chat history on open
             fetch('/api/ai/chat/history')
                 .then(r => r.ok ? r.json() : null)
@@ -10526,6 +10689,7 @@
         }
 
         function aiOnMonthChange() { /* allow re-analysis with new month on next click */ }
+        function aiOnUsrChange() { /* allow re-analysis with new usr on next click */ }
 
         function showAiTab(tab) {
             document.querySelectorAll('.ai-tab').forEach(b => b.classList.remove('active'));
@@ -10592,12 +10756,14 @@
 
         async function loadAiAnalysis(key, endpoint, renderFn) {
             const mes = document.getElementById('aiMesSel').value;
+            const usrEl = document.getElementById('aiUsrFilter');
+            const usr = (usrEl && usrEl.value) ? usrEl.value : 'usr1';
             const btn = document.getElementById('btn' + key.charAt(0).toUpperCase() + key.slice(1));
             const res = document.getElementById('res-' + key);
             if (btn) { btn.disabled = true; }
             res.innerHTML = `<div class="ai-spinner"><i class="fa-solid fa-spinner"></i> A analisar dados com IA... aguarde.</div>`;
             try {
-                const resp = await fetch(`${endpoint}?mes=${mes}`);
+                const resp = await fetch(`${endpoint}?mes=${mes}&usr=${usr}`);
                 const data = await resp.json();
                 if (data.error) {
                     res.innerHTML = `<div style="color:var(--error);padding:1rem;">${data.error}</div>`;
@@ -10858,6 +11024,8 @@
             const msg = inp.value.trim();
             if (!msg) return;
             const mes = document.getElementById('aiMesSel').value;
+            const usrEl = document.getElementById('aiUsrFilter');
+            const usr = (usrEl && usrEl.value) ? usrEl.value : 'usr1';
             inp.value = '';
             _aiAppendMsg('user', msg);
             document.getElementById('aiSendBtn').disabled = true;
@@ -10868,7 +11036,7 @@
                 const resp = await fetch('/api/ai/chat', {
                     method: 'POST',
                     headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({message: msg, mes}),
+                    body: JSON.stringify({message: msg, mes, usr}),
                 });
                 const data = await resp.json();
                 const typing = document.getElementById(typingId);
