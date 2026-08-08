@@ -16,9 +16,10 @@ def init_tables():
             expires_at TIMESTAMP
         )
     ''')
+    conn.execute("ALTER TABLE ai_analyses ADD COLUMN IF NOT EXISTS usr TEXT DEFAULT 'usr1'")
     conn.execute('''
         CREATE INDEX IF NOT EXISTS idx_ai_analyses_lookup
-        ON ai_analyses (user_email, analysis_type, period, expires_at)
+        ON ai_analyses (user_email, analysis_type, period, usr, expires_at)
     ''')
     conn.execute('''
         CREATE TABLE IF NOT EXISTS ai_chat_history (
@@ -33,22 +34,22 @@ def init_tables():
     conn.close()
 
 
-def get_cached_analysis(user_email: str, analysis_type: str, period: str = None):
+def get_cached_analysis(user_email: str, analysis_type: str, period: str = None, usr: str = 'usr1'):
     conn = get_connection()
     now = datetime.utcnow()
     if period:
         row = conn.execute(
             '''SELECT result_json FROM ai_analyses
-               WHERE user_email=%s AND analysis_type=%s AND period=%s AND expires_at > %s
+               WHERE user_email=%s AND analysis_type=%s AND period=%s AND usr=%s AND expires_at > %s
                ORDER BY generated_at DESC LIMIT 1''',
-            (user_email, analysis_type, period, now),
+            (user_email, analysis_type, period, usr, now),
         ).fetchone()
     else:
         row = conn.execute(
             '''SELECT result_json FROM ai_analyses
-               WHERE user_email=%s AND analysis_type=%s AND expires_at > %s
+               WHERE user_email=%s AND analysis_type=%s AND usr=%s AND expires_at > %s
                ORDER BY generated_at DESC LIMIT 1''',
-            (user_email, analysis_type, now),
+            (user_email, analysis_type, usr, now),
         ).fetchone()
     conn.close()
     if row:
@@ -57,16 +58,16 @@ def get_cached_analysis(user_email: str, analysis_type: str, period: str = None)
 
 
 def save_analysis(user_email: str, analysis_type: str, result: dict,
-                  period: str = None, ttl_hours: int = 6):
+                  period: str = None, ttl_hours: int = 6, usr: str = 'usr1'):
     conn = get_connection()
     now = datetime.utcnow()
     expires = now + timedelta(hours=ttl_hours)
     conn.execute(
         '''INSERT INTO ai_analyses
-           (user_email, analysis_type, period, result_json, generated_at, expires_at)
-           VALUES (%s, %s, %s, %s, %s, %s)''',
+           (user_email, analysis_type, period, result_json, generated_at, expires_at, usr)
+           VALUES (%s, %s, %s, %s, %s, %s, %s)''',
         (user_email, analysis_type, period,
-         json.dumps(result, ensure_ascii=False), now, expires),
+         json.dumps(result, ensure_ascii=False), now, expires, usr),
     )
     conn.commit()
     conn.close()
