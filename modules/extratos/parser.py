@@ -44,13 +44,30 @@ def _parse_date(date_string):
         return '2023-01-01'
 
 
+# Extratos em PDF costumam usar traços tipográficos (U+2010 e afins) no lugar do
+# hífen ASCII e parênteses ornamentados. Sem normalizar, o sinal negativo é
+# descartado pela limpeza de _parse_value e todo débito vira crédito.
+_UNICODE_FIXES = {
+    '‐': '-', '‑': '-', '‒': '-',
+    '–': '-', '—': '-', '−': '-',
+    '﴾': '(', '﴿': ')',
+}
+
+
+def _clean_text(s):
+    s = str(s)
+    for bad, good in _UNICODE_FIXES.items():
+        s = s.replace(bad, good)
+    return s
+
+
 def _parse_value(val_str):
     if pd.isna(val_str):
         return 0.0
     if isinstance(val_str, (int, float)):
         return float(val_str)
 
-    val_str = str(val_str).strip()
+    val_str = _clean_text(val_str).strip()
     val_str = re.sub(r'[^\d\,\.\-]', '', val_str)
 
     if ',' in val_str and '.' in val_str:
@@ -92,9 +109,18 @@ def _df_to_transactions(df, filepath=''):
     col_date = _find_column(df, ['data oper', 'data de in', 'open time', 'data', 'date', 'registro', 'time'])
     col_desc = _find_column(df, ['descri', 'desc', 'historico', 'histórico', 'lançamento', 'detail', 'comment', 'symbol'])
 
-    col_val = _find_column(df, ['montante', 'valor', 'value', 'amount', 'quantia', 'saída', 'saida', 'gross p/l', 'purchase value'])
+    # 'movimento' fica por último: se a planilha tiver tanto 'Movimento' (tipo de
+    # lançamento) quanto 'Valor' (montante), 'Valor' continua ganhando.
+    col_val = _find_column(df, ['montante', 'valor', 'value', 'amount', 'quantia', 'saída', 'saida', 'gross p/l', 'purchase value', 'movimento'])
     col_deb = _find_column(df, ['dbito', 'débito'])
     col_cred = _find_column(df, ['crdito', 'crédito'])
+
+    # Tabela degenerada (uma coluna só, com a linha inteira do extrato dentro):
+    # data/descrição/valor resolvem para a mesma coluna e cada linha viraria uma
+    # transação de valor 0,00 com a data de fallback. Melhor não produzir nada e
+    # deixar os fallbacks de PDF assumirem.
+    if col_val is not None and (col_val == col_desc or col_val == col_date):
+        col_val = None
 
     if not col_date or not col_desc:
         if len(df.columns) >= 3:
@@ -137,7 +163,7 @@ def _df_to_transactions(df, filepath=''):
             continue
 
         date_str = _parse_date(row[col_date])
-        descricao = str(raw_desc).strip()
+        descricao = _clean_text(raw_desc).strip()
         if descricao.lower() in ['nan', 'none', '']:
             continue
 
@@ -301,7 +327,9 @@ def _parse_pdf_text_lines(lines, filepath=''):
 
     rows = []
     for line in lines:
-        line = line.strip()
+        # Normaliza traços tipográficos: as regex de data abaixo usam hífen ASCII
+        # e não casariam com datas do tipo '11‐08‐2026' (U+2010).
+        line = _clean_text(line).strip()
         if not line:
             continue
         # Ignora linhas de saldo/totais
@@ -757,7 +785,10 @@ def process_file(filepath):
             with pdfplumber.open(filepath) as pdf:
                 for page in pdf.pages:
                     for table in page.extract_tables():
-                        if len(table) > 1:
+                        # Tabelas de 1-2 colunas são degeneradas (o pdfplumber às vezes
+                        # devolve a página inteira numa célula só): não há como separar
+                        # data/descrição/valor e cada linha viraria lixo.
+                        if len(table) > 1 and len(table[0]) >= 3:
                             header = table[0]
                             data_rows = table[1:]
 
