@@ -37,6 +37,11 @@ fix_app.py
 test_*.py
 test_cols.py
 
+# Suite de regressão versionada (modules/*/__tests__) — não confundir com os
+# scripts soltos test_*.py na raiz, que são ignorados acima.
+!modules/**/__tests__/
+!modules/**/__tests__/test_*.py
+
 # Extratos bancários (dados pessoais)
 MyFinance/
 

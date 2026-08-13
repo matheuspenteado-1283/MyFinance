@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'pdf', 'csv', 'xls', 'xlsx', 'xml'}
+ALLOWED_EXTENSIONS = {'pdf', 'csv', 'xls', 'xlsx', 'xml', 'ofx', 'qfx'}
 
 
 def configure_app(app):

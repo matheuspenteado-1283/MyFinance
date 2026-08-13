@@ -276,6 +276,20 @@
         #reviewSection h1 { position: static; background: #0f172a; padding: 1rem 0; margin: 0; }
         #reviewSection p { display: none; }
 
+        .conf-banner {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1rem; margin: 0.5rem 0; border-radius: 8px;
+            font-size: 0.9rem; border: 1px solid var(--glass-border);
+            background: rgba(30, 41, 59, 0.6);
+        }
+        .conf-banner .conf-score { font-weight: 700; font-size: 1.1rem; }
+        .conf-banner.green  { border-color: #22c55e; color: #86efac; }
+        .conf-banner.green  .conf-score { color: #22c55e; }
+        .conf-banner.amber  { border-color: #f59e0b; color: #fcd34d; }
+        .conf-banner.amber  .conf-score { color: #f59e0b; }
+        .conf-banner.red    { border-color: #ef4444; color: #fca5a5; }
+        .conf-banner.red    .conf-score { color: #ef4444; }
+
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 0.5rem; border-bottom: 1px solid var(--glass-border); }
         th {
@@ -2144,6 +2158,12 @@
             <h1>Revisão e Categorização</h1>
             <p>Revise suas categorias, ajuste os filtros e as cotas "Pag1/Pag2".</p>
 
+            <div id="confidenceBanner" class="conf-banner" style="display:none;">
+                <span class="conf-score"></span>
+                <span class="conf-msg"></span>
+                <button class="btn btn-xs" id="confDetailsBtn">Ver checagens</button>
+            </div>
+
             <div class="table-container table-full">
                 <table id="transactionsTable">
                     <thead>
@@ -2281,16 +2301,24 @@
                         <input type="date" id="dm_data" class="auth-input" required>
                     </div>
                     <div class="form-field">
+                        <label>Período do Lançamento</label>
+                        <input type="month" id="dm_mes_ref" class="auth-input" required>
+                    </div>
+                    <div class="form-field">
                         <label>Descrição</label>
                         <input type="text" id="dm_desc" class="auth-input" required>
                     </div>
                     <div class="form-field">
                         <label>Valor Original</label>
-                        <input type="number" step="0.01" id="dm_valor_orig" class="auth-input" oninput="calcDmEur()">
+                        <input type="number" step="0.01" id="dm_valor_orig" class="auth-input" oninput="calcDmEur();updateDmStatus()">
                     </div>
                     <div class="form-field">
                         <label>Moeda</label>
-                        <input type="text" id="dm_moeda" class="auth-input" value="BRL">
+                        <select id="dm_moeda" class="auth-input" onchange="updateDmCambio()">
+                            <option value="BRL">BRL</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-row">
@@ -2304,28 +2332,30 @@
                     </div>
                     <div class="form-field">
                         <label id="dmLabelUsr1">Valor Pagador 1</label>
-                        <input type="number" id="dm_usr1" class="auth-input" step="0.01" placeholder="0,00">
+                        <input type="number" id="dm_usr1" class="auth-input" step="0.01" placeholder="0,00" oninput="updateDmStatus()">
                     </div>
                     <div class="form-field">
                         <label id="dmLabelUsr2">Valor Pagador 2</label>
-                        <input type="number" id="dm_usr2" class="auth-input" step="0.01" placeholder="0,00">
+                        <input type="number" id="dm_usr2" class="auth-input" step="0.01" placeholder="0,00" oninput="updateDmStatus()">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-field">
                         <label>Status Pago</label>
                         <select id="dm_status" class="auth-input">
-                            <option value="Pendente">Pendente</option>
-                            <option value="Pago">Pago</option>
+                            <option value="OK">OK</option>
+                            <option value="NOK">NOK</option>
                         </select>
                     </div>
                     <div class="form-field">
                         <label>Categoria Final</label>
-                        <select id="dm_cat" class="auth-input"><option value="">—</option></select>
+                        <input type="text" id="dm_cat" class="auth-input" list="dmCatList" placeholder="Buscar categoria..." autocomplete="off">
+                        <datalist id="dmCatList"></datalist>
                     </div>
                     <div class="form-field">
                         <label>Conta Bancária</label>
-                        <select id="dm_conta" class="auth-input"><option value="">—</option></select>
+                        <input type="text" id="dm_conta" class="auth-input" list="dmContaList" placeholder="Buscar conta..." autocomplete="off">
+                        <datalist id="dmContaList"></datalist>
                     </div>
                     <div class="form-field" style="justify-content:flex-end;padding-bottom:6px;">
                         <label style="font-size:0.95rem;cursor:pointer;">
@@ -2381,7 +2411,7 @@
                 </div>
                 <div class="dm-filter-field">
                     <label><i class="fa-solid fa-circle-check" style="margin-right:4px;"></i>Status</label>
-                    <input type="text" id="dmFilter9" class="filter-input" placeholder="pago / pendente" onkeyup="filterDmTable(); updateDmFilterUI()">
+                    <input type="text" id="dmFilter9" class="filter-input" placeholder="ok / nok" onkeyup="filterDmTable(); updateDmFilterUI()">
                 </div>
                 <div class="dm-filter-field">
                     <label><i class="fa-solid fa-folder" style="margin-right:4px;"></i>Categoria</label>
@@ -5521,8 +5551,8 @@
                 
                 console.log('USR1 Keys:', dmUsr1Keys, 'USR2 Keys:', dmUsr2Keys, 'Defaults:', dmUsr1Default, dmUsr2Default);
                 
-                const cSel = document.getElementById('dm_conta');
-                cSel.innerHTML = '<option value="">—</option>' + contas.map(c => `<option value="${c.descricao}">${c.descricao}</option>`).join('');
+                const cList = document.getElementById('dmContaList');
+                cList.innerHTML = contas.map(c => `<option value="${c.descricao}"></option>`).join('');
                 
                 const usr1Input = document.getElementById('dm_usr1');
                 document.getElementById('dmLabelUsr1').innerText = dmUsr1Default || 'Valor Pagador 1';
@@ -5540,9 +5570,9 @@
         }
 
         function updateDmCategorySelect(isReceita) {
-            const dSel = document.getElementById('dm_cat');
+            const list = document.getElementById('dmCatList');
             const cats = isReceita ? dmReceitasCats : dmDespesasCats;
-            dSel.innerHTML = '<option value="">—</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+            list.innerHTML = cats.map(c => `<option value="${c}"></option>`).join('');
         }
 
         function onDmReceitaChanged() {
@@ -5603,7 +5633,7 @@
                 const usr2Val = parseFloat(d.usr2) || 0;
                 const diff = Math.abs(d.valor_original - (usr1Val + usr2Val));
                 const diffBadge = diff < 0.01 ? '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">OK</span>' : `<span class="val-badge" style="background:rgba(239,68,68,0.15);color:var(--error);">${formatCurrency(diff)}</span>`;
-                const stColor = d.status_pago === 'Pago' ? 'var(--success)' : 'var(--warning)';
+                const stColor = d.status_pago === 'OK' ? 'var(--success)' : (d.status_pago === 'NOK' ? 'var(--error)' : 'var(--warning)');
                 const cambioDisplay = d.cambio_eur ? String(d.cambio_eur).replace('.', ',') : '—';
                 const usr1Display = d.usr1 ? String(d.usr1).replace(/\./g, ',') : '—';
                 const usr2Display = d.usr2 ? String(d.usr2).replace(/\./g, ',') : '—';
@@ -5959,6 +5989,7 @@
                 document.getElementById('dmFormTitle').innerText = 'Editar Despesa';
                 document.getElementById('dm_id').value = id;
                 document.getElementById('dm_data').value = data.data.split('/').reverse().join('-');
+                document.getElementById('dm_mes_ref').value = data.mes_referencia || mesValue;
                 document.getElementById('dm_desc').value = data.descricao;
                 document.getElementById('dm_valor_orig').value = data.valor_original;
                 document.getElementById('dm_moeda').value = data.moeda;
@@ -5966,7 +5997,7 @@
                 document.getElementById('dm_valor_eur').value = data.valor_eur;
                 document.getElementById('dm_usr1').value = data.usr1;
                 document.getElementById('dm_usr2').value = data.usr2;
-                document.getElementById('dm_status').value = data.status_pago;
+                updateDmStatus();
                 document.getElementById('dm_conta').value = data.conta_bancaria;
                 document.getElementById('dm_receita').checked = !!data.receita;
                 document.getElementById('dm_comments').value = data.comentarios;
@@ -5977,9 +6008,11 @@
                 document.getElementById('dmFormTitle').innerText = 'Nova Despesa';
                 document.getElementById('dm_id').value = '';
                 document.getElementById('dm_data').value = `${mesValue}-01`;
+                document.getElementById('dm_mes_ref').value = mesValue;
                 document.getElementById('dm_usr1').value = '';
                 document.getElementById('dm_usr2').value = '';
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
+                updateDmCambio();
             }
             document.getElementById('dmFormPanel').scrollIntoView({behavior:'smooth'});
         }
@@ -5994,14 +6027,42 @@
             document.getElementById('dm_valor_eur').value = (v * c).toFixed(2);
         }
 
+        async function updateDmCambio() {
+            const moeda = document.getElementById('dm_moeda').value;
+            if(!moeda) return;
+            if(moeda === 'EUR') {
+                document.getElementById('dm_cambio').value = '1';
+                calcDmEur();
+                return;
+            }
+            try {
+                const res = await fetch(`/api/cotacao?from=${moeda}&to=EUR`);
+                if(res.ok) {
+                    const data = await res.json();
+                    document.getElementById('dm_cambio').value = (data.cotacao || 1).toFixed(4);
+                    calcDmEur();
+                }
+            } catch(e) {
+                console.error('Erro ao buscar cotação:', e);
+            }
+        }
+
         function calcDmDiff() {
             // Apenas auxiliar visual se necessário
+        }
+
+        function updateDmStatus() {
+            const orig = parseFloat(document.getElementById('dm_valor_orig').value) || 0;
+            const usr1 = parseFloat(document.getElementById('dm_usr1').value) || 0;
+            const usr2 = parseFloat(document.getElementById('dm_usr2').value) || 0;
+            const diff = Math.abs(orig - (usr1 + usr2));
+            document.getElementById('dm_status').value = diff < 0.01 ? 'OK' : 'NOK';
         }
 
         async function saveDmRow(e) {
             e.preventDefault();
             const id = document.getElementById('dm_id').value;
-            const mesRef = document.getElementById('dmMesRef').value;
+            const mesRef = document.getElementById('dm_mes_ref').value || document.getElementById('dmMesRef').value;
             
             const usr1Val = document.getElementById('dm_usr1').value;
             const usr2Val = document.getElementById('dm_usr2').value;
@@ -6400,7 +6461,7 @@
             ddData.forEach(d => {
                 const diff = Math.abs(d.valor_original - (d.usr1 + d.usr2));
                 const diffBadge = diff < 0.01 ? '<span class="val-badge" style="background:rgba(16,185,129,0.15);color:var(--success);">OK</span>' : `<span class="val-badge" style="background:rgba(239,68,68,0.15);color:var(--error);">${formatCurrency(diff)}</span>`;
-                const stColor = d.status_pago === 'Pago' ? 'var(--success)' : 'var(--warning)';
+                const stColor = d.status_pago === 'OK' ? 'var(--success)' : (d.status_pago === 'NOK' ? 'var(--error)' : 'var(--warning)');
                 
                 tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
                     <td>${formatDateBR(d.data)}</td>
@@ -8501,6 +8562,7 @@
                 const res = await r.json();
                 if (r.ok && res.transactions && res.transactions.length > 0) {
                     parsedTransactions = res.transactions;
+                    updateConfidenceBanner(res);
                     showReviewScreen();
                 } else {
                     alert(res.error || 'Nenhuma transação foi extraída. Verifique se o arquivo está no formato correto (CSV, Excel, etc.) e possui colunas de Data, Descrição e Valor.');
@@ -8519,16 +8581,58 @@
             });
         });
 
+        function updateConfidenceBanner(res) {
+            const banner = document.getElementById('confidenceBanner');
+            if (!banner) return;
+            const score = res.score;
+            const checks = res.checks || [];
+            if (score === undefined || score === null) {
+                banner.style.display = 'none';
+                return;
+            }
+            const scoreEl = banner.querySelector('.conf-score');
+            const msgEl = banner.querySelector('.conf-msg');
+            scoreEl.textContent = score + '/100';
+            banner.classList.remove('green', 'amber', 'red');
+
+            let cls = 'green';
+            let msg = 'Saldo confere · pronto para importar';
+            if (score < 60) {
+                cls = 'red';
+                msg = 'Não conseguimos ler este extrato com segurança';
+            } else if (score < 90) {
+                cls = 'amber';
+                const suspeitas = (res.linhas_suspeitas || []).length;
+                msg = suspeitas > 0
+                    ? suspeitas + ' linha(s) de ' + (res.total_linhas || parsedTransactions.length) + ' precisam da sua confirmação'
+                    : 'Revise antes de importar';
+            }
+            banner.classList.add(cls);
+            msgEl.textContent = msg;
+
+            const detailsBtn = document.getElementById('confDetailsBtn');
+            if (detailsBtn) {
+                detailsBtn.onclick = function () {
+                    const detalhes = checks
+                        .map(c => (c.passou ? '✓' : '✗') + ' ' + c.nome + ' — ' + (c.detalhe || ''))
+                        .join('\n');
+                    alert('Checagens:\n\n' + (detalhes || 'nenhuma'));
+                };
+            }
+            banner.style.display = 'flex';
+        }
+
         function resetToUpload() {
             parsedTransactions = [];
             selectedFiles = [];
             fileList.innerHTML = '';
             tableBody.innerHTML = '';
+            const banner = document.getElementById('confidenceBanner');
+            if (banner) banner.style.display = 'none';
             uploadBtn.disabled = false;
             loader.style.display = 'none';
             btnIcon.style.display = 'inline-block';
             btnText.textContent = 'Processar Base Documental';
-
             reviewSection.style.display = 'none';
             reviewSection.classList.remove('full-screen-mode');
             document.getElementById('extratosModule').classList.remove('no-limits');

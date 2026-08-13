@@ -25,13 +25,18 @@ def _find_column(df, possible_names):
 
 
 def _parse_date(date_string):
+    """Devolve (data_iso, fallback: bool).
+
+    Nunca mais devolve uma data mágica como '2023-01-01'. Quando o parse falha,
+    devolve (None, True) e o chamador marca a linha como suspeita.
+    """
     if pd.isna(date_string):
-        return '2023-01-01'
+        return None, True
     if isinstance(date_string, pd.Timestamp):
-        return date_string.strftime('%Y-%m-%d')
+        return date_string.strftime('%Y-%m-%d'), False
     from datetime import date, datetime
     if isinstance(date_string, (date, datetime)):
-        return date_string.strftime('%Y-%m-%d')
+        return date_string.strftime('%Y-%m-%d'), False
 
     date_str = str(date_string).strip()
     try:
@@ -39,9 +44,9 @@ def _parse_date(date_string):
             dt = dateutil.parser.parse(date_str, dayfirst=False, fuzzy=True)
         else:
             dt = dateutil.parser.parse(date_str, dayfirst=True, fuzzy=True)
-        return dt.strftime('%Y-%m-%d')
+        return dt.strftime('%Y-%m-%d'), False
     except Exception:
-        return '2023-01-01'
+        return None, True
 
 
 # Extratos em PDF costumam usar traços tipográficos (U+2010 e afins) no lugar do
@@ -87,7 +92,7 @@ def _parse_value(val_str):
         return 0.0
 
 
-def _df_to_transactions(df, filepath=''):
+def _df_to_transactions(df, filepath='', user_email=None):
     transactions = []
 
     header_idx = -1
@@ -162,7 +167,7 @@ def _df_to_transactions(df, filepath=''):
         if val_float == 0.0 and str(raw_desc).strip() == '':
             continue
 
-        date_str = _parse_date(row[col_date])
+        date_str, date_fallback = _parse_date(row[col_date])
         descricao = _clean_text(raw_desc).strip()
         if descricao.lower() in ['nan', 'none', '']:
             continue
@@ -197,9 +202,9 @@ def _df_to_transactions(df, filepath=''):
         if 'br_' in fp or 'santander' in fp or 'itau' in fp or 'bradesco' in fp or 'nubank' in fp or 'brasil' in fp:
             moeda = 'BRL'
 
-        rate = get_exchange_rate(date_str, moeda, 'EUR')
+        rate = get_exchange_rate(date_str or 'latest', moeda, 'EUR')
         valor_eur = round(val_float * rate, 2)
-        categoria = guess_category(descricao)
+        categoria = guess_category(descricao, user_email)
 
         transactions.append({
             'id': str(uuid.uuid4())[:8],
@@ -214,6 +219,8 @@ def _df_to_transactions(df, filepath=''):
             'categoria': categoria,
             'is_debit': is_debit,
             'receita': not is_debit,
+            'data_fallback': date_fallback,
+            'linha_idx': index,
         })
 
     return transactions
@@ -295,7 +302,7 @@ def _read_xml_xls(filepath):
     return None
 
 
-def _parse_pdf_text_lines(lines, filepath=''):
+def _parse_pdf_text_lines(lines, filepath='', user_email=None):
     """Tenta extrair transações de linhas de texto de PDF sem tabela estruturada.
     Suporta: dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy, dd/mm (sem ano — infere o ano do texto).
     """
@@ -384,10 +391,10 @@ def _parse_pdf_text_lines(lines, filepath=''):
     df = pd.DataFrame(rows)
     if detected_currency:
         df['moeda'] = detected_currency
-    return _df_to_transactions(df, filepath=filepath)
+    return _df_to_transactions(df, filepath=filepath, user_email=user_email)
 
 
-def _parse_pdf_millennium(pdf, filepath=''):
+def _parse_pdf_millennium(pdf, filepath='', user_email=None):
     """Parsing de extratos Millennium BCP (PT): colunas DÉBITO / CRÉDITO / SALDO
     alinhadas à direita, datas no formato M.DD (ex.: 5.04) e milhar separado por espaço.
 
@@ -520,10 +527,10 @@ def _parse_pdf_millennium(pdf, filepath=''):
             if not description:
                 continue
 
-            date_str = _parse_date(f'{year:04d}-{month:02d}-{day:02d}')
+            date_str, date_fallback = _parse_date(f'{year:04d}-{month:02d}-{day:02d}')
             rate = get_exchange_rate(date_str, moeda, 'EUR')
             valor_eur = round(val_float * rate, 2)
-            categoria = guess_category(description)
+            categoria = guess_category(description, user_email)
 
             rows.append({
                 'id': str(uuid.uuid4())[:8],
@@ -538,12 +545,14 @@ def _parse_pdf_millennium(pdf, filepath=''):
                 'categoria': categoria,
                 'is_debit': is_debit,
                 'receita': not is_debit,
+                'data_fallback': date_fallback,
+                'linha_idx': len(rows),
             })
 
     return rows
 
 
-def _parse_pdf_words(pdf, filepath=''):
+def _parse_pdf_words(pdf, filepath='', user_email=None):
     """Parsing de PDFs com colunas de débito/crédito separadas usando posição X das palavras.
     Detecta automaticamente quais colunas são 'retirado' (débito) e 'recebido' (crédito).
     Retorna lista de transações ou [] se não conseguir detectar o formato.
@@ -643,12 +652,12 @@ def _parse_pdf_words(pdf, filepath=''):
                 is_debit = True
 
             raw_date = dates[0]['text']
-            date_str = _parse_date(raw_date)
+            date_str, date_fallback = _parse_date(raw_date)
 
             moeda = detected_currency or 'EUR'
-            rate = get_exchange_rate(date_str, moeda, 'EUR')
+            rate = get_exchange_rate(date_str or 'latest', moeda, 'EUR')
             valor_eur = round(val_float * rate, 2)
-            categoria = guess_category(description)
+            categoria = guess_category(description, user_email)
 
             rows.append({
                 'id': str(uuid.uuid4())[:8],
@@ -662,6 +671,8 @@ def _parse_pdf_words(pdf, filepath=''):
                 'pag2': round(val_float / 2, 2),
                 'categoria': categoria,
                 'is_debit': is_debit,
+                'data_fallback': date_fallback,
+                'linha_idx': len(rows),
             })
 
     return rows
@@ -696,11 +707,11 @@ def _read_ofx_xml(filepath):
     return None
 
 
-def process_file(filepath):
+def process_file(filepath, user_email=None):
     if filepath.lower().endswith('.csv'):
         try:
             df = pd.read_csv(filepath, sep=None, engine='python')
-            return _df_to_transactions(df, filepath=filepath)
+            return _df_to_transactions(df, filepath=filepath, user_email=user_email)
         except Exception:
             return []
 
@@ -708,26 +719,26 @@ def process_file(filepath):
         # Tenta SpreadsheetML (Excel XML)
         df = _read_xml_xls(filepath)
         if df is not None:
-            txns = _df_to_transactions(df, filepath=filepath)
+            txns = _df_to_transactions(df, filepath=filepath, user_email=user_email)
             if txns:
                 return txns
         # Tenta OFX/XML bancário
         if filepath.lower().endswith('.xml'):
             df = _read_ofx_xml(filepath)
             if df is not None:
-                txns = _df_to_transactions(df, filepath=filepath)
+                txns = _df_to_transactions(df, filepath=filepath, user_email=user_email)
                 if txns:
                     return txns
         try:
             df = pd.read_excel(filepath)
-            txns = _df_to_transactions(df, filepath=filepath)
+            txns = _df_to_transactions(df, filepath=filepath, user_email=user_email)
             if txns:
                 return txns
         except Exception:
             pass
         try:
             df = pd.read_excel(filepath, engine='xlrd')
-            return _df_to_transactions(df, filepath=filepath)
+            return _df_to_transactions(df, filepath=filepath, user_email=user_email)
         except Exception:
             return []
 
@@ -757,15 +768,15 @@ def process_file(filepath):
 
                             if reconstructed_rows:
                                 df = pd.DataFrame(reconstructed_rows, columns=header)
-                                transactions.extend(_df_to_transactions(df, filepath=filepath))
+                                transactions.extend(_df_to_transactions(df, filepath=filepath, user_email=user_email))
 
                 # Fallback 0: formato Millennium BCP (colunas DÉBITO/CRÉDITO/SALDO, data M.DD)
                 if not transactions:
-                    transactions = _parse_pdf_millennium(pdf, filepath)
+                    transactions = _parse_pdf_millennium(pdf, filepath, user_email)
 
                 # Fallback 1: parsing por posição X das palavras (detecta débito/crédito por coluna)
                 if not transactions:
-                    transactions = _parse_pdf_words(pdf, filepath)
+                    transactions = _parse_pdf_words(pdf, filepath, user_email)
 
                 # Fallback 2: extração de texto linha a linha quando não há tabelas detectáveis
                 if not transactions:
@@ -774,7 +785,7 @@ def process_file(filepath):
                         text = page.extract_text()
                         if text:
                             all_lines.extend(text.split('\n'))
-                    transactions = _parse_pdf_text_lines(all_lines, filepath)
+                    transactions = _parse_pdf_text_lines(all_lines, filepath, user_email)
         except Exception:
             pass
         return transactions
