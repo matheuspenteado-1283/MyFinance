@@ -155,7 +155,8 @@ def change_user_email(current_email: str, password: str, new_email: str) -> dict
             'receitas_mensais',
             'lcto_impostos',
             'lcto_emprestimos',
-            'lcto_investimentos',
+            'investimentos_posicoes',
+            'investimentos_mensal',
             'trader_positions',
             'relatorios_configurados',
             # cadastros

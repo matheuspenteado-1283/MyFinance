@@ -19,9 +19,7 @@ from .db.receitas import (
 from .db.investimentos import (
     get_all_investimentos, add_investimento, update_investimento, delete_investimento, clear_investimentos,
 )
-from .db.usuarios import (
-    get_all_usuarios, add_usuario, update_usuario, delete_usuario, clear_usuarios,
-)
+from .db.usuarios import get_pagador_labels, save_pagador_labels
 from .db.tipo_imposto import (
     get_all_tipo_imposto, add_tipo_imposto, update_tipo_imposto, delete_tipo_imposto, clear_tipo_imposto,
 )
@@ -373,88 +371,24 @@ def api_export_investimentos():
                      as_attachment=True, download_name='Cadastro_Investimentos.xlsx')
 
 
-# ── Usuários ──────────────────────────────────────────────────────────────────
+# ── Configuração de Pagadores ─────────────────────────────────────────────────
 
-@bp.route('/api/cad_usuarios', methods=['GET'])
-def api_get_usuarios():
+@bp.route('/api/pagador_labels', methods=['GET'])
+def api_get_pagador_labels():
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    return jsonify(get_all_usuarios(session['user_email']))
+    return jsonify(get_pagador_labels(session['user_email']))
 
 
-@bp.route('/api/cad_usuarios', methods=['POST'])
-def api_post_usuario():
+@bp.route('/api/pagador_labels', methods=['POST'])
+def api_post_pagador_labels():
     if 'user_email' not in session:
         return jsonify({'error': 'Não logado'}), 401
-    d = request.json
-    add_usuario(session['user_email'], d.get('chave_usr1'), d.get('chave_usr2'), d.get('nome'), d.get('fator_pagamento', 1))
-    return jsonify({'status': 'ok'})
-
-
-@bp.route('/api/cad_usuarios/<int:u_id>', methods=['PUT'])
-def api_put_usuario(u_id):
-    if 'user_email' not in session:
-        return jsonify({'error': 'Não logado'}), 401
-    d = request.json
-    update_usuario(session['user_email'], u_id, d.get('chave_usr1'), d.get('chave_usr2'), d.get('nome'), d.get('fator_pagamento', 1))
-    return jsonify({'status': 'ok'})
-
-
-@bp.route('/api/cad_usuarios/<int:u_id>', methods=['DELETE'])
-def api_delete_usuario(u_id):
-    if 'user_email' not in session:
-        return jsonify({'error': 'Não logado'}), 401
-    delete_usuario(session['user_email'], u_id)
-    return jsonify({'status': 'ok'})
-
-
-@bp.route('/api/upload_usuarios', methods=['POST'])
-def api_upload_usuarios():
-    if 'user_email' not in session:
-        return jsonify({'error': 'Não logado'}), 401
-    if 'file' not in request.files:
-        return jsonify({'error': 'Nenhum arquivo'}), 400
-    file = request.files['file']
-    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-    file.save(filepath)
-    try:
-        filename = file.filename.lower()
-        df = pd.read_excel(filepath) if filename.endswith(('.xls', '.xlsx')) else pd.read_csv(filepath)
-        count = 0
-        clear_usuarios(session['user_email'])
-        for _, row in df.iterrows():
-            add_usuario(
-                session['user_email'],
-                str(row.get('chave_usr1', row.get('Chave Usr1', ''))),
-                str(row.get('chave_usr2', row.get('Chave Usr2', ''))),
-                str(row.get('nome', row.get('Nome', ''))),
-                int(row.get('fator_pagamento', row.get('Fator Pagamento', 1))),
-            )
-            count += 1
-        os.remove(filepath)
-        return jsonify({'status': 'ok', 'count': count})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-
-@bp.route('/api/export_usuarios', methods=['GET'])
-def api_export_usuarios():
-    if 'user_email' not in session:
-        return jsonify({'error': 'Não logado'}), 401
-    usuarios = get_all_usuarios(session['user_email'])
-    df = pd.DataFrame(usuarios)
-    if not df.empty:
-        df.drop(columns=['id', 'user_email'], errors='ignore', inplace=True)
-    df.rename(columns={
-        'nome': 'Nome', 'chave_usr1': 'Chave Usr1', 'chave_usr2': 'Chave Usr2',
-        'fator_pagamento': 'Fator Pagamento',
-    }, inplace=True)
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Usuarios')
-    output.seek(0)
-    return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                     as_attachment=True, download_name='Cadastro_Usuarios.xlsx')
+    d = request.json or {}
+    label_usr1 = (d.get('label_usr1') or '').strip() or 'USR1'
+    label_usr2 = (d.get('label_usr2') or '').strip() or 'USR2'
+    save_pagador_labels(session['user_email'], label_usr1, label_usr2)
+    return jsonify({'status': 'ok', 'label_usr1': label_usr1, 'label_usr2': label_usr2})
 
 
 # ── Tipo Imposto ──────────────────────────────────────────────────────────────

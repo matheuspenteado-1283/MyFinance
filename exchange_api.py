@@ -30,15 +30,19 @@ def get_exchange_rate(date_str: str, from_currency: str, to_currency: str = "EUR
         return 1.0 # Em caso de erro de data, evitamos travar o processo
 
     url = f"https://api.frankfurter.app/{date_str}?from={from_currency}&to={to_currency}"
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        if "rates" in data and to_currency in data["rates"]:
-            rate = float(data["rates"][to_currency])
-            _rate_cache[cache_key] = rate
-            return rate
-    except Exception as e:
-        print(f"Erro ao buscar cotação de {from_currency} na data {date_str}: {e}")
-        
-    return 1.0 # Fallback se falhar
+    last_err = None
+    for attempt in range(3):
+        try:
+            response = requests.get(url, timeout=8)
+            response.raise_for_status()
+            data = response.json()
+            if "rates" in data and to_currency in data["rates"]:
+                rate = float(data["rates"][to_currency])
+                _rate_cache[cache_key] = rate
+                return rate
+            break  # resposta válida mas sem a moeda pedida — não adianta repetir
+        except Exception as e:
+            last_err = e
+
+    print(f"Erro ao buscar cotação de {from_currency} na data {date_str}: {last_err}")
+    return 1.0 # Fallback se falhar após as tentativas

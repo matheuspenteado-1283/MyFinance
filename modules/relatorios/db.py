@@ -63,12 +63,11 @@ def get_tabelas_campos():
         'receitas_mensais': ['data', 'tipo_receita', 'valor_original', 'moeda_original', 'cotacao', 'valor_eur', 'valor_brl', 'conta_bancaria', 'mes_referencia'],
         'lcto_impostos': ['mes_ano', 'tp_imposto', 'moeda_faturado', 'valor_faturado', 'valor_imposto', 'moeda_pagamento', 'pagamento', 'pagamento_mes_ano', 'desconto_iva'],
         'lcto_emprestimos': ['tipo', 'beneficiario', 'valor_operacao', 'moeda_emp', 'data_emprestimo', 'data_operacao', 'obs', 'status'],
-        'lcto_investimentos': ['banco', 'tp_investimento', 'data_inv', 'valor_inv', 'moeda', 'qtd', 'taxa', 'valor_atual', 'val_mes_ant', 'aporte'],
+        'lcto_investimentos': ['banco', 'tp_investimento', 'moeda', 'data_inicio', 'valor_investido_inicial', 'mes_referencia', 'valor_mercado', 'aporte_mes', 'resgate_mes'],
         'cad_despesas': ['id', 'despesa', 'tipo_despesa', 'fator_divisao', 'prioridade'],
         'cad_contas': ['id', 'descricao', 'agencia', 'conta', 'dados_acesso', 'senha', 'comentarios'],
         'cad_receitas': ['id', 'descricao'],
         'cad_investimentos': ['id', 'descricao'],
-        'cad_usuarios': ['id', 'chave_usr1', 'chave_usr2', 'nome', 'fator_pagamento'],
         'tb_tipo_imposto': ['id', 'tp_imposto', 'alq_imposto', 'pagamento'],
     }
 
@@ -173,19 +172,20 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
 
         elif tabela == 'lcto_investimentos':
             c.execute('''
-                SELECT banco, tp_investimento, data_inv, valor_atual, valor_inv, moeda
-                FROM lcto_investimentos
-                WHERE user_email=%s AND substr(data_inv,1,7) >= %s AND substr(data_inv,1,7) <= %s
+                SELECT p.banco, p.tp_investimento, p.moeda, m.mes_referencia, m.valor_mercado
+                FROM investimentos_mensal m
+                JOIN investimentos_posicoes p ON p.id = m.posicao_id
+                WHERE p.user_email=%s AND m.mes_referencia >= %s AND m.mes_referencia <= %s
             ''', (user_email, mes_inicio, mes_fim))
             for row in c.fetchall():
                 agr = f"{row['banco']} - {row['tp_investimento']}" if row['banco'] else 'Sem Banco'
-                data_mes = row['data_inv'][:7] if row['data_inv'] else mes_inicio
+                data_mes = row['mes_referencia'] or mes_inicio
                 agrupadores_encontrados.add(agr)
                 if agr not in resultado:
                     resultado[agr] = {'valores': {}, 'moedas': set()}
                 if data_mes not in resultado[agr]['valores']:
                     resultado[agr]['valores'][data_mes] = {}
-                resultado[agr]['valores'][data_mes][row['moeda']] = row['valor_atual'] or row['valor_inv']
+                resultado[agr]['valores'][data_mes][row['moeda']] = row['valor_mercado']
                 resultado[agr]['moedas'].add(row['moeda'])
 
         elif tabela == 'cad_despesas':
@@ -225,17 +225,6 @@ def get_dados_relatorio_dinamico(user_email, tabelas, campos, agrupador, mes_ini
                 agrupadores_encontrados.add(agr)
                 if agr not in resultado:
                     resultado[agr] = {'valores': {}, 'moedas': set(), 'dados': {}}
-
-        elif tabela == 'cad_usuarios':
-            c.execute('SELECT nome, chave_usr1, chave_usr2, fator_pagamento FROM cad_usuarios')
-            for row in c.fetchall():
-                agr = row['nome'] or 'Sem Nome'
-                agrupadores_encontrados.add(agr)
-                if agr not in resultado:
-                    resultado[agr] = {'valores': {}, 'moedas': set(), 'dados': {}}
-                resultado[agr]['dados']['chave_usr1'] = row['chave_usr1']
-                resultado[agr]['dados']['chave_usr2'] = row['chave_usr2']
-                resultado[agr]['dados']['fator_pagamento'] = row['fator_pagamento']
 
         elif tabela == 'tb_tipo_imposto':
             c.execute('SELECT tp_imposto, alq_imposto, pagamento FROM tb_tipo_imposto')

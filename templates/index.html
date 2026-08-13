@@ -14,6 +14,10 @@
     <!-- Chart.js para Dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Manual de Uso — aba Referencia -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='js/guia_referencia.js') }}" defer></script>
+
     <style>
         :root {
             --bg-color: #0f172a;
@@ -1202,6 +1206,145 @@
         }
         .ai-tab-content { display:none; }
         .ai-tab-content.active { display:block; }
+
+        /* ── Manual de Uso ──────────────────────────── */
+        .guia-home-cta {
+            display:flex; align-items:center; gap:1.25rem;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid var(--primary);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .guia-home-cta:hover {
+            background: rgba(59, 130, 246, 0.14);
+            transform: translateY(-2px);
+        }
+        .guia-home-cta-icon { font-size: 1.8rem; color: var(--primary); flex-shrink:0; }
+        .guia-home-cta-body { flex:1; }
+        .guia-home-cta-title { font-size: 1.1rem; font-weight: 700; color: var(--text-light); }
+        .guia-home-cta-desc { font-size: 0.85rem; color: var(--text-muted); margin-top:2px; line-height:1.4; }
+        .guia-home-cta-arrow { color: var(--primary); flex-shrink:0; }
+        .guia-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.25rem; }
+        .guia-tab {
+            padding:7px 14px; border-radius:8px; border:1px solid var(--glass-border);
+            background:var(--glass-bg); color:var(--text-muted); font-size:0.82rem;
+            font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+        }
+        .guia-tab:hover { border-color:var(--primary); color:var(--text-light); }
+        .guia-tab.active {
+            background:var(--primary-gradient); color:#fff;
+            border-color:transparent; box-shadow:0 2px 12px rgba(59,130,246,0.4);
+        }
+        .guia-tab-content { display:none; }
+        .guia-tab-content.active { display:block; }
+        .guia-intro { color:var(--text-muted); font-size:0.9rem; margin-bottom:1.25rem; line-height:1.5; }
+        .guia-step {
+            display:flex; align-items:flex-start; gap:12px;
+            background:var(--glass-bg); border:1px solid var(--glass-border);
+            border-radius:12px; padding:1rem 1.25rem; margin-bottom:0.85rem;
+            transition: all 0.2s;
+        }
+        .guia-step.done { opacity:0.6; border-color: var(--success, #10b981); }
+        .guia-step-check { margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; }
+        .guia-step-body { flex:1; }
+        .guia-step-title { font-weight:600; color:var(--text-light); margin-bottom:4px; }
+        .guia-step-desc { color:var(--text-muted); font-size:0.85rem; line-height:1.45; }
+        .guia-step-action {
+            flex-shrink:0; padding:7px 14px; border-radius:8px; border:none; cursor:pointer;
+            background:var(--primary-gradient); color:#fff; font-size:0.8rem; font-weight:600;
+            white-space:nowrap; transition:all 0.2s;
+        }
+        .guia-step-action:hover { opacity:0.88; transform:translateY(-1px); }
+
+        /* ── Fluxo Animado: Como o MyFinance funciona ─────────────────────── */
+        .mf-flow-wrap { margin-bottom: 2rem; }
+        .mf-flow-title {
+            font-size: 0.8rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;
+        }
+        .mf-flow {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem 0;
+        }
+        .mf-flow::before {
+            content: '';
+            position: absolute;
+            top: 32px;
+            left: 6%;
+            right: 6%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary) 0%, rgba(59,130,246,0.12) 100%);
+            z-index: 0;
+        }
+        .mf-flow-dot {
+            position: absolute;
+            top: 27px;
+            left: 6%;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px 3px rgba(59,130,246,0.7);
+            z-index: 1;
+            animation: mfDotMove 12s linear infinite;
+        }
+        .mf-flow-step {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            width: 12%; min-width: 88px; gap: 0.6rem;
+        }
+        .mf-flow-icon {
+            width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--glass-bg); border: 2px solid var(--glass-border);
+            font-size: 1.4rem; color: var(--text-muted);
+            animation: mfPulse 12s ease-in-out infinite;
+            animation-fill-mode: both;
+        }
+        .mf-flow-label {
+            font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+            line-height: 1.3;
+        }
+        .mf-flow-step:nth-child(1) .mf-flow-icon { animation-delay: 0s; }
+        .mf-flow-step:nth-child(2) .mf-flow-icon { animation-delay: 1.5s; }
+        .mf-flow-step:nth-child(3) .mf-flow-icon { animation-delay: 3s; }
+        .mf-flow-step:nth-child(4) .mf-flow-icon { animation-delay: 4.5s; }
+        .mf-flow-step:nth-child(5) .mf-flow-icon { animation-delay: 6s; }
+        .mf-flow-step:nth-child(6) .mf-flow-icon { animation-delay: 7.5s; }
+        .mf-flow-step:nth-child(7) .mf-flow-icon { animation-delay: 9s; }
+        .mf-flow-step:nth-child(8) .mf-flow-icon { animation-delay: 10.5s; }
+
+        @keyframes mfPulse {
+            0%, 4%   { transform: scale(1); background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-muted); box-shadow: none; }
+            7%       { transform: scale(1.14); background: var(--primary-gradient); border-color: transparent; color: #fff; box-shadow: 0 0 22px rgba(59,130,246,0.65); }
+            13%, 100% { transform: scale(1); background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-muted); box-shadow: none; }
+        }
+        @keyframes mfDotMove {
+            0%   { left: 6%; opacity: 0; }
+            4%   { opacity: 1; }
+            94%  { left: 94%; opacity: 1; }
+            100% { left: 94%; opacity: 0; }
+        }
+
+        @media (max-width: 860px) {
+            .mf-flow::before, .mf-flow-dot { display: none; }
+            .mf-flow {
+                flex-direction: column; align-items: stretch; gap: 0.85rem;
+            }
+            .mf-flow-step {
+                width: auto; flex-direction: row; text-align: left;
+                background: var(--glass-bg); border: 1px solid var(--glass-border);
+                border-radius: 12px; padding: 0.75rem 1rem;
+            }
+            .mf-flow-icon { width: 44px; height: 44px; font-size: 1.1rem; }
+            .mf-flow-label { font-size: 0.85rem; }
+        }
         .ai-analysis-btn {
             display:inline-flex; align-items:center; gap:8px;
             padding:10px 22px; border-radius:10px; border:none; cursor:pointer;
@@ -1415,10 +1558,13 @@
                 <i class="fa-solid fa-chart-line"></i><span>Investimentos</span>
             </button>
             <button class="side-link" data-module="cad_usuarios" onclick="openModule('cad_usuarios')">
-                <i class="fa-solid fa-users"></i><span>Usuários</span>
+                <i class="fa-solid fa-users"></i><span>Pagadores</span>
             </button>
             <button class="side-link" data-module="cad_tipo_imposto" onclick="openModule('cad_tipo_imposto')">
                 <i class="fa-solid fa-percent"></i><span>Tipos de Impostos</span>
+            </button>
+            <button class="side-link" data-module="guia_uso" onclick="openModule('guia_uso')">
+                <i class="fa-solid fa-book-open"></i><span>Manual de Uso</span>
             </button>
             <button class="side-link" data-module="avancado" onclick="openModule('avancado')">
                 <i class="fa-solid fa-sliders"></i><span>Avançado</span>
@@ -1488,6 +1634,54 @@
     <!-- Container Principal do Menu -->
     <div id="menuContainer">
         <h1 style="text-align: center; margin-bottom: 2rem;">MyFinance</h1>
+        <div class="guia-home-cta" onclick="openModule('guia_uso')">
+            <i class="fa-solid fa-book-open guia-home-cta-icon"></i>
+            <div class="guia-home-cta-body">
+                <div class="guia-home-cta-title">Manual de Uso</div>
+                <div class="guia-home-cta-desc">Novo por aqui? Siga o guia passo a passo: cadastros, despesas, upload de extratos, receitas, investimentos, relatórios, dashboards e Agente IA.</div>
+            </div>
+            <i class="fa-solid fa-chevron-right guia-home-cta-arrow"></i>
+        </div>
+
+        <div class="mf-flow-wrap">
+            <div class="mf-flow-title">Como o MyFinance funciona</div>
+            <div class="mf-flow">
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-users-gear"></i></div>
+                    <div class="mf-flow-label">Cadastros</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+                    <div class="mf-flow-label">Upload de Despesas + Classificação IA</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="mf-flow-label">Lançamento de Despesas</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-coins"></i></div>
+                    <div class="mf-flow-label">Lançamento de Receitas</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="mf-flow-label">Lançamento de Investimentos</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                    <div class="mf-flow-label">Relatórios</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div class="mf-flow-label">Dashboards</div>
+                </div>
+                <div class="mf-flow-step">
+                    <div class="mf-flow-icon"><i class="fa-solid fa-robot"></i></div>
+                    <div class="mf-flow-label">Análises do Agente IA</div>
+                </div>
+                <div class="mf-flow-dot"></div>
+            </div>
+        </div>
+
         <div class="menu-grid">
             <div class="menu-card" onclick="openModule('extratos')">
                 <i class="fa-solid fa-file-invoice-dollar menu-icon"></i>
@@ -1548,6 +1742,230 @@
         </div>
     </div>
 
+    <!-- Módulo Manual de Uso -->
+    <div class="container module-container module-fullscreen" id="guiaUsoModule" style="display:none;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem;">
+            <div>
+                <h1 style="margin:0;display:flex;align-items:center;gap:10px;">
+                    <i class="fa-solid fa-book-open" style="color:var(--primary);"></i> Manual de Uso
+                </h1>
+                <small style="color:var(--text-muted);">Siga a ordem abaixo na primeira vez que usar o MyFinance — cada passo tem um botão para ir direto ao módulo</small>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div id="guiaProgressLabel" style="font-size:0.85rem;color:var(--text-muted);white-space:nowrap;"></div>
+                <a href="/guia" target="_blank" rel="noopener" class="btn btn-xs secondary"
+                   style="text-decoration:none;white-space:nowrap;"
+                   title="Abrir o guia completo em uma nova aba — com busca, modo claro e impressão">
+                    <i class="fa-solid fa-up-right-from-square"></i> Guia Completo MYFINANCE
+                </a>
+            </div>
+        </div>
+
+        <div class="guia-tabs" role="tablist" aria-label="Etapas do manual de uso">
+            <button class="guia-tab active" onclick="showGuiaTab('cadastros')">1. Cadastros</button>
+            <button class="guia-tab" onclick="showGuiaTab('despesas')">2. Despesas</button>
+            <button class="guia-tab" onclick="showGuiaTab('upload')">3. Upload de Extratos</button>
+            <button class="guia-tab" onclick="showGuiaTab('receitas')">4. Receitas &amp; Investimentos</button>
+            <button class="guia-tab" onclick="showGuiaTab('relatorios')">5. Relatórios</button>
+            <button class="guia-tab" onclick="showGuiaTab('dashboards')">6. Dashboards</button>
+            <button class="guia-tab" onclick="showGuiaTab('ia')">7. Agente IA</button>
+            <button class="guia-tab" onclick="showGuiaTab('referencia')"><i class="fa-solid fa-book"></i> Referência</button>
+        </div>
+
+        <!-- Referencia: conteudo vem de Docs/GUIA_DO_USUARIO_MYFINANCE.md via /api/guia -->
+        <div id="guiaTab-referencia" class="guia-tab-content"></div>
+
+        <!-- 1. Cadastros -->
+        <div id="guiaTab-cadastros" class="guia-tab-content active">
+            <p class="guia-intro">Comece por aqui. Os lançamentos (despesas, receitas, investimentos) dependem destes cadastros — sem eles, os formulários de lançamento ficam sem opções para selecionar.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-pagadores" onchange="guiaToggleStep('guia-cad-pagadores')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Pagadores</div>
+                    <div class="guia-step-desc">Cadastre quem paga as contas na sua casa/empresa. Esses nomes substituem "USR1"/"USR2" nas telas de despesas, dashboard, relatórios e extração.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_usuarios')">Ir para Pagadores</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-contas" onchange="guiaToggleStep('guia-cad-contas')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Contas Bancárias</div>
+                    <div class="guia-step-desc">Cadastre as contas/bancos usados nos lançamentos e nos uploads de extrato.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_contas')">Ir para Contas</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-despesas" onchange="guiaToggleStep('guia-cad-despesas')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Categorias de Despesas</div>
+                    <div class="guia-step-desc">Defina as categorias (tipo, fator de divisão, prioridade) usadas para classificar despesas mensais e extratos importados.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_despesas')">Ir para Cadastro de Despesas</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-receitas" onchange="guiaToggleStep('guia-cad-receitas')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Categorias de Receitas</div>
+                    <div class="guia-step-desc">Defina as categorias usadas para classificar as receitas mensais (salário, freelas, aluguel recebido, etc.).</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_receitas')">Ir para Cadastro de Receitas</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-investimentos" onchange="guiaToggleStep('guia-cad-investimentos')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Catálogo de Investimentos</div>
+                    <div class="guia-step-desc">Cadastre os tipos/ativos de investimento que você usa (renda fixa, ações, fundos, etc.) antes de lançar aportes.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_investimentos')">Ir para Cadastro de Investimentos</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-cad-impostos" onchange="guiaToggleStep('guia-cad-impostos')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Tipos de Imposto</div>
+                    <div class="guia-step-desc">Opcional — cadastre os tipos de imposto que você acompanha (IPTU, IPVA, etc.) se for usar o módulo de Impostos.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('cad_tipo_imposto')">Ir para Tipos de Imposto</button>
+            </div>
+        </div>
+
+        <!-- 2. Despesas -->
+        <div id="guiaTab-despesas" class="guia-tab-content">
+            <p class="guia-intro">Com os cadastros prontos, lance as despesas do mês manualmente. Cada lançamento usa o pagador, a conta e a categoria cadastrados na etapa anterior.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-desp-mensais" onchange="guiaToggleStep('guia-desp-mensais')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Despesas Mensais</div>
+                    <div class="guia-step-desc">Lance despesas do mês uma a uma (valor, categoria, pagador, conta). É a fonte usada pelos relatórios, dashboards e pelo Agente IA.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('despesas_mensais')">Ir para Despesas Mensais</button>
+            </div>
+        </div>
+
+        <!-- 3. Upload de Extratos -->
+        <div id="guiaTab-upload" class="guia-tab-content">
+            <p class="guia-intro">Alternativa mais rápida ao lançamento manual: envie o extrato do banco (PDF/CSV) e revise a categorização sugerida em vez de digitar cada despesa.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-upload-extrair" onchange="guiaToggleStep('guia-upload-extrair')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Extração do Extrato</div>
+                    <div class="guia-step-desc">Faça upload do PDF/CSV do banco. O sistema extrai as transações automaticamente.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('extratos')">Ir para Upload de Extratos</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-upload-revisar" onchange="guiaToggleStep('guia-upload-revisar')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Revisão e Categorização</div>
+                    <div class="guia-step-desc">Confira cada transação extraída e associe à categoria de despesa correta antes de confirmar a importação.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('extratos')">Ir para Revisão</button>
+            </div>
+        </div>
+
+        <!-- 4. Receitas & Investimentos -->
+        <div id="guiaTab-receitas" class="guia-tab-content">
+            <p class="guia-intro">Registre o outro lado do fluxo de caixa: o que entra (receitas) e o que é guardado/aplicado (investimentos).</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rec-mensais" onchange="guiaToggleStep('guia-rec-mensais')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Receitas Mensais</div>
+                    <div class="guia-step-desc">Lance as receitas do mês (salário, extras, etc.) usando as categorias cadastradas na etapa 1.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('receitas_mensais')">Ir para Receitas Mensais</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rec-investimentos" onchange="guiaToggleStep('guia-rec-investimentos')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Lançamentos de Investimentos</div>
+                    <div class="guia-step-desc">Registre aportes, resgates e posições usando o catálogo de investimentos cadastrado na etapa 1.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('lcto_investimentos')">Ir para Lançamentos de Investimentos</button>
+            </div>
+        </div>
+
+        <!-- 5. Relatórios -->
+        <div id="guiaTab-relatorios" class="guia-tab-content">
+            <p class="guia-intro">Depois de lançar alguns meses de dados, consulte os relatórios para ver o detalhe das movimentações.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rel-mensal" onchange="guiaToggleStep('guia-rel-mensal')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Relatório Mensal</div>
+                    <div class="guia-step-desc">Detalhe de receitas e despesas de um mês específico.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('relatorio_mes')">Ir para Relatório Mensal</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rel-anual" onchange="guiaToggleStep('guia-rel-anual')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Relatório Anual</div>
+                    <div class="guia-step-desc">Visão consolidada do ano, mês a mês.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('relatorio_ano')">Ir para Relatório Anual</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-rel-dinamico" onchange="guiaToggleStep('guia-rel-dinamico')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Relatório Dinâmico</div>
+                    <div class="guia-step-desc">Monte suas próprias tabelas cruzando período, categoria, pagador e conta.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('relatorio_dinamico')">Ir para Relatório Dinâmico</button>
+            </div>
+        </div>
+
+        <!-- 6. Dashboards -->
+        <div id="guiaTab-dashboards" class="guia-tab-content">
+            <p class="guia-intro">O Dashboard reúne tudo em gráficos, organizado em abas: Visão Geral, Despesas, Receitas, Budget, Investimentos, P&amp;L, Fluxo de Caixa e Patrimônio.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-dash" onchange="guiaToggleStep('guia-dash')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Dashboard</div>
+                    <div class="guia-step-desc">Use os filtros de mês, pagador e moeda no topo, depois navegue pelas abas para ver evolução do ano, despesas por categoria, receitas, aderência ao orçamento, carteira de investimentos, P&amp;L, fluxo de caixa e patrimônio líquido.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('dashboard')">Ir para Dashboard</button>
+            </div>
+        </div>
+
+        <!-- 7. Agente IA -->
+        <div id="guiaTab-ia" class="guia-tab-content">
+            <p class="guia-intro">Com dados lançados, o Assistente IA analisa tudo e responde perguntas em linguagem natural sobre suas finanças.</p>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-ia-analises" onchange="guiaToggleStep('guia-ia-analises')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Análises prontas</div>
+                    <div class="guia-step-desc">Nas abas Alertas, Saúde Financeira, Dicas de Economia, Dicas de Investimento e Análise de Carteira, clique em "Analisar"/"Gerar" para receber um diagnóstico automático do mês selecionado.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('ai_agent')">Ir para Assistente IA</button>
+            </div>
+
+            <div class="guia-step">
+                <input type="checkbox" class="guia-step-check" id="guia-ia-chat" onchange="guiaToggleStep('guia-ia-chat')">
+                <div class="guia-step-body">
+                    <div class="guia-step-title">Chat livre</div>
+                    <div class="guia-step-desc">Na aba Chat, pergunte diretamente — por exemplo "Como está minha saúde financeira?" ou "Quais são meus maiores gastos?". O agente responde com base nos seus dados reais.</div>
+                </div>
+                <button class="guia-step-action" onclick="openModule('ai_agent')">Ir para o Chat</button>
+            </div>
+        </div>
+
+    </div>
+
     <!-- Módulo Assistente IA -->
     <div class="container module-container module-fullscreen" id="aiAgentModule" style="display:none;">
 
@@ -1561,6 +1979,11 @@
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <select id="aiMesSel" style="background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-light);padding:6px 10px;border-radius:8px;font-size:0.83rem;" onchange="aiOnMonthChange()"></select>
+                <select id="aiUsrFilter" style="background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-light);padding:6px 10px;border-radius:8px;font-size:0.83rem;" onchange="aiOnUsrChange()">
+                    <option value="usr1" selected>USR1</option>
+                    <option value="usr2">USR2</option>
+                    <option value="all">Ambos (USR1+USR2)</option>
+                </select>
                 <button class="ai-analysis-btn" style="padding:7px 16px;font-size:0.82rem;" onclick="aiClearCache()">
                     <i class="fa-solid fa-rotate"></i> Atualizar Cache
                 </button>
@@ -1685,7 +2108,7 @@
             </div>
             <div class="menu-card" onclick="openModule('cad_usuarios')">
                 <i class="fa-solid fa-users menu-icon"></i>
-                <div class="menu-title">Cadastro de Usuários</div>
+                <div class="menu-title">Configuração de Pagadores</div>
             </div>
             <div class="menu-card" onclick="openModule('cad_tipo_imposto')">
                 <i class="fa-solid fa-percent menu-icon"></i>
@@ -1878,75 +2301,31 @@
         </div>
     </div>
 
-    <!-- Módulo Cadastro de Usuários -->
+    <!-- Módulo Configuração de Pagadores -->
     <div class="container module-container module-fullscreen" id="cadUsuariosModule">
-        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-users" style="margin-right: 15px;"></i>Cadastro de Usuários</h1>
+        <h1 style="text-align: center; margin-bottom: 2.5rem;"><i class="fa-solid fa-users" style="margin-right: 15px;"></i>Configuração de Pagadores</h1>
 
         <div class="form-panel">
-            <h3 id="cadUsuarioTitle"><i class="fa-solid fa-user-plus"></i> Novo Usuário do Sistema</h3>
-            <form id="cadUsuarioForm" onsubmit="saveUsuario(event)">
-                <input type="hidden" id="cu_id" value="">
+            <h3><i class="fa-solid fa-user-pen"></i> Rótulos dos Pagadores</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                Estes nomes substituem "USR1"/"USR2" nas telas de despesas, dashboard, relatórios e extração.
+            </p>
+            <form id="pagadorLabelsForm" onsubmit="savePagadorLabels(event)">
                 <div class="form-row-2">
                     <div class="form-field">
-                        <label>Nome</label>
-                        <input type="text" id="cu_nome" class="auth-input" placeholder="Nome completo" required>
+                        <label>Pagador 1</label>
+                        <input type="text" id="pl_usr1" class="auth-input" placeholder="USR1" maxlength="60">
                     </div>
                     <div class="form-field">
-                        <label>Fator de Pagamento</label>
-                        <select id="cu_fator" class="auth-input">
-                            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-                            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-                            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-                            <option value="10">10</option>
-                        </select>
-                    </div>
-                    <div class="form-field">
-                        <label>Chave Usr1</label>
-                        <input type="text" id="cu_usr1" class="auth-input" placeholder="Identificador 1">
-                    </div>
-                    <div class="form-field">
-                        <label>Chave Usr2</label>
-                        <input type="text" id="cu_usr2" class="auth-input" placeholder="Identificador 2">
+                        <label>Pagador 2</label>
+                        <input type="text" id="pl_usr2" class="auth-input" placeholder="USR2" maxlength="60">
                     </div>
                 </div>
                 <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm" id="cadUsuarioBtn"><i class="fa-solid fa-check"></i> Salvar Usuário</button>
-                    <button type="button" class="btn btn-sm secondary" id="cadUsuarioCancelBtn" style="display:none;" onclick="cancelEditUsuario()">
-                        <i class="fa-solid fa-xmark"></i> Cancelar
-                    </button>
+                    <button type="submit" class="btn btn-sm" id="pagadorLabelsBtn"><i class="fa-solid fa-check"></i> Salvar</button>
+                    <span id="pagadorLabelsStatus" style="font-size:0.85rem;color:var(--success);"></span>
                 </div>
             </form>
-        </div>
-
-        <h3 style="margin: 2rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-address-book"></i> Usuários Cadastrados</h3>
-        <div class="table-container table-full">
-            <table id="usuariosTable">
-                <thead><tr>
-                    <th onclick="sortTableGeneric('usuariosTable', 0)">Nome <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                    <th onclick="sortTableGeneric('usuariosTable', 1)">Chave Usr1 <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                    <th onclick="sortTableGeneric('usuariosTable', 2)">Chave Usr2 <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                    <th style="text-align:center;" onclick="sortTableGeneric('usuariosTable', 3)">Fator de Pagamento <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
-                    <th style="width:120px;text-align:center;">Ações</th>
-                </tr></thead>
-                <tbody id="usuariosTableBody"></tbody>
-            </table>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem; align-items: stretch;">
-            <div class="upload-area" id="cu_dropZone" style="margin-bottom: 0;">
-                <i class="fa-solid fa-file-import upload-icon" style="font-size: 2.5rem;"></i>
-                <div class="upload-text">Importar via Planilha</div>
-                <div class="upload-subtext">Arraste ou clique para sobrescrever tudo (CSV, Excel)</div>
-                <input type="file" id="cu_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadUsuariosFile(this)">
-                <div id="cu_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
-            </div>
-            <div class="form-panel" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 15px;">
-                <i class="fa-solid fa-file-export" style="font-size: 2.5rem; color: var(--secondary);"></i>
-                <div style="font-weight: 600;">Exportar Dados</div>
-                <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_usuarios'" style="width: 100%;">
-                    <i class="fa-solid fa-download"></i> Baixar XLSX
-                </button>
-            </div>
         </div>
     </div>
 
@@ -2164,7 +2543,12 @@
                 <button class="btn btn-xs" id="confDetailsBtn">Ver checagens</button>
             </div>
 
-            <div class="table-container table-full">
+            <div id="reviewLoadingState" style="display:none; flex-direction:column; align-items:center; justify-content:center; gap:1rem; padding: 5rem 0; color: var(--text-muted);">
+                <div class="loader" style="display:block; width:40px; height:40px; border-width:4px;"></div>
+                <div>Carregando transações...</div>
+            </div>
+
+            <div class="table-container table-full" id="reviewTableContainer">
                 <table id="transactionsTable">
                     <thead>
                         <tr>
@@ -2206,6 +2590,9 @@
             <div class="btn-group action-bar" style="justify-content: center;">
                 <button class="btn btn-xs secondary" id="exportBtn">
                     <i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX
+                </button>
+                <button class="btn btn-xs secondary" id="exportDespesasBtn">
+                    <i class="fa-solid fa-file-arrow-down"></i> Exportar para Despesas (Arquivo)
                 </button>
                 <button class="btn btn-xs secondary" style="background: linear-gradient(135deg, #10b981, #059669);" id="saveMensaisBtn" onclick="saveDespesasMensais()">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar Despesas Mensais
@@ -2363,9 +2750,15 @@
                         </label>
                     </div>
                 </div>
-                <div class="form-field" style="margin-top:1rem;">
-                    <label>Comentários</label>
-                    <input type="text" id="dm_comments" class="auth-input" placeholder="Observações livres...">
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label>Período do Lançamento (Mês)</label>
+                        <input type="month" id="dm_mes_ref" class="auth-input" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Comentários</label>
+                        <input type="text" id="dm_comments" class="auth-input" placeholder="Observações livres...">
+                    </div>
                 </div>
 <div style="display:flex;gap:12px;margin-top:1.2rem;">
                     <button type="submit" class="btn btn-xs secondary" id="dmSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
@@ -2704,7 +3097,7 @@
                     </div>
                     <div class="form-field">
                         <label>Valor BRL</label>
-                        <input type="number" step="0.01" id="rm_valor_brl" class="auth-input">
+                        <input type="number" step="0.01" id="rm_valor_brl" class="auth-input" readonly>
                     </div>
                     <div class="form-field">
                         <label>Conta Bancária</label>
@@ -2732,19 +3125,65 @@
             </form>
         </div>
 
+        <!-- Filter Toggle Bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+            <button id="rmFilterToggleBtn" onclick="toggleRmFilters()">
+                <i class="fa-solid fa-sliders"></i>
+                Filtros
+                <span id="rmFilterBadge" class="dm-filter-badge" style="display:none;">0</span>
+            </button>
+            <span id="rmFilterCount" style="font-size:0.75rem;color:var(--text-muted);"></span>
+        </div>
+
+        <!-- Filter Panel -->
+        <div id="rmFilterBar" class="dm-filter-panel">
+            <div class="dm-filter-grid">
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-calendar-day" style="margin-right:4px;"></i>Data</label>
+                    <input type="text" id="rmFilter0" class="filter-input" placeholder="ex: 2026-05" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-tag" style="margin-right:4px;"></i>Tipo de Receita</label>
+                    <input type="text" id="rmFilter1" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-coins" style="margin-right:4px;"></i>Valor</label>
+                    <input type="text" id="rmFilter2" class="filter-input" placeholder="ex: 100" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-money-bill-wave" style="margin-right:4px;"></i>Moeda</label>
+                    <input type="text" id="rmFilter3" class="filter-input" placeholder="EUR / BRL" onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-building-columns" style="margin-right:4px;"></i>Conta</label>
+                    <input type="text" id="rmFilter7" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+                <div class="dm-filter-field">
+                    <label><i class="fa-solid fa-comment" style="margin-right:4px;"></i>Comentários</label>
+                    <input type="text" id="rmFilter8" class="filter-input" placeholder="buscar..." onkeyup="filterRmTable(); updateRmFilterUI()">
+                </div>
+            </div>
+            <div class="dm-filter-footer">
+                <span class="dm-filter-count-text" id="rmFilterActiveLabel">Nenhum filtro ativo</span>
+                <button class="btn btn-xs" onclick="clearRmFilters()" style="background:#475569;padding:4px 14px;font-size:0.75rem;gap:6px;display:inline-flex;align-items:center;">
+                    <i class="fa-solid fa-xmark"></i> Limpar Filtros
+                </button>
+            </div>
+        </div>
+
         <div class="table-container table-full" style="margin-bottom: 1.5rem;">
             <table id="rmTable">
                 <thead><tr>
                     <th style="width:40px; text-align:center;"></th>
-                    <th onclick="sortRmTable(0)">Data <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                    <th onclick="sortRmTable(1)">Tipo de Receita <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                    <th style="text-align:right;" onclick="sortRmTable(2)">Valor Original <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                    <th style="text-align:center;" onclick="sortRmTable(3)">Moeda <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                    <th onclick="sortRmTable(0)">Data <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(0)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                    <th onclick="sortRmTable(1)">Tipo de Receita <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(1)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                    <th style="text-align:right;" onclick="sortRmTable(2)">Valor Original <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(2)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
+                    <th style="text-align:center;" onclick="sortRmTable(3)">Moeda <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(3)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
                     <th style="text-align:center;" onclick="sortRmTable(4)">Cotação <i class="sort-icon fa-solid fa-sort" data-col="4"></i></th>
                     <th style="text-align:right;" onclick="sortRmTable(5)">Valor EUR <i class="sort-icon fa-solid fa-sort" data-col="5"></i></th>
                     <th style="text-align:right;" onclick="sortRmTable(6)">Valor BRL <i class="sort-icon fa-solid fa-sort" data-col="6"></i></th>
-                    <th onclick="sortRmTable(7)">Conta <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
-                    <th onclick="sortRmTable(8)">Comentários <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
+                    <th onclick="sortRmTable(7)">Conta <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(7)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="7"></i></th>
+                    <th onclick="sortRmTable(8)">Comentários <i class="filter-icon fa-solid fa-filter" onclick="focusRmFilter(8)" title="Filtrar"></i> <i class="sort-icon fa-solid fa-sort" data-col="8"></i></th>
                     <th style="width:100px; text-align:center;">Ações</th>
                 </tr></thead>
                 <tbody id="rmTableBody"></tbody>
@@ -3045,10 +3484,6 @@
                         <div class="rel-din-tabela-card" data-tabela="cad_investimentos" onclick="relDinToggleTabela(this)"
                              style="--card-color:#a78bfa; --card-bg:rgba(167,139,250,0.1);">
                             <i class="fa-solid fa-briefcase"></i> Cad. Investimentos
-                        </div>
-                        <div class="rel-din-tabela-card" data-tabela="cad_usuarios" onclick="relDinToggleTabela(this)"
-                             style="--card-color:#fbbf24; --card-bg:rgba(251,191,36,0.1);">
-                            <i class="fa-solid fa-users"></i> Cad. Usuários
                         </div>
                         <div class="rel-din-tabela-card" data-tabela="tb_tipo_imposto" onclick="relDinToggleTabela(this)"
                              style="--card-color:#fca5a5; --card-bg:rgba(252,165,165,0.1);">
@@ -3901,159 +4336,137 @@
 
     <!-- Módulo Lançamento Investimentos -->
     <div class="container module-container module-fullscreen" id="lctoInvestimentosModule" style="display:none;">
-        <h1 style="text-align:center; margin-bottom:1.5rem;"><i class="fa-solid fa-chart-line" style="margin-right:15px; color:var(--primary);"></i>Lançamentos de Investimentos</h1>
-        
-        <!-- Cards de Resumo -->
-        <div class="summary-grid" style="margin-bottom: 2rem;">
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_investido_brl" style="color: var(--text-light);">R$ 0,00</div>
-                <div class="stat-label">Valor Investido em BRL</div>
-                <i class="fa-solid fa-money-bill-1 stat-icon" style="color: var(--primary);"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_investido_eur" style="color: var(--text-light);">€ 0,00</div>
-                <div class="stat-label">Valor Investido em EUR</div>
-                <i class="fa-solid fa-euro-sign stat-icon" style="color: #10b981;"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_total_brl" style="color: var(--primary);">R$ 0,00</div>
-                <div class="stat-label">Total Investido em BRL</div>
-                <i class="fa-solid fa-scale-balanced stat-icon" style="color: var(--primary);"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_total_eur" style="color: #10b981;">€ 0,00</div>
-                <div class="stat-label">Total Investido em EUR</div>
-                <i class="fa-solid fa-globe stat-icon" style="color: #10b981;"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="li_sum_cotacao" style="color: var(--warning);">0,00</div>
-                <div class="stat-label">Cotação EUR/BRL</div>
-                <i class="fa-solid fa-coins stat-icon" style="color: var(--warning);"></i>
-            </div>
-        </div>
-        
-        <!-- Formulário -->
+        <h1 style="text-align:center; margin-bottom:1.5rem;"><i class="fa-solid fa-chart-line" style="margin-right:15px; color:var(--primary);"></i>Investimentos</h1>
+
+        <!-- Cards de Resumo (um bloco por moeda) -->
+        <div id="liSummaryCards"></div>
+
+        <!-- Formulário: Nova Posição -->
         <div class="form-panel">
-            <h3 id="liFormTitle"><i class="fa-solid fa-pen-to-square" style="margin-right:10px;"></i>Novo Lançamento</h3>
-            <form id="liForm" onsubmit="saveLctoInvestimento(event)">
-                <input type="hidden" id="li_id" value="">
+            <h3 id="liPosFormTitle"><i class="fa-solid fa-plus-circle" style="margin-right:10px;"></i>Nova Posição</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1rem;">Cadastro único por ativo: banco, tipo, moeda e o valor investido inicial. As atualizações mensais de valor de mercado, aporte e resgate são feitas depois, na tabela abaixo.</p>
+            <form id="liPosForm" onsubmit="savePosicao(event)">
+                <input type="hidden" id="lp_id" value="">
                 <div class="form-row-2">
                     <div class="form-field">
                         <label><i class="fa-solid fa-building-columns"></i> Banco</label>
-                        <select id="li_banco" class="auth-input" required></select>
+                        <select id="lp_banco" class="auth-input" required></select>
                     </div>
                     <div class="form-field">
                         <label><i class="fa-solid fa-tags"></i> Tipo Investimento</label>
-                        <select id="li_tp_investimento" class="auth-input" required></select>
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-calendar-day"></i> Data Investimento</label>
-                        <input type="date" id="li_data_inv" class="auth-input" required>
+                        <select id="lp_tp_investimento" class="auth-input" required></select>
                     </div>
                     <div class="form-field">
                         <label><i class="fa-solid fa-coins"></i> Moeda</label>
-                        <select id="li_moeda" class="auth-input">
+                        <select id="lp_moeda" class="auth-input">
                             <option value="BRL">BRL</option>
                             <option value="USD">USD</option>
                             <option value="EUR">EUR</option>
                         </select>
                     </div>
-                </div>
-                <div class="form-row-2">
                     <div class="form-field">
-                        <label><i class="fa-solid fa-dollar-sign"></i> Valor Unitário</label>
-                        <input type="number" step="0.01" id="li_valor_inv" class="auth-input" placeholder="0,00" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-list-ol"></i> Quantidade</label>
-                        <input type="number" step="0.0001" id="li_qtd" class="auth-input" placeholder="0,0000" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-receipt"></i> Taxas (R$)</label>
-                        <input type="number" step="0.01" id="li_taxa" class="auth-input" value="0" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-hand-holding-dollar"></i> Aporte Mensal (R$)</label>
-                        <input type="number" step="0.01" id="li_aporte" class="auth-input" value="0">
+                        <label><i class="fa-solid fa-calendar-day"></i> Data de Início</label>
+                        <input type="date" id="lp_data_inicio" class="auth-input" required>
                     </div>
                 </div>
                 <div class="form-row-2">
                     <div class="form-field">
-                        <label><i class="fa-solid fa-chart-line"></i> Valor de Mercado Atual (Un.)</label>
-                        <input type="number" step="0.01" id="li_valor_atual" class="auth-input" placeholder="0,00" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-clock-rotate-left"></i> Valor Mês Anterior</label>
-                        <input type="number" step="0.01" id="li_val_mes_ant" class="auth-input" value="0" oninput="calcLiTotais()">
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-calculator"></i> Valor Total Investido</label>
-                        <input type="text" id="li_valor_tot_inv" class="auth-input" style="opacity:0.7; background: rgba(0,0,0,0.2);" readonly>
-                    </div>
-                    <div class="form-field">
-                        <label><i class="fa-solid fa-sack-dollar"></i> Valor Líquido Mês</label>
-                        <input type="text" id="li_valor_liq_mes" class="auth-input" style="opacity:0.7; background: rgba(0,0,0,0.2);" readonly>
+                        <label><i class="fa-solid fa-sack-dollar"></i> Valor Investido Inicial</label>
+                        <input type="number" step="0.01" id="lp_valor_inicial" class="auth-input" placeholder="0,00" required>
                     </div>
                 </div>
-                <div style="display:flex;gap:15px;margin-top:2rem;align-items:center;">
-                    <button type="submit" class="btn btn-sm secondary" id="liSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar Lançamento</button>
-                    <button type="button" class="btn btn-sm" id="liCancelBtn" style="display:none; background: var(--error);" onclick="cancelEditLctoInvest()">
+                <div style="display:flex;gap:15px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary" id="liPosSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar Posição</button>
+                    <button type="button" class="btn btn-sm" id="liPosCancelBtn" style="display:none; background: var(--error);" onclick="cancelEditPosicao()">
                         <i class="fa-solid fa-xmark"></i> Cancelar
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- Tabela -->
-        <h3 style="margin: 2.5rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-check"></i> Lançamentos Cadastrados</h3>
-        
+        <!-- Formulário: Atualizar Mês (aparece ao clicar em "Atualizar Mês" numa posição) -->
+        <div class="form-panel" id="liMensalPanel" style="display:none; border: 1px solid var(--primary);">
+            <h3><i class="fa-solid fa-calendar-check" style="margin-right:10px;"></i> Atualizar Mês — <span id="mu_pos_label"></span></h3>
+            <form id="liMensalForm" onsubmit="saveMensal(event)">
+                <input type="hidden" id="mu_pos_id" value="">
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-calendar"></i> Mês de Referência</label>
+                        <input type="month" id="mu_mes_referencia" class="auth-input" required>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-chart-line"></i> Valor de Mercado (total)</label>
+                        <input type="number" step="0.01" id="mu_valor_mercado" class="auth-input" placeholder="0,00" oninput="calcMuPreview()" required>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-hand-holding-dollar"></i> Aporte no Mês</label>
+                        <input type="number" step="0.01" id="mu_aporte_mes" class="auth-input" value="0" oninput="calcMuPreview()">
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-money-bill-transfer"></i> Resgate no Mês</label>
+                        <input type="number" step="0.01" id="mu_resgate_mes" class="auth-input" value="0" oninput="calcMuPreview()">
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-receipt"></i> Taxas do Mês</label>
+                        <input type="number" step="0.01" id="mu_taxa_mes" class="auth-input" value="0">
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-calculator"></i> P&amp;L do Mês (prévia)</label>
+                        <input type="text" id="mu_pnl_preview" class="auth-input" style="opacity:0.8; background: rgba(0,0,0,0.2);" readonly>
+                    </div>
+                </div>
+                <div style="display:flex;gap:15px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary"><i class="fa-solid fa-floppy-disk"></i> Salvar Mês</button>
+                    <button type="button" class="btn btn-sm" style="background: var(--error);" onclick="closeMensalPanel()">
+                        <i class="fa-solid fa-xmark"></i> Fechar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela de Posições -->
+        <h3 style="margin: 2.5rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-check"></i> Posições</h3>
+
         <div class="search-area" style="margin-bottom: 1.5rem; display: flex; gap: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
             <div style="flex:1; position:relative;">
                 <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
-                <input type="text" class="auth-input" style="padding-left:40px; margin:0;" placeholder="Pesquisar em bancos, ativos ou datas..." oninput="filterTableGeneric('lctoInvestTable', this.value)">
+                <input type="text" class="auth-input" style="padding-left:40px; margin:0;" placeholder="Pesquisar em bancos ou tipos..." oninput="filterTableGeneric('posicoesTable', this.value)">
             </div>
-            <button class="btn btn-sm secondary" onclick="window.location.href='/api/export_lcto_investimentos'"><i class="fa-solid fa-file-excel"></i> Exportar Excel (XLSX)</button>
+            <button class="btn btn-sm secondary" onclick="exportLctoInvestimentos()"><i class="fa-solid fa-file-excel"></i> Exportar Excel (XLSX)</button>
         </div>
 
         <div class="table-container table-full">
-            <table id="lctoInvestTable">
+            <table id="posicoesTable">
                 <thead>
                     <tr>
-                        <th style="width:40px;"><input type="checkbox" onclick="toggleAllDm(this)"></th>
-                        <th onclick="sortTableGeneric('lctoInvestTable', 0)">Banco <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
-                        <th onclick="sortTableGeneric('lctoInvestTable', 1)">Tipo Investimento <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
-                        <th onclick="sortTableGeneric('lctoInvestTable', 2)">Data <i class="sort-icon fa-solid fa-sort" data-col="2"></i></th>
-                        <th style="text-align:right;">Valor Unit.</th>
+                        <th onclick="sortTableGeneric('posicoesTable', 0)">Banco <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                        <th onclick="sortTableGeneric('posicoesTable', 1)">Tipo Investimento <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
                         <th style="text-align:center;">Moeda</th>
-                        <th style="text-align:right;">Qtd</th>
-                        <th style="text-align:right;">Taxa</th>
-                        <th style="text-align:right;">Total Investido</th>
+                        <th onclick="sortTableGeneric('posicoesTable', 3)">Início <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                        <th style="text-align:right;">Investido Inicial</th>
                         <th style="text-align:right;">Valor Atual</th>
-                        <th style="text-align:right;">Liq. Mês</th>
-                        <th style="text-align:right;">Mês Ant.</th>
-                        <th style="text-align:right;">Aporte</th>
-                        <th style="text-align:right;">Lucro Op.</th>
-                        <th style="text-align:right;">Lucro Mês</th>
+                        <th style="text-align:right;">P&amp;L Mês</th>
+                        <th style="text-align:right;">P&amp;L Total</th>
                         <th style="text-align:right;">% Rent.</th>
-                        <th style="width:100px;text-align:center;">Ações</th>
+                        <th style="text-align:center;">Último Mês</th>
+                        <th style="width:190px;text-align:center;">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="lctoInvestTableBody"></tbody>
+                <tbody id="posicoesTableBody"></tbody>
             </table>
         </div>
 
         <!-- Upload e Export -->
-        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 1.5rem;">
             <div class="upload-area" id="li_dropZone" style="flex: 1;">
                 <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever tudo</b></div>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever todas as posições</b></div>
                 <div class="upload-subtext">CSV, Excel</div>
                 <input type="file" id="li_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadLctoInvestFile(this)">
                 <div id="li_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
-            <button class="btn btn-xs secondary" onclick="exportLctoInvestimentos()">
-                <i class="fa-solid fa-file-excel"></i> Exportar Excel
-            </button>
         </div>
     </div>
 
@@ -4283,6 +4696,7 @@
             'cad_tipo_imposto': 'Cadastro de Tipos de Imposto',
             'avancado': 'Avançado',
             'ai_agent': 'Assistente IA',
+            'guia_uso': 'Manual de Uso',
         };
 
         function showGoodbyeMessage() {
@@ -4354,6 +4768,7 @@
                 'lcto_investimentos': () => { document.getElementById('lctoInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadLctoInvestimentos(); },
                 'avancado':          () => { document.getElementById('avancadoModule').style.display = 'block'; nav.style.maxWidth = '800px'; },
                 'ai_agent':          () => { document.getElementById('aiAgentModule').style.display = 'block'; nav.style.maxWidth = '1400px'; initAiAgent(); },
+                'guia_uso':          () => { document.getElementById('guiaUsoModule').style.display = 'block'; nav.style.maxWidth = '1300px'; initGuiaUso(); },
             };
 
             if (moduleMap[moduleKey]) {
@@ -4939,7 +5354,6 @@
                 'despesasTable': ['id', 'despesa', 'tipo_despesa', 'fator_divisao', 'prioridade'],
                 'contasTable': ['descricao', 'agencia', 'conta', 'dados_acesso', 'senha', 'comentarios'],
                 'receitasTable': ['descricao', 'tipo_receita', 'fator_divisao', 'prioridade'],
-                'usuariosTable': ['nome', 'chave_usr1', 'chave_usr2', 'fator_pagamento'],
                 'investimentosTable': ['descricao'],
                 'tipoImpostoTable': ['tp_imposto', 'alq_imposto', 'pagamento']
             };
@@ -4968,7 +5382,6 @@
                 'contasTable': renderContasTable,
                 'receitasTable': renderReceitasTable,
                 'investimentosTable': renderInvestimentosTable,
-                'usuariosTable': renderUsuariosTable,
                 'tipoImpostoTable': renderTipoImpostoTable
             };
             if (renderFn[tableId]) renderFn[tableId]();
@@ -5079,109 +5492,30 @@
         // Enter no campo de senha do modal
         document.getElementById('modalAppPassword').addEventListener('keydown', function(e){ if(e.key==='Enter') confirmRevealSenha(); });
 
-        // ── Usuários ─────────────────────────────────────────────────────────────
+        // ── Configuração de Pagadores ───────────────────────────────────────────
         async function loadUsuarios(){
-            const res = await fetch('/api/cad_usuarios');
+            const res = await fetch('/api/pagador_labels');
             const data = await res.json();
-            window.usuariosTableData = data;
-            renderUsuariosTable();
+            document.getElementById('pl_usr1').value = data.label_usr1 === 'USR1' ? '' : data.label_usr1;
+            document.getElementById('pl_usr2').value = data.label_usr2 === 'USR2' ? '' : data.label_usr2;
         }
 
-        function renderUsuariosTable() {
-            const tbody = document.getElementById('usuariosTableBody');
-            tbody.innerHTML = '';
-            if (!window.usuariosTableData || !window.usuariosTableData.length) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Nenhum usuário cadastrado.</td></tr>';
-                return;
-            }
-            window.usuariosTableData.forEach(u => {
-                tbody.innerHTML += `<tr>
-                    <td>${u.nome}</td>
-                    <td>${u.chave_usr1||'—'}</td>
-                    <td>${u.chave_usr2||'—'}</td>
-                    <td style="text-align:center;"><span class="val-badge">${u.fator_pagamento}</span></td>
-                    <td style="text-align:center;">
-                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:4px;"
-                            onclick="editUsuario(${u.id},'${esc(u.nome)}','${esc(u.chave_usr1)}','${esc(u.chave_usr2)}','${u.fator_pagamento}')" title="Editar">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
-                            onclick="deleteUsuario(${u.id})" title="Remover">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>`;
-            });
-        }
-
-        function editUsuario(id,nome,usr1,usr2,fator){
-            document.getElementById('cu_id').value=id;
-            document.getElementById('cu_nome').value=nome;
-            document.getElementById('cu_usr1').value=usr1;
-            document.getElementById('cu_usr2').value=usr2;
-            document.getElementById('cu_fator').value=fator;
-            document.getElementById('cadUsuarioBtn').innerHTML='<i class="fa-solid fa-save"></i> Salvar';
-            document.getElementById('cadUsuarioCancelBtn').style.display='inline-flex';
-            document.getElementById('cadUsuarioTitle').innerText='Editando Usuário';
-            document.getElementById('cadUsuariosModule').scrollIntoView({behavior:'smooth',block:'start'});
-        }
-
-        function cancelEditUsuario(){
-            document.getElementById('cadUsuarioForm').reset();
-            document.getElementById('cu_id').value='';
-            document.getElementById('cadUsuarioBtn').innerHTML='<i class="fa-solid fa-plus"></i> Adicionar';
-            document.getElementById('cadUsuarioCancelBtn').style.display='none';
-            document.getElementById('cadUsuarioTitle').innerText='Novo Usuário';
-        }
-
-        async function saveUsuario(e){
+        async function savePagadorLabels(e){
             e.preventDefault();
-            const id = document.getElementById('cu_id').value;
             const payload = {
-                nome: document.getElementById('cu_nome').value,
-                chave_usr1: document.getElementById('cu_usr1').value,
-                chave_usr2: document.getElementById('cu_usr2').value,
-                fator_pagamento: document.getElementById('cu_fator').value
+                label_usr1: document.getElementById('pl_usr1').value,
+                label_usr2: document.getElementById('pl_usr2').value,
             };
-            const res = await fetch(id ? `/api/cad_usuarios/${id}` : '/api/cad_usuarios', {
-                method: id ? 'PUT' : 'POST',
+            const res = await fetch('/api/pagador_labels', {
+                method: 'POST',
                 headers:{'Content-Type':'application/json'},
                 body: JSON.stringify(payload)
             });
-            if(res.ok){ cancelEditUsuario(); loadUsuarios(); }
-        }
-
-        async function deleteUsuario(id){
-            if(!confirm('Remover este usuário?')) return;
-            await fetch(`/api/cad_usuarios/${id}`,{method:'DELETE'});
-            loadUsuarios();
-        }
-
-        async function uploadUsuariosFile(input){
-            if(!input.files.length) return;
-            const file = input.files[0];
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const statusDiv = document.getElementById('cu_upload_status');
-            statusDiv.innerText = 'Fazendo upload e processando...';
-            
-            try {
-                const res = await fetch('/api/upload_usuarios', { method: 'POST', body: formData });
-                const data = await res.json();
-                if(res.ok) {
-                    statusDiv.innerText = `${data.count} usuários cadastrados!`;
-                    statusDiv.style.color = 'var(--success)';
-                    loadUsuarios();
-                } else {
-                    statusDiv.innerText = data.error || 'Erro.';
-                    statusDiv.style.color = 'var(--error)';
-                }
-            } catch (e) {
-                statusDiv.innerText = 'Erro de conexão.';
-                statusDiv.style.color = 'var(--error)';
+            if(res.ok){
+                const status = document.getElementById('pagadorLabelsStatus');
+                status.innerText = 'Salvo!';
+                setTimeout(() => status.innerText = '', 2000);
             }
-            input.value = '';
         }
 
         function returnToMenu() {
@@ -5506,8 +5840,6 @@
         // ── Módulo Despesas Mensais ─────────────────────────────────────────────
         let dmDespesasCats = [];
         let dmReceitasCats = [];
-        let dmUsr1Keys = [];
-        let dmUsr2Keys = [];
         let dmUsr1Default = '';
         let dmUsr2Default = '';
 
@@ -5518,41 +5850,28 @@
                 mesInput.value = new Date().toISOString().substring(0, 7);
             }
             
-            // Carrega categorias, contas e usuários para os selects do formulário
+            // Carrega categorias, contas e labels de pagadores para os selects do formulário
             try {
-                const [cRes, dRes, rRes, uRes] = await Promise.all([fetch('/api/cad_contas'), fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/cad_usuarios')]);
+                const [cRes, dRes, rRes, plRes] = await Promise.all([fetch('/api/cad_contas'), fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/pagador_labels')]);
                 const contas = await cRes.json();
                 const despesas = await dRes.json();
                 const receitas = await rRes.json();
-                const usuarios = await uRes.json();
-                
-                console.log('Contas carregadas:', contas);
-                
-                console.log('Usuarios carregados:', usuarios);
-                
+                const pagadorLabels = await plRes.json();
+
                 dmDespesasCats = despesas.map(d => d.despesa);
                 dmReceitasCats = receitas.map(r => r.descricao);
-                
-                // Extrai chaves únicas da tabela de usuários
-                const allUsr1 = usuarios.map(u => u.chave_usr1).filter(k => k);
-                const allUsr2 = usuarios.map(u => u.chave_usr2).filter(k => k);
-                dmUsr1Keys = [...new Set(allUsr1)];
-                dmUsr2Keys = [...new Set(allUsr2)];
-                
-                // Armazena o primeiro valor não vazio como padrão
-                dmUsr1Default = dmUsr1Keys[0] || '';
-                document.getElementById('dmColUsr1').innerHTML = (dmUsr1Default || 'USR1') + ' <i class="sort-icon fa-solid fa-sort" data-col="5"></i>';
-                document.getElementById('dmConsColUsr1').innerText = dmUsr1Default || 'Total Usr1';
-                document.getElementById('ddColUsr1').innerText = dmUsr1Default || 'USR1';
-                dmUsr2Default = dmUsr2Keys[0] || '';
-                document.getElementById('dmColUsr2').innerHTML = (dmUsr2Default || 'USR2') + ' <i class="sort-icon fa-solid fa-sort" data-col="6"></i>';
-                document.getElementById('dmConsColUsr2').innerText = dmUsr2Default || 'Total Usr2';
-                document.getElementById('ddColUsr2').innerText = dmUsr2Default || 'USR2';
-                
-                console.log('USR1 Keys:', dmUsr1Keys, 'USR2 Keys:', dmUsr2Keys, 'Defaults:', dmUsr1Default, dmUsr2Default);
-                
-                const cList = document.getElementById('dmContaList');
-                cList.innerHTML = contas.map(c => `<option value="${c.descricao}"></option>`).join('');
+
+                dmUsr1Default = pagadorLabels.label_usr1 || 'USR1';
+                document.getElementById('dmColUsr1').innerHTML = dmUsr1Default + ' <i class="sort-icon fa-solid fa-sort" data-col="5"></i>';
+                document.getElementById('dmConsColUsr1').innerText = dmUsr1Default;
+                document.getElementById('ddColUsr1').innerText = dmUsr1Default;
+                dmUsr2Default = pagadorLabels.label_usr2 || 'USR2';
+                document.getElementById('dmColUsr2').innerHTML = dmUsr2Default + ' <i class="sort-icon fa-solid fa-sort" data-col="6"></i>';
+                document.getElementById('dmConsColUsr2').innerText = dmUsr2Default;
+                document.getElementById('ddColUsr2').innerText = dmUsr2Default;
+
+                const cSel = document.getElementById('dm_conta');
+                cSel.innerHTML = '<option value="">—</option>' + contas.map(c => `<option value="${c.descricao}">${c.descricao}</option>`).join('');
                 
                 const usr1Input = document.getElementById('dm_usr1');
                 document.getElementById('dmLabelUsr1').innerText = dmUsr1Default || 'Valor Pagador 1';
@@ -5613,11 +5932,9 @@
                 const data = await res.json();
 
                 window.dmDataOriginal = [...data];
-                window.dmData = [...data];
-                renderDmTable(data);
-                clearDmFilters();
+                applyDmFilters();
+                updateDmFilterUI();
                 updateDmSumTable(data);
-                updateDmCards();
             } catch(e) {
                 if(e.name === 'AbortError') return;
                 console.error('Erro ao carregar despesas:', e);
@@ -5627,7 +5944,14 @@
         function renderDmTable(data) {
             const tbody = document.getElementById('dmTableBody');
             tbody.innerHTML = '';
-            
+
+            if(!data || data.length === 0) {
+                tbody.innerHTML = dmFiltersActive()
+                    ? '<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum registro corresponde aos filtros ativos. <a href="#" onclick="clearDmFilters();return false;" style="color:var(--primary);">Limpar Filtros</a></td></tr>'
+                    : '<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma despesa encontrada para este período</td></tr>';
+                return;
+            }
+
             data.forEach(d => {
                 const usr1Val = parseFloat(d.usr1) || 0;
                 const usr2Val = parseFloat(d.usr2) || 0;
@@ -5752,6 +6076,14 @@
                 const input = document.getElementById('dmFilter' + filterId);
                 if(input) input.focus();
             }, 80);
+        }
+
+        function dmFiltersActive() {
+            const filterIds = [0, 1, 2, 3, 8, 9, 10, 11, 12, 13];
+            return filterIds.some(id => {
+                const input = document.getElementById('dmFilter' + id);
+                return input && input.value.trim();
+            });
         }
 
         function applyDmFilters() {
@@ -6003,6 +6335,7 @@
                 document.getElementById('dm_comments').value = data.comentarios;
                 updateDmCategorySelect(!!data.receita);
                 document.getElementById('dm_cat').value = data.categoria_final;
+                document.getElementById('dm_mes_ref').value = data.mes_referencia || mesValue;
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-save"></i> Salvar Alteração';
             } else {
                 document.getElementById('dmFormTitle').innerText = 'Nova Despesa';
@@ -6011,6 +6344,7 @@
                 document.getElementById('dm_mes_ref').value = mesValue;
                 document.getElementById('dm_usr1').value = '';
                 document.getElementById('dm_usr2').value = '';
+                document.getElementById('dm_mes_ref').value = mesValue;
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
                 updateDmCambio();
             }
@@ -6063,7 +6397,6 @@
             e.preventDefault();
             const id = document.getElementById('dm_id').value;
             const mesRef = document.getElementById('dm_mes_ref').value || document.getElementById('dmMesRef').value;
-            
             const usr1Val = document.getElementById('dm_usr1').value;
             const usr2Val = document.getElementById('dm_usr2').value;
             const usr1Num = parseFloat(usr1Val) || 0;
@@ -6551,6 +6884,7 @@
 
         // ── Módulo Receitas Mensais ─────────────────────────────────────────────
         let rmReceitasCats = [];
+        let rmCotacaoAtual = null; // cotação EUR por 1 BRL, buscada na API
 
         async function initReceitasMensais() {
             const mesInput = document.getElementById('rmMesRef');
@@ -6574,7 +6908,8 @@
                 const rateRes = await fetch(`/api/cotacao?from=BRL&to=EUR`);
                 if(rateRes.ok) {
                     const rateData = await rateRes.json();
-                    document.getElementById('rm_cotacao').value = rateData.cotacao.toFixed(4);
+                    rmCotacaoAtual = rateData.cotacao;
+                    document.getElementById('rm_cotacao').value = rmCotacaoAtual.toFixed(4);
                 }
             } catch(e) {}
             
@@ -6584,16 +6919,22 @@
         async function loadReceitasMensais() {
             const mesValue = document.getElementById('rmMesRef').value;
             if(!mesValue) return;
-            
+
             const [ano, mes] = mesValue.split('-');
             const mesExtenso = new Date(ano, mes - 1).toLocaleString('pt-BR', { month: 'long' });
             document.getElementById('rmHeaderMes').innerText = mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1);
-            
+
             const res = await fetch(`/api/receitas_mensais?mes=${mesValue}`);
             const data = await res.json();
-            
+
+            window.rmDataOriginal = [...data];
+            applyRmFilters();
+            updateRmFilterUI();
+        }
+
+        function updateRmTotals(data) {
             document.getElementById('rmTotalRegistros').innerText = data.length;
-            
+
             let totalEur = 0, totalBrl = 0;
             data.forEach(r => {
                 totalEur += r.valor_eur || 0;
@@ -6601,16 +6942,133 @@
             });
             document.getElementById('rmTotalEur').innerText = '€ ' + formatCurrency(totalEur);
             document.getElementById('rmTotalBrl').innerText = 'R$ ' + formatCurrency(totalBrl);
-            
-            window.rmData = data;
-            renderRmTable(data);
+        }
+
+        function rmFiltersActive() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            return filterIds.some(id => {
+                const input = document.getElementById('rmFilter' + id);
+                return input && input.value.trim();
+            });
+        }
+
+        function applyRmFilters() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            const filters = filterIds.map(id => {
+                const input = document.getElementById('rmFilter' + id);
+                return input ? input.value.trim().toLowerCase() : '';
+            });
+
+            const filtered = window.rmDataOriginal ? window.rmDataOriginal.filter(r => {
+                const row = [
+                    (r.data || ''),
+                    (r.tipo_receita || ''),
+                    String(r.valor_original || ''),
+                    (r.moeda_original || ''),
+                    (r.conta_bancaria || ''),
+                    (r.comentarios || '')
+                ];
+                const rowLC = row.map(v => (v || '').toString().toLowerCase());
+                return filters.every((f, idx) => !f || rowLC[idx].includes(f));
+            }) : [];
+
+            window.rmData = filtered;
+            renderRmTable(filtered);
+            updateRmTotals(filtered);
+        }
+
+        function filterRmTable() {
+            if(!window.rmDataOriginal) return;
+            applyRmFilters();
+        }
+
+        function focusRmFilter(colIdx) {
+            const colToFilterId = {0:0, 1:1, 2:2, 3:3, 7:7, 8:8};
+            const filterId = colToFilterId[colIdx];
+            if(filterId === undefined) return;
+            const bar = document.getElementById('rmFilterBar');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            if(!bar.classList.contains('open')) {
+                bar.classList.add('open');
+                btn.classList.add('dm-filters-on');
+            }
+            setTimeout(() => {
+                const input = document.getElementById('rmFilter' + filterId);
+                if(input) input.focus();
+            }, 80);
+        }
+
+        function toggleRmFilters() {
+            const bar = document.getElementById('rmFilterBar');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            const isOpen = bar.classList.contains('open');
+            if (isOpen) {
+                bar.classList.remove('open');
+                bar.style.paddingTop = '0';
+                bar.style.paddingBottom = '0';
+                btn.classList.remove('dm-filters-on');
+            } else {
+                bar.classList.add('open');
+                bar.style.paddingTop = '';
+                bar.style.paddingBottom = '';
+                btn.classList.add('dm-filters-on');
+                setTimeout(() => document.getElementById('rmFilter1').focus(), 80);
+            }
+        }
+
+        function updateRmFilterUI() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            let active = 0;
+            filterIds.forEach(id => {
+                const el = document.getElementById('rmFilter' + id);
+                if (!el) return;
+                if (el.value.trim()) {
+                    el.classList.add('dm-filter-active');
+                    active++;
+                } else {
+                    el.classList.remove('dm-filter-active');
+                }
+            });
+            const badge = document.getElementById('rmFilterBadge');
+            const btn = document.getElementById('rmFilterToggleBtn');
+            const label = document.getElementById('rmFilterActiveLabel');
+            const count = document.getElementById('rmFilterCount');
+            if (active > 0) {
+                badge.style.display = 'inline-flex';
+                badge.textContent = active;
+                btn.classList.add('dm-filters-on');
+                label.textContent = active + (active === 1 ? ' filtro ativo' : ' filtros ativos');
+                label.style.color = '#a5b4fc';
+            } else {
+                badge.style.display = 'none';
+                if (!document.getElementById('rmFilterBar').classList.contains('open')) {
+                    btn.classList.remove('dm-filters-on');
+                }
+                label.textContent = 'Nenhum filtro ativo';
+                label.style.color = '';
+            }
+            if (count) count.textContent = active > 0 ? `${active} filtro${active > 1 ? 's' : ''} aplicado${active > 1 ? 's' : ''}` : '';
+        }
+
+        function clearRmFilters() {
+            const filterIds = [0, 1, 2, 3, 7, 8];
+            filterIds.forEach(i => {
+                const input = document.getElementById('rmFilter'+i);
+                if(input) { input.value = ''; input.classList.remove('dm-filter-active'); }
+            });
+            window.rmData = window.rmDataOriginal ? [...window.rmDataOriginal] : [];
+            renderRmTable(window.rmData);
+            updateRmTotals(window.rmData);
+            updateRmFilterUI();
         }
 
         function renderRmTable(data) {
             const tbody = document.getElementById('rmTableBody');
             tbody.innerHTML = '';
             if(!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma receita encontrada para este período</td></tr>';
+                tbody.innerHTML = rmFiltersActive()
+                    ? '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum registro corresponde aos filtros ativos. <a href="#" onclick="clearRmFilters();return false;" style="color:var(--primary);">Limpar Filtros</a></td></tr>'
+                    : '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma receita encontrada para este período</td></tr>';
                 return;
             }
             data.forEach(r => {
@@ -6669,7 +7127,11 @@
             document.getElementById('rmForm').reset();
             applyUsrLabels('rm_pagador');
             const mesValue = document.getElementById('rmMesRef').value;
-            
+
+            // reset() reverte o campo Cotação para o valor fixo do HTML — repõe a cotação real buscada da API
+            const cotacaoPadrao = rmCotacaoAtual || 1;
+            document.getElementById('rm_cotacao').value = cotacaoPadrao.toFixed(4);
+
             if(id) {
                 document.getElementById('rmFormTitle').innerText = 'Editar Receita';
                 document.getElementById('rm_id').value = id;
@@ -6677,9 +7139,6 @@
                 document.getElementById('rm_tipo').value = data.tipo_receita;
                 document.getElementById('rm_valor_orig').value = data.valor_original;
                 document.getElementById('rm_moeda').value = data.moeda_original;
-                document.getElementById('rm_cotacao').value = data.cotacao;
-                document.getElementById('rm_valor_eur').value = data.valor_eur;
-                document.getElementById('rm_valor_brl').value = data.valor_brl;
                 document.getElementById('rm_conta').value = data.conta_bancaria;
                 document.getElementById('rm_comments').value = data.comentarios;
                 document.getElementById('rm_pagador').value = data.pagador_usr || '';
@@ -6690,6 +7149,7 @@
                 document.getElementById('rm_data').value = `${mesValue}-01`;
                 document.getElementById('rmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
             }
+            calcRmEur();
             document.getElementById('rmFormPanel').scrollIntoView({behavior:'smooth'});
         }
 
@@ -6702,9 +7162,12 @@
             const c = parseFloat(document.getElementById('rm_cotacao').value) || 1;
             const moeda = document.getElementById('rm_moeda').value;
             let valorEur = v;
-            if(moeda === 'BRL') valorEur = v / c;
+            if(moeda === 'BRL') valorEur = v * c;
             else if(moeda === 'USD') valorEur = v * c;
             document.getElementById('rm_valor_eur').value = valorEur.toFixed(2);
+            // rm_cotacao representa EUR por 1 BRL, então BRL = EUR / cotação
+            const valorBrl = c ? valorEur / c : valorEur;
+            document.getElementById('rm_valor_brl').value = valorBrl.toFixed(2);
         }
 
         function formatDateBR(dateStr) {
@@ -6962,12 +7425,12 @@
         async function getUsrLabels() {
             if (usrLabelsCache) return usrLabelsCache;
             try {
-                const res = await fetch('/api/cad_usuarios');
+                const res = await fetch('/api/pagador_labels');
                 if (!res.ok) return { usr1: 'USR1', usr2: 'USR2' };
-                const usuarios = await res.json();
+                const data = await res.json();
                 usrLabelsCache = {
-                    usr1: usuarios.map(u => u.chave_usr1).find(k => k) || 'USR1',
-                    usr2: usuarios.map(u => u.chave_usr2).find(k => k) || 'USR2',
+                    usr1: data.label_usr1 || 'USR1',
+                    usr2: data.label_usr2 || 'USR2',
                 };
                 return usrLabelsCache;
             } catch (e) {
@@ -6987,6 +7450,7 @@
 
         async function dashLoadUsrLabels() {
             await applyUsrLabels('dashUsrFilter');
+            await applyUsrLabels('aiUsrFilter');
         }
 
         function dashSetLoading(message = 'Carregando dashboard...') {
@@ -7132,9 +7596,9 @@
                 const k = data.kpis || {};
                 dashRender(`
                     <div class="dash-kpi-grid">
-                        ${dashKpi('fa-solid fa-coins', 'Receitas do mês', dashMoney(k.receitas), 'Entradas consolidadas', 'positive', 'revenues')}
-                        ${dashKpi('fa-solid fa-receipt', 'Despesas do mês', dashMoney(k.despesas), `${dashPct(k.budget_usado_pct)} do budget`, dashTone((k.budget_despesas || 0) - (k.despesas || 0)), 'expenses')}
-                        ${dashKpi('fa-solid fa-scale-balanced', 'Saldo do mês', dashMoney(k.saldo), 'Receitas - despesas', dashTone(k.saldo), 'cashflow')}
+                        ${dashKpi('fa-solid fa-coins', 'Receitas do mês', dashMoneyInv(k.receitas_eur, k.receitas_brl), 'Entradas consolidadas', 'positive', 'revenues')}
+                        ${dashKpi('fa-solid fa-receipt', 'Despesas do mês', dashMoneyInv(k.despesas_eur, k.despesas_brl), `${dashPct(k.budget_usado_pct)} do budget`, dashTone((k.budget_despesas || 0) - (k.despesas || 0)), 'expenses')}
+                        ${dashKpi('fa-solid fa-scale-balanced', 'Saldo do mês', dashMoneyInv((k.receitas_eur||0)-(k.despesas_eur||0), (k.receitas_brl||0)-(k.despesas_brl||0)), 'Receitas - despesas', dashTone(k.saldo), 'cashflow')}
                         ${dashKpi('fa-solid fa-bullseye', 'Budget usado', dashPct(k.budget_usado_pct), dashMoney(k.budget_despesas || 0), (k.budget_usado_pct || 0) <= 100 ? 'positive' : 'negative', 'budget')}
                         ${dashKpi('fa-solid fa-chart-pie', 'Investimentos', dashMoneyInv(k.investimentos_eur, k.investimentos_brl), dashInvHint(k.investimentos_eur, k.investimentos_brl), 'neutral', 'investments')}
                         ${dashKpi('fa-solid fa-arrow-trend-up', 'P&L investimentos', dashMoneyInv(k.pnl_eur, k.pnl_brl), dashInvHint(k.pnl_eur, k.pnl_brl), dashTone(k.pnl), 'pnl')}
@@ -7948,6 +8412,7 @@
         const uploadSection = document.getElementById('uploadSection');
         const reviewSection = document.getElementById('reviewSection');
         const exportBtn     = document.getElementById('exportBtn');
+        const exportDespesasBtn = document.getElementById('exportDespesasBtn');
         // ─────────────────────────────────────────────────────────────────────
 
         const CATEGORIES = [
@@ -8347,7 +8812,12 @@
         async function showReviewScreen() {
             uploadSection.style.display = 'none';
             reviewSection.style.display = 'flex';
-            
+
+            const reviewLoadingEl = document.getElementById('reviewLoadingState');
+            const reviewTableContainerEl = document.getElementById('reviewTableContainer');
+            reviewLoadingEl.style.display = 'flex';
+            reviewTableContainerEl.style.display = 'none';
+
             // Ativar modo Full Screen Real
             const extratosMod = document.getElementById('extratosModule');
             extratosMod.classList.add('no-limits');
@@ -8360,18 +8830,16 @@
 
             const defaultConta = document.getElementById('uploadContaBancaria').value;
 
-            // Busca categorias, receitas e usuários para valores padrão de USR
+            // Busca categorias, receitas e labels de pagadores para valores padrão de USR
             let usr1Default = '';
             let usr2Default = '';
             try {
-                const [dRes, rRes, uRes] = await Promise.all([fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/cad_usuarios')]);
+                const [dRes, rRes, plRes] = await Promise.all([fetch('/api/cad_despesas'), fetch('/api/cad_receitas'), fetch('/api/pagador_labels')]);
                 window.DYNAMIC_CATEGORIES = (await dRes.json()).map(x => x.despesa);
                 window.DYNAMIC_RECEITAS = (await rRes.json()).map(x => x.descricao);
-                const usuarios = await uRes.json();
-                const allUsr1 = usuarios.map(u => u.chave_usr1).filter(k => k);
-                const allUsr2 = usuarios.map(u => u.chave_usr2).filter(k => k);
-                usr1Default = allUsr1[0] || '';
-                usr2Default = allUsr2[0] || '';
+                const pagadorLabels = await plRes.json();
+                usr1Default = pagadorLabels.label_usr1 || '';
+                usr2Default = pagadorLabels.label_usr2 || '';
                 // Fix: atualizar labels Pag1/Pag2 com nomes reais de USR1/USR2
                 const lbl1 = document.getElementById('reviewLabelPag1');
                 const lbl2 = document.getElementById('reviewLabelPag2');
@@ -8504,7 +8972,7 @@
                     updateStatusUI(tr, trx);
                     calcTotals();
                 });
-                tr.querySelector(`#p2_${trx.id}`).addEventListener('blur', (e) => { 
+                tr.querySelector(`#p2_${trx.id}`).addEventListener('blur', (e) => {
                     trx.pag2 = parseCurrencyBR(e.target.value);
                     e.target.value = formatCurrency(trx.pag2);
                     updateStatusUI(tr, trx);
@@ -8512,6 +8980,9 @@
                 });
             });
             calcTotals();
+
+            reviewLoadingEl.style.display = 'none';
+            reviewTableContainerEl.style.display = '';
         }
 
         // Impede que o browser role a tabela de revisão para a esquerda ao focar
@@ -8678,8 +9149,55 @@
                 a.download = "Extratos_Processados.xlsx"; a.click();
             })
             .finally(() => {
-                exportBtn.innerHTML = '<i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX'; 
+                exportBtn.innerHTML = '<i class="fa-solid fa-file-excel"></i> Exportar Tabela XLSX';
                 exportBtn.disabled = false;
+            });
+        });
+
+        exportDespesasBtn.addEventListener('click', () => {
+            const visibleIds = [];
+            document.querySelectorAll('#tableBody tr').forEach((tr) => {
+                if(tr.style.display !== 'none') visibleIds.push(tr.getAttribute('data-id'));
+            });
+
+            const rows = [];
+            parsedTransactions.filter(t => visibleIds.includes(t.id)).forEach(trx => {
+                const tr = document.querySelector(`tr[data-id="${trx.id}"]`);
+                if (!tr) return;
+                rows.push({
+                    data: trx.data,
+                    descricao: trx.descricao,
+                    valor_original: trx.valor_original,
+                    moeda: trx.moeda,
+                    cambio_eur: trx.cambio,
+                    valor_eur: trx.valor_eur,
+                    usr1: trx.pag1,
+                    usr2: trx.pag2,
+                    status_pago: tr.querySelector(`#st_${trx.id}`)?.textContent || 'Pendente',
+                    categoria_final: tr.querySelector(`#cat_${trx.id}`)?.value || trx.categoria,
+                    receita: tr.querySelector(`#rec_${trx.id}`)?.checked ? 1 : 0,
+                    conta_bancaria: tr.querySelector(`#cta_${trx.id}`)?.value || '',
+                    comentarios: tr.querySelector(`#com_${trx.id}`)?.value || '',
+                });
+            });
+
+            if (!rows.length) { alert('Nenhuma linha para exportar.'); return; }
+
+            exportDespesasBtn.innerHTML = 'Gerando XLSX...'; exportDespesasBtn.disabled = true;
+            fetch('/export_despesas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rows })
+            })
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url;
+                a.download = "Despesas_Para_Importar.xlsx"; a.click();
+            })
+            .finally(() => {
+                exportDespesasBtn.innerHTML = '<i class="fa-solid fa-file-arrow-down"></i> Exportar para Despesas (Arquivo)';
+                exportDespesasBtn.disabled = false;
             });
         });
         // Setup Drag and Drop styling for all config upload areas
@@ -8804,170 +9322,277 @@
         async function loadLctoInvestimentos() {
             try {
                 await Promise.all([
-                    loadContasIntoSelect('li_banco'),
-                    loadInvestTypesIntoSelect('li_tp_investimento')
+                    loadContasIntoSelect('lp_banco'),
+                    loadInvestTypesIntoSelect('lp_tp_investimento')
                 ]);
-                const res = await fetch('/api/lcto_investimentos');
+                const res = await fetch('/api/investimentos/posicoes');
                 lctoInvestData = await res.json();
+                lctoInvestHistorico = {};
                 renderLctoInvestTable();
+                renderLiSummaryCards();
             } catch(e) { console.error(e); }
         }
 
-        async function renderLctoInvestTable() {
-            const tbody = document.getElementById('lctoInvestTableBody');
-            tbody.innerHTML = '';
+        function moedaSymbol(moeda) {
+            return moeda === 'EUR' ? '€ ' : (moeda === 'USD' ? '$ ' : 'R$ ');
+        }
+
+        function renderLiSummaryCards() {
+            const porMoeda = {};
             lctoInvestData.forEach(d => {
-                const valTotInv = (d.valor_inv || 0) * (d.qtd || 0);
-                const valorLiqMes = (d.valor_atual || 0) - (valTotInv + (d.taxa || 0));
-                const lucroOp = (d.valor_atual || 0) - valTotInv;
-                const lucroMes = (d.valor_atual || 0) - (d.val_mes_ant || 0);
-                const pctRent = valTotInv > 0 ? (lucroOp / valTotInv * 100) : 0;
-                const badgeClass = pctRent >= 0 ? 'val-badge' : 'val-badge debit';
-                tbody.innerHTML += `<tr>\n                    <td style="text-align:center;"><input type="checkbox" class="dm-row-cb" value="${d.id}"></td>
+                const m = (d.moeda || 'BRL').toUpperCase();
+                const acc = porMoeda[m] || (porMoeda[m] = { valorInicial: 0, valorAtual: 0, pnlMes: 0, pnlTotal: 0 });
+                acc.valorInicial += (d.custo_acumulado || 0);
+                acc.valorAtual += (d.valor_atual || 0);
+                acc.pnlMes += (d.pnl_mensal || 0);
+                acc.pnlTotal += (d.pnl_total || 0);
+            });
+            const container = document.getElementById('liSummaryCards');
+            const moedas = Object.keys(porMoeda);
+            if (!moedas.length) {
+                container.innerHTML = '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Nenhuma posição cadastrada ainda.</p>';
+                return;
+            }
+            container.innerHTML = moedas.map(m => {
+                const s = porMoeda[m];
+                const sym = moedaSymbol(m);
+                const pct = s.valorInicial ? (s.pnlTotal / s.valorInicial * 100) : 0;
+                const cls = v => v >= 0 ? 'val-badge' : 'val-badge debit';
+                return `
+                <h4 style="margin: 0 0 0.8rem; color: var(--text-muted); font-size: 0.9rem; letter-spacing: 0.03em;">${m}</h4>
+                <div class="summary-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <div class="stat-value">${sym}${formatCurrency(s.valorInicial)}</div>
+                        <div class="stat-label">Custo Acumulado</div>
+                        <i class="fa-solid fa-sack-dollar stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${sym}${formatCurrency(s.valorAtual)}</div>
+                        <div class="stat-label">Valor Atual</div>
+                        <i class="fa-solid fa-chart-pie stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(s.pnlMes)}">${sym}${formatCurrency(s.pnlMes)}</span></div>
+                        <div class="stat-label">P&amp;L do Mês</div>
+                        <i class="fa-solid fa-calendar-check stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(s.pnlTotal)}">${sym}${formatCurrency(s.pnlTotal)}</span></div>
+                        <div class="stat-label">P&amp;L Total</div>
+                        <i class="fa-solid fa-arrow-trend-up stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(pct)}">${pct.toFixed(2)}%</span></div>
+                        <div class="stat-label">% Rentabilidade</div>
+                        <i class="fa-solid fa-percent stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderLctoInvestTable() {
+            const tbody = document.getElementById('posicoesTableBody');
+            tbody.innerHTML = '';
+            if (!lctoInvestData.length) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);">Nenhuma posição cadastrada.</td></tr>';
+                return;
+            }
+            lctoInvestData.forEach(d => {
+                const cls = v => (v || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+                tbody.innerHTML += `<tr>
                     <td>${d.banco || ''}</td>
                     <td>${d.tp_investimento || ''}</td>
-                    <td>${d.data_inv || ''}</td>
-                    <td style="text-align:right;">${formatCurrency(d.valor_inv)}</td>
                     <td style="text-align:center;"><span class="currency-badge">${d.moeda}</span></td>
-                    <td style="text-align:right;">${d.qtd || 0}</td>
-                    <td style="text-align:right;">${formatCurrency(d.taxa)}</td>
-                    <td style="text-align:right;">${formatCurrency(valTotInv)}</td>
+                    <td>${d.data_inicio || ''}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_investido_inicial)}</td>
                     <td style="text-align:right;">${formatCurrency(d.valor_atual)}</td>
-                    <td style="text-align:right;">${formatCurrency(valorLiqMes)}</td>
-                    <td style="text-align:right;">${formatCurrency(d.val_mes_ant)}</td>
-                    <td style="text-align:right;">${formatCurrency(d.aporte)}</td>
-                    <td style="text-align:right;">${formatCurrency(lucroOp)}</td>
-                    <td style="text-align:right;">${formatCurrency(lucroMes)}</td>
-                    <td style="text-align:right;"><span class="${badgeClass}">${pctRent.toFixed(2)}%</span></td>
+                    <td style="text-align:right;"><span class="${cls(d.pnl_mensal)}">${formatCurrency(d.pnl_mensal)}</span></td>
+                    <td style="text-align:right;"><span class="${cls(d.pnl_total)}">${formatCurrency(d.pnl_total)}</span></td>
+                    <td style="text-align:right;"><span class="${cls(d.pct_rentabilidade)}">${(d.pct_rentabilidade || 0).toFixed(2)}%</span></td>
+                    <td style="text-align:center;">${d.ultimo_mes || '—'}</td>
                     <td style="text-align:center;">
-                        <button class="btn secondary" style="padding:0.3rem 0.6rem;font-size:0.8rem;margin-right:3px;"
-                            onclick="editLctoInvest(${d.id})" title="Editar">
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="openMensalPanel(${d.id})" title="Atualizar mês">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </button>
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="toggleHistorico(${d.id})" title="Ver histórico mensal">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </button>
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="editPosicao(${d.id})" title="Editar posição">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button class="btn" style="padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--error);"
-                            onclick="deleteLctoInvest(${d.id})" title="Excluir">
+                        <button class="btn" style="padding:0.3rem 0.5rem;font-size:0.75rem;background:var(--error);"
+                            onclick="deletePosicao(${d.id})" title="Excluir posição">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
+                </tr>
+                <tr id="li_hist_row_${d.id}" style="display:none;">
+                    <td colspan="11" style="background: rgba(0,0,0,0.15);"><div id="li_hist_${d.id}">Carregando...</div></td>
                 </tr>`;
             });
-            await calcLctoInvestSummary();
         }
 
-        let currentExchangeRate = 0; // BRL -> EUR
+        let lctoInvestHistorico = {};
 
-        async function calcLctoInvestSummary() {
-            let valorInvestBRL = 0; 
-            let valorInvestEUR = 0; 
-            
-            lctoInvestData.forEach(d => {
-                const totalLinha = (d.valor_inv || 0) * (d.qtd || 0);
-                if (d.moeda === 'EUR') {
-                    valorInvestEUR += totalLinha;
-                } else if (d.moeda === 'BRL') {
-                    valorInvestBRL += totalLinha;
-                }
-            });
-
-            // Buscar cotação atual EUR -> BRL se não tiver
-            if (currentExchangeRate === 0) {
-                try {
-                    const res = await fetch('/api/cotacao?from=EUR&to=BRL');
-                    const data = await res.json();
-                    currentExchangeRate = data.cotacao || 6.00; // Fallback 6.00
-                } catch(e) { currentExchangeRate = 6.00; }
+        async function toggleHistorico(posId) {
+            const row = document.getElementById(`li_hist_row_${posId}`);
+            const isHidden = row.style.display === 'none';
+            row.style.display = isHidden ? 'table-row' : 'none';
+            if (isHidden && !lctoInvestHistorico[posId]) {
+                const res = await fetch(`/api/investimentos/posicoes/${posId}/mensal`);
+                lctoInvestHistorico[posId] = await res.json();
+                renderHistorico(posId);
             }
-
-            const totalConvertidoBRL = valorInvestBRL + (valorInvestEUR * currentExchangeRate);
-            const totalConvertidoEUR = valorInvestEUR + (valorInvestBRL / currentExchangeRate);
-
-            document.getElementById('li_sum_investido_brl').innerText = formatCurrency(valorInvestBRL);
-            document.getElementById('li_sum_investido_eur').innerText = '€ ' + formatCurrency(valorInvestEUR);
-            document.getElementById('li_sum_total_brl').innerText = formatCurrency(totalConvertidoBRL);
-            document.getElementById('li_sum_total_eur').innerText = '€ ' + formatCurrency(totalConvertidoEUR);
-            document.getElementById('li_sum_cotacao').innerText = currentExchangeRate.toFixed(4).replace('.', ',');
         }
 
-        function calcLiTotais() {
-            const valor = parseFloat(document.getElementById('li_valor_inv').value) || 0;
-            const qtd = parseFloat(document.getElementById('li_qtd').value) || 0;
-            const taxa = parseFloat(document.getElementById('li_taxa').value) || 0;
-            const valAtual = parseFloat(document.getElementById('li_valor_atual').value) || 0;
-            const valMesAnt = parseFloat(document.getElementById('li_val_mes_ant').value) || 0;
-            
-            const totalInv = valor * qtd;
-            const liqMes = valAtual - (totalInv + taxa);
-            
-            document.getElementById('li_valor_tot_inv').value = formatCurrency(totalInv);
-            document.getElementById('li_valor_liq_mes').value = formatCurrency(liqMes);
+        function renderHistorico(posId) {
+            const snaps = lctoInvestHistorico[posId] || [];
+            const container = document.getElementById(`li_hist_${posId}`);
+            if (!snaps.length) {
+                container.innerHTML = '<p style="color:var(--text-muted);padding:0.5rem;">Nenhum mês lançado ainda.</p>';
+                return;
+            }
+            const cls = v => (v || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+            container.innerHTML = `<table style="width:100%;">
+                <thead><tr>
+                    <th>Mês</th><th style="text-align:right;">Valor de Mercado</th>
+                    <th style="text-align:right;">Aporte</th><th style="text-align:right;">Resgate</th>
+                    <th style="text-align:right;">Custo Acumulado</th><th style="text-align:right;">P&amp;L Mês</th>
+                    <th style="width:50px;"></th>
+                </tr></thead>
+                <tbody>
+                ${snaps.slice().reverse().map(s => `<tr>
+                    <td>${s.mes_referencia}</td>
+                    <td style="text-align:right;">${formatCurrency(s.valor_mercado)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.aporte_mes)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.resgate_mes)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.custo_acumulado)}</td>
+                    <td style="text-align:right;"><span class="${cls(s.pnl_mensal)}">${formatCurrency(s.pnl_mensal)}</span></td>
+                    <td style="text-align:center;"><button class="btn" style="padding:0.2rem 0.4rem;font-size:0.7rem;background:var(--error);" onclick="deleteMensal(${s.id}, ${posId})"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`).join('')}
+                </tbody>
+            </table>`;
         }
 
-        async function saveLctoInvestimento(e) {
+        async function deleteMensal(snapshotId, posId) {
+            if(!confirm('Remover este mês do histórico?')) return;
+            await fetch(`/api/investimentos/mensal/${snapshotId}`, { method: 'DELETE' });
+            delete lctoInvestHistorico[posId];
+            await loadLctoInvestimentos();
+            await toggleHistorico(posId);
+        }
+
+        async function savePosicao(e) {
             e.preventDefault();
-            const id = document.getElementById('li_id').value;
+            const id = document.getElementById('lp_id').value;
             const data = {
-                banco: document.getElementById('li_banco').value,
-                tp_investimento: document.getElementById('li_tp_investimento').value,
-                data_inv: document.getElementById('li_data_inv').value,
-                valor_inv: parseFloat(document.getElementById('li_valor_inv').value) || 0,
-                moeda: document.getElementById('li_moeda').value,
-                qtd: parseFloat(document.getElementById('li_qtd').value) || 0,
-                taxa: parseFloat(document.getElementById('li_taxa').value) || 0,
-                valor_atual: parseFloat(document.getElementById('li_valor_atual').value) || 0,
-                val_mes_ant: parseFloat(document.getElementById('li_val_mes_ant').value) || 0,
-                aporte: parseFloat(document.getElementById('li_aporte').value) || 0
+                banco: document.getElementById('lp_banco').value,
+                tp_investimento: document.getElementById('lp_tp_investimento').value,
+                moeda: document.getElementById('lp_moeda').value,
+                data_inicio: document.getElementById('lp_data_inicio').value,
+                valor_investido_inicial: parseFloat(document.getElementById('lp_valor_inicial').value) || 0
             };
-            
+
             const method = id ? 'PUT' : 'POST';
-            const url = id ? `/api/lcto_investimentos/${id}` : '/api/lcto_investimentos';
-            
+            const url = id ? `/api/investimentos/posicoes/${id}` : '/api/investimentos/posicoes';
+
             const res = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            
+
             if(res.ok) {
-                document.getElementById('liForm').reset();
-                document.getElementById('li_id').value = '';
-                document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
-                document.getElementById('liCancelBtn').style.display = 'none';
+                cancelEditPosicao();
                 loadLctoInvestimentos();
             }
         }
 
-        function editLctoInvest(id) {
+        function editPosicao(id) {
             const d = lctoInvestData.find(x => x.id === id);
             if(!d) return;
-            document.getElementById('li_id').value = d.id;
-            document.getElementById('li_banco').value = d.banco || '';
-            document.getElementById('li_tp_investimento').value = d.tp_investimento || '';
-            document.getElementById('li_data_inv').value = d.data_inv || '';
-            document.getElementById('li_valor_inv').value = d.valor_inv || '';
-            document.getElementById('li_moeda').value = d.moeda || 'BRL';
-            document.getElementById('li_qtd').value = d.qtd || '';
-            document.getElementById('li_taxa').value = d.taxa || '';
-            document.getElementById('li_valor_atual').value = d.valor_atual || '';
-            document.getElementById('li_val_mes_ant').value = d.val_mes_ant || '';
-            document.getElementById('li_aporte').value = d.aporte || '';
-            document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
-            document.getElementById('liCancelBtn').style.display = 'inline-block';
-            calcLiTotais();
+            document.getElementById('lp_id').value = d.id;
+            document.getElementById('lp_banco').value = d.banco || '';
+            document.getElementById('lp_tp_investimento').value = d.tp_investimento || '';
+            document.getElementById('lp_moeda').value = d.moeda || 'BRL';
+            document.getElementById('lp_data_inicio').value = d.data_inicio || '';
+            document.getElementById('lp_valor_inicial').value = d.valor_investido_inicial || '';
+            document.getElementById('liPosSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+            document.getElementById('liPosCancelBtn').style.display = 'inline-block';
         }
 
-        function cancelEditLctoInvest() {
-            document.getElementById('li_id').value = '';
-            document.getElementById('liForm').reset();
-            loadContasIntoSelect('li_banco');
-            loadInvestTypesIntoSelect('li_tp_investimento');
-            document.getElementById('liSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
-            document.getElementById('liCancelBtn').style.display = 'none';
+        function cancelEditPosicao() {
+            document.getElementById('lp_id').value = '';
+            document.getElementById('liPosForm').reset();
+            loadContasIntoSelect('lp_banco');
+            loadInvestTypesIntoSelect('lp_tp_investimento');
+            document.getElementById('liPosSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar Posição';
+            document.getElementById('liPosCancelBtn').style.display = 'none';
         }
 
-        async function deleteLctoInvest(id) {
-            if(!confirm('Confirmar exclusão?')) return;
-            await fetch(`/api/lcto_investimentos/${id}`, { method: 'DELETE' });
+        async function deletePosicao(id) {
+            if(!confirm('Excluir esta posição e todo o histórico mensal dela?')) return;
+            await fetch(`/api/investimentos/posicoes/${id}`, { method: 'DELETE' });
             loadLctoInvestimentos();
+        }
+
+        function openMensalPanel(posId) {
+            const d = lctoInvestData.find(x => x.id === posId);
+            if(!d) return;
+            document.getElementById('mu_pos_id').value = posId;
+            document.getElementById('mu_pos_label').innerText = `${d.banco || ''} - ${d.tp_investimento || ''}`;
+            const now = new Date();
+            document.getElementById('mu_mes_referencia').value = d.ultimo_mes && d.ultimo_mes > now.toISOString().slice(0,7)
+                ? d.ultimo_mes : now.toISOString().slice(0, 7);
+            document.getElementById('mu_valor_mercado').value = d.valor_atual || '';
+            document.getElementById('mu_aporte_mes').value = 0;
+            document.getElementById('mu_resgate_mes').value = 0;
+            document.getElementById('mu_taxa_mes').value = 0;
+            document.getElementById('liMensalPanel').style.display = 'block';
+            document.getElementById('liMensalPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            calcMuPreview();
+        }
+
+        function closeMensalPanel() {
+            document.getElementById('liMensalPanel').style.display = 'none';
+            document.getElementById('liMensalForm').reset();
+        }
+
+        function calcMuPreview() {
+            const posId = parseInt(document.getElementById('mu_pos_id').value);
+            const d = lctoInvestData.find(x => x.id === posId);
+            if(!d) return;
+            const valorAnterior = d.valor_atual || 0;
+            const valorMercado = parseFloat(document.getElementById('mu_valor_mercado').value) || 0;
+            const aporte = parseFloat(document.getElementById('mu_aporte_mes').value) || 0;
+            const resgate = parseFloat(document.getElementById('mu_resgate_mes').value) || 0;
+            const pnlMes = valorMercado - valorAnterior - aporte + resgate;
+            document.getElementById('mu_pnl_preview').value = formatCurrency(pnlMes);
+        }
+
+        async function saveMensal(e) {
+            e.preventDefault();
+            const posId = document.getElementById('mu_pos_id').value;
+            const data = {
+                mes_referencia: document.getElementById('mu_mes_referencia').value,
+                valor_mercado: parseFloat(document.getElementById('mu_valor_mercado').value) || 0,
+                aporte_mes: parseFloat(document.getElementById('mu_aporte_mes').value) || 0,
+                resgate_mes: parseFloat(document.getElementById('mu_resgate_mes').value) || 0,
+                taxa_mes: parseFloat(document.getElementById('mu_taxa_mes').value) || 0
+            };
+            const res = await fetch(`/api/investimentos/posicoes/${posId}/mensal`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if(res.ok) {
+                delete lctoInvestHistorico[posId];
+                closeMensalPanel();
+                loadLctoInvestimentos();
+            }
         }
 
         async function uploadLctoInvestFile(input) {
@@ -9007,7 +9632,6 @@
             cad_contas:         [{ value: 'descricao',        label: 'Descrição (Contas)' }],
             cad_receitas:       [{ value: 'descricao',        label: 'Descrição (Receitas)' }],
             cad_investimentos:  [{ value: 'descricao',        label: 'Descrição (Invest.)' }],
-            cad_usuarios:       [{ value: 'nome',             label: 'Nome (Usuários)' }],
             tb_tipo_imposto:    [{ value: 'tp_imposto',       label: 'Tipo Imposto (Config)' }],
         };
         const REL_DIN_CAMPOS = {
@@ -9075,12 +9699,6 @@
             ],
             cad_receitas:       [{ value: 'descricao', label: 'Descrição' }],
             cad_investimentos:  [{ value: 'descricao', label: 'Descrição' }],
-            cad_usuarios:       [
-                { value: 'nome',             label: 'Nome' },
-                { value: 'chave_usr1',       label: 'Chave Usr1' },
-                { value: 'chave_usr2',       label: 'Chave Usr2' },
-                { value: 'fator_pagamento',  label: 'Fator Pagamento' },
-            ],
             tb_tipo_imposto:    [
                 { value: 'tp_imposto',  label: 'Tipo Imposto' },
                 { value: 'alq_imposto', label: 'Alíquota' },
@@ -10152,6 +10770,7 @@
 
         function initAiAgent() {
             _aiPopulateMonths();
+            applyUsrLabels('aiUsrFilter');
             // load chat history on open
             fetch('/api/ai/chat/history')
                 .then(r => r.ok ? r.json() : null)
@@ -10177,6 +10796,7 @@
         }
 
         function aiOnMonthChange() { /* allow re-analysis with new month on next click */ }
+        function aiOnUsrChange() { /* allow re-analysis with new usr on next click */ }
 
         function showAiTab(tab) {
             document.querySelectorAll('.ai-tab').forEach(b => b.classList.remove('active'));
@@ -10188,14 +10808,69 @@
             event.currentTarget.classList.add('active');
         }
 
+        // ── Manual de Uso ───────────────────────────────────────────────────────
+        const GUIA_PROGRESS_KEY = 'mf_guia_progress';
+
+        function showGuiaTab(tab) {
+            document.querySelectorAll('.guia-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.guia-tab-content').forEach(c => {
+                c.classList.remove('active'); c.style.display = 'none';
+            });
+            const content = document.getElementById('guiaTab-' + tab);
+            if (content) { content.style.display = 'block'; content.classList.add('active'); }
+            event.currentTarget.classList.add('active');
+        }
+
+        function guiaLoadProgress() {
+            try { return JSON.parse(localStorage.getItem(GUIA_PROGRESS_KEY)) || {}; }
+            catch(e) { return {}; }
+        }
+
+        function guiaToggleStep(stepId) {
+            const checkbox = document.getElementById(stepId);
+            const progress = guiaLoadProgress();
+            progress[stepId] = checkbox.checked;
+            localStorage.setItem(GUIA_PROGRESS_KEY, JSON.stringify(progress));
+            checkbox.closest('.guia-step').classList.toggle('done', checkbox.checked);
+            updateGuiaProgress();
+        }
+
+        function updateGuiaProgress() {
+            const checks = document.querySelectorAll('.guia-step-check');
+            const done = document.querySelectorAll('.guia-step-check:checked').length;
+            const label = document.getElementById('guiaProgressLabel');
+            if (label) label.innerText = `${done} de ${checks.length} passos concluídos`;
+        }
+
+        // Carrega a aba Referencia sob demanda (guia_referencia.js)
+        (function wrapShowGuiaTab() {
+            const _orig = window.showGuiaTab;
+            window.showGuiaTab = function(tab) {
+                if (_orig) _orig.apply(this, arguments);
+                if (tab === 'referencia' && window.initGuiaReferencia) window.initGuiaReferencia();
+            };
+        })();
+
+        function initGuiaUso() {
+            const progress = guiaLoadProgress();
+            document.querySelectorAll('.guia-step-check').forEach(cb => {
+                const checked = !!progress[cb.id];
+                cb.checked = checked;
+                cb.closest('.guia-step').classList.toggle('done', checked);
+            });
+            updateGuiaProgress();
+        }
+
         async function loadAiAnalysis(key, endpoint, renderFn) {
             const mes = document.getElementById('aiMesSel').value;
+            const usrEl = document.getElementById('aiUsrFilter');
+            const usr = (usrEl && usrEl.value) ? usrEl.value : 'usr1';
             const btn = document.getElementById('btn' + key.charAt(0).toUpperCase() + key.slice(1));
             const res = document.getElementById('res-' + key);
             if (btn) { btn.disabled = true; }
             res.innerHTML = `<div class="ai-spinner"><i class="fa-solid fa-spinner"></i> A analisar dados com IA... aguarde.</div>`;
             try {
-                const resp = await fetch(`${endpoint}?mes=${mes}`);
+                const resp = await fetch(`${endpoint}?mes=${mes}&usr=${usr}`);
                 const data = await resp.json();
                 if (data.error) {
                     res.innerHTML = `<div style="color:var(--error);padding:1rem;">${data.error}</div>`;
@@ -10456,6 +11131,8 @@
             const msg = inp.value.trim();
             if (!msg) return;
             const mes = document.getElementById('aiMesSel').value;
+            const usrEl = document.getElementById('aiUsrFilter');
+            const usr = (usrEl && usrEl.value) ? usrEl.value : 'usr1';
             inp.value = '';
             _aiAppendMsg('user', msg);
             document.getElementById('aiSendBtn').disabled = true;
@@ -10466,7 +11143,7 @@
                 const resp = await fetch('/api/ai/chat', {
                     method: 'POST',
                     headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({message: msg, mes}),
+                    body: JSON.stringify({message: msg, mes, usr}),
                 });
                 const data = await resp.json();
                 const typing = document.getElementById(typingId);
