@@ -2752,10 +2752,6 @@
                 </div>
                 <div class="form-row-2">
                     <div class="form-field">
-                        <label>Período do Lançamento (Mês)</label>
-                        <input type="month" id="dm_mes_ref" class="auth-input" required>
-                    </div>
-                    <div class="form-field">
                         <label>Comentários</label>
                         <input type="text" id="dm_comments" class="auth-input" placeholder="Observações livres...">
                     </div>
@@ -5870,8 +5866,8 @@
                 document.getElementById('dmConsColUsr2').innerText = dmUsr2Default;
                 document.getElementById('ddColUsr2').innerText = dmUsr2Default;
 
-                const cSel = document.getElementById('dm_conta');
-                cSel.innerHTML = '<option value="">—</option>' + contas.map(c => `<option value="${c.descricao}">${c.descricao}</option>`).join('');
+                const cList = document.getElementById('dmContaList');
+                cList.innerHTML = contas.map(c => `<option value="${c.descricao}"></option>`).join('');
                 
                 const usr1Input = document.getElementById('dm_usr1');
                 document.getElementById('dmLabelUsr1').innerText = dmUsr1Default || 'Valor Pagador 1';
@@ -6335,7 +6331,6 @@
                 document.getElementById('dm_comments').value = data.comentarios;
                 updateDmCategorySelect(!!data.receita);
                 document.getElementById('dm_cat').value = data.categoria_final;
-                document.getElementById('dm_mes_ref').value = data.mes_referencia || mesValue;
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-save"></i> Salvar Alteração';
             } else {
                 document.getElementById('dmFormTitle').innerText = 'Nova Despesa';
@@ -6344,7 +6339,6 @@
                 document.getElementById('dm_mes_ref').value = mesValue;
                 document.getElementById('dm_usr1').value = '';
                 document.getElementById('dm_usr2').value = '';
-                document.getElementById('dm_mes_ref').value = mesValue;
                 document.getElementById('dmSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar';
                 updateDmCambio();
             }
