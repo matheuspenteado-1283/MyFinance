@@ -19,6 +19,8 @@ def init_all():
         from modules.impostos.db import init_tables as init_impostos
         from modules.emprestimos.db import init_tables as init_emprestimos
         from modules.investimentos.db import init_tables as init_investimentos
+        from modules.reservas.db import init_tables as init_reservas
+        from modules.settings.db import init_tables as init_settings
         from modules.trader.db import init_tables as init_trader
         from modules.relatorios.db import init_tables as init_relatorios
         from modules.budget.db import init_tables as init_budget
@@ -37,6 +39,8 @@ def init_all():
         init_impostos()
         init_emprestimos()
         init_investimentos()
+        init_reservas()
+        init_settings()
         init_trader()
         init_relatorios()
         init_budget()
