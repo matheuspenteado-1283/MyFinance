@@ -9773,6 +9773,13 @@
         // Tipo de Reserva reaproveita o catálogo de "Tipos de Investimentos" já existente
         // (loadInvestTypesIntoSelect / window.INVEST_TYPES_CACHE, definidos no módulo Investimentos).
         let rvPosicoesData = [];
+
+        function formatDataReserva(dateStr) {
+            if (!dateStr) return '';
+            const [y, m, d] = String(dateStr).slice(0, 10).split('-');
+            if (!y || !m || !d) return dateStr;
+            return `${d}-${m}-${y}`;
+        }
         let rvHistorico = {};
         let RV_MOEDAS = [];
 
@@ -9882,7 +9889,7 @@
                     <td>${d.banco || ''}</td>
                     <td>${d.tp_reserva || ''}</td>
                     <td style="text-align:center;"><span class="currency-badge">${d.moeda}</span></td>
-                    <td>${d.data_inicio || ''}</td>
+                    <td>${formatDataReserva(d.data_inicio)}</td>
                     <td style="text-align:right;">${formatCurrency(d.valor_investido_inicial, d.moeda)}</td>
                     <td style="text-align:right;">${formatCurrency(d.valor_atual, d.moeda)}</td>
                     <td style="text-align:right;"><span class="${cls(d.pnl_mensal)}">${formatCurrency(d.pnl_mensal, d.moeda)}</span></td>
@@ -9890,6 +9897,7 @@
                     <td style="text-align:right;"><span class="${cls(d.pct_rentabilidade)}">${(d.pct_rentabilidade || 0).toFixed(2)}%</span></td>
                     <td style="text-align:center;">${d.ultimo_mes || '—'}</td>
                     <td style="text-align:center;">
+                        ${d.origem === 'manual' ? `
                         <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
                             onclick="openReservaMensalPanel(${d.id})" title="Atualizar mês">
                             <i class="fa-solid fa-calendar-check"></i>
@@ -9906,11 +9914,18 @@
                             onclick="deleteReservaPosicao(${d.id})" title="Excluir reserva">
                             <i class="fa-solid fa-trash"></i>
                         </button>
+                        ` : `
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;"
+                            onclick="openModule('lcto_investimentos')" title="Editar em Investimentos">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </button>
+                        `}
                     </td>
                 </tr>
+                ${d.origem === 'manual' ? `
                 <tr id="rv_hist_row_${d.id}" style="display:none;">
                     <td colspan="11" style="background: rgba(0,0,0,0.15);"><div id="rv_hist_${d.id}">Carregando...</div></td>
-                </tr>`;
+                </tr>` : ''}`;
             });
         }
 
@@ -9986,7 +10001,7 @@
         }
 
         function editReservaPosicao(id) {
-            const d = rvPosicoesData.find(x => x.id === id);
+            const d = rvPosicoesData.find(x => x.id === id && x.origem === 'manual');
             if(!d) return;
             document.getElementById('rv_id').value = d.id;
             document.getElementById('rv_banco').value = d.banco || '';
@@ -10008,13 +10023,15 @@
         }
 
         async function deleteReservaPosicao(id) {
+            const d = rvPosicoesData.find(x => x.id === id && x.origem === 'manual');
+            if (!d) return;
             if(!confirm('Excluir esta reserva e todo o histórico mensal dela?')) return;
             await fetch(`/api/reservas/posicoes/${id}`, { method: 'DELETE' });
             loadReservas();
         }
 
         function openReservaMensalPanel(posId) {
-            const d = rvPosicoesData.find(x => x.id === posId);
+            const d = rvPosicoesData.find(x => x.id === posId && x.origem === 'manual');
             if(!d) return;
             document.getElementById('rv_mu_pos_id').value = posId;
             document.getElementById('rv_mu_pos_label').innerText = `${d.banco || ''} - ${d.tp_reserva || ''}`;
@@ -10037,7 +10054,7 @@
 
         function calcReservaMuPreview() {
             const posId = parseInt(document.getElementById('rv_mu_pos_id').value);
-            const d = rvPosicoesData.find(x => x.id === posId);
+            const d = rvPosicoesData.find(x => x.id === posId && x.origem === 'manual');
             if(!d) return;
             const valorAnterior = d.valor_atual || 0;
             const valorMercado = parseFloat(document.getElementById('rv_mu_valor_mercado').value) || 0;

@@ -9,6 +9,7 @@ from .db import (
     get_all_posicoes, add_posicao, update_posicao, delete_posicao, clear_posicoes,
     get_mensal, upsert_mensal, delete_mensal, get_resumo, _mes_atual,
 )
+from modules.investimentos.db import get_mensal as get_mensal_investimentos
 
 
 # ── Posições ────────────────────────────────────────────────────────────────
@@ -142,12 +143,13 @@ def api_export_reservas():
             'data_inicio': 'Data Início', 'valor_investido_inicial': 'Valor Investido Inicial',
             'criado_em': 'Criado Em', 'valor_atual': 'Valor Atual', 'custo_acumulado': 'Custo Acumulado',
             'pnl_total': 'P&L Total', 'pnl_mensal': 'P&L Mês', 'pct_rentabilidade': '% Rentabilidade',
-            'qtd_meses': 'Meses Registrados',
+            'qtd_meses': 'Meses Registrados', 'origem': 'Origem',
         }, inplace=True)
 
     historico_rows = []
     for pos in posicoes:
-        for snap in get_mensal(pos['id']):
+        snaps = get_mensal_investimentos(pos['id']) if pos.get('origem') == 'investimentos' else get_mensal(pos['id'])
+        for snap in snaps:
             historico_rows.append({
                 'Posição ID': pos['id'], 'Banco': pos.get('banco'), 'Tipo': pos.get('tp_reserva'),
                 'Mês': snap.get('mes_referencia'), 'Valor de Mercado': snap.get('valor_mercado'),

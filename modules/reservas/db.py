@@ -125,6 +125,38 @@ def _calcular_pnl(valor_investido_inicial, valor_investido_inicial_eur, snapshot
     }
 
 
+def _investimentos_como_reservas(user_email: str):
+    """Lê as posições de Investimentos (fonte de verdade lá) e devolve-as no formato
+    de posição de Reservas, só para leitura/exibição — nada é persistido aqui. Os
+    campos _eur são recalculados com a cotação ATUAL (get_exchange_rate 'latest'),
+    pois Investimentos não guarda histórico de câmbio por mês como Reservas faz
+    (congelamento); é uma aproximação aceite só para exibição e total consolidado."""
+    from modules.investimentos.db import get_all_posicoes as get_all_investimentos
+    from exchange_api import get_exchange_rate
+
+    investimentos = get_all_investimentos(user_email)
+    cache_rate = {}
+    resultado = []
+    for pos in investimentos:
+        pos = dict(pos)
+        moeda = (pos.get('moeda') or 'BRL').upper()
+        if moeda not in cache_rate:
+            cache_rate[moeda] = (
+                get_exchange_rate('latest', moeda, MOEDA_ANCORA) if moeda != MOEDA_ANCORA else 1.0
+            )
+        rate = cache_rate[moeda]
+
+        pos['moeda'] = moeda
+        pos['tp_reserva'] = pos.pop('tp_investimento', None)
+        pos['origem'] = 'investimentos'
+        pos['valor_investido_inicial_eur'] = _to_float(pos.get('valor_investido_inicial')) * rate
+        pos['valor_atual_eur'] = _to_float(pos.get('valor_atual')) * rate
+        pos['custo_acumulado_eur'] = _to_float(pos.get('custo_acumulado')) * rate
+        pos['pnl_total_eur'] = pos['valor_atual_eur'] - pos['custo_acumulado_eur'] - _to_float(pos.get('taxas_acumuladas')) * rate
+        resultado.append(pos)
+    return resultado
+
+
 def get_all_posicoes(user_email: str):
     conn = get_connection()
     posicoes = conn.execute(
@@ -135,6 +167,7 @@ def get_all_posicoes(user_email: str):
     resultado = []
     for pos in posicoes:
         pos = dict(pos)
+        pos['origem'] = 'manual'
         snapshots = conn.execute(
             'SELECT * FROM reservas_mensal WHERE posicao_id=%s ORDER BY mes_referencia ASC',
             (pos['id'],),
@@ -161,6 +194,7 @@ def get_all_posicoes(user_email: str):
         })
         resultado.append(pos)
     conn.close()
+    resultado.extend(_investimentos_como_reservas(user_email))
     return resultado
 
 
