@@ -15,6 +15,8 @@ from modules.receitas_mensais import bp as receitas_mensais_bp
 from modules.impostos import bp as impostos_bp
 from modules.emprestimos import bp as emprestimos_bp
 from modules.investimentos import bp as investimentos_bp
+from modules.reservas import bp as reservas_bp
+from modules.settings import bp as settings_bp
 from modules.trader import bp as trader_bp
 from modules.dashboard import bp as dashboard_bp
 from modules.relatorios import bp as relatorios_bp
@@ -80,6 +82,8 @@ def create_app():
     app.register_blueprint(impostos_bp)
     app.register_blueprint(emprestimos_bp)
     app.register_blueprint(investimentos_bp)
+    app.register_blueprint(reservas_bp)
+    app.register_blueprint(settings_bp)
     app.register_blueprint(trader_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(relatorios_bp)

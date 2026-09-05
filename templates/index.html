@@ -1520,6 +1520,9 @@
             <button class="side-link" data-module="lcto_investimentos" onclick="openModule('lcto_investimentos')">
                 <i class="fa-solid fa-coins"></i><span>Lançamentos Invest.</span>
             </button>
+            <button class="side-link" data-module="reservas" onclick="openModule('reservas')">
+                <i class="fa-solid fa-vault"></i><span>Reservas</span>
+            </button>
             <button class="side-link" data-module="trader" onclick="openModule('trader')">
                 <i class="fa-solid fa-arrow-trend-up"></i><span>Trader</span>
             </button>
@@ -4466,10 +4469,155 @@
         </div>
     </div>
 
+    <!-- Módulo Reservas (separado de Investimentos) -->
+    <div class="container module-container module-fullscreen" id="reservasModule" style="display:none;">
+        <h1 style="text-align:center; margin-bottom:1.5rem;"><i class="fa-solid fa-vault" style="margin-right:15px; color:var(--primary);"></i>Reservas</h1>
+
+        <!-- Total consolidado (moeda base do usuário) -->
+        <div class="form-panel" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+            <div>
+                <div style="color:var(--text-muted); font-size:0.85rem;">Total Consolidado</div>
+                <div id="rvTotalConsolidado" style="font-size:1.8rem; font-weight:700;">—</div>
+                <div id="rvTotalPnl" style="font-size:0.9rem; color:var(--text-muted);"></div>
+            </div>
+            <div class="form-field" style="min-width:180px; margin:0;">
+                <label><i class="fa-solid fa-globe"></i> Moeda Base</label>
+                <select id="rvMoedaBase" class="auth-input" onchange="saveReservasMoedaBase()"></select>
+            </div>
+        </div>
+
+        <!-- Cards de Resumo (um bloco por moeda nativa, sem conversão) -->
+        <div id="rvSummaryCards"></div>
+
+        <!-- Formulário: Nova Reserva -->
+        <div class="form-panel">
+            <h3 id="rvPosFormTitle"><i class="fa-solid fa-plus-circle" style="margin-right:10px;"></i>Nova Reserva</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1rem;">Saldos em conta corrente, poupança ou outras formas de reserva, em qualquer moeda. Atualizações mensais de valor, aporte e resgate são feitas depois, na tabela abaixo.</p>
+            <form id="rvPosForm" onsubmit="saveReservaPosicao(event)">
+                <input type="hidden" id="rv_id" value="">
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-building-columns"></i> Banco</label>
+                        <select id="rv_banco" class="auth-input" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-tags"></i> Tipo de Reserva</label>
+                        <select id="rv_tipo" class="auth-input" required></select>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-coins"></i> Moeda</label>
+                        <select id="rv_moeda" class="auth-input"></select>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-calendar-day"></i> Data de Início</label>
+                        <input type="date" id="rv_data_inicio" class="auth-input" required>
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-sack-dollar"></i> Valor Inicial</label>
+                        <input type="number" step="0.01" id="rv_valor_inicial" class="auth-input" placeholder="0,00" required>
+                    </div>
+                </div>
+                <div style="display:flex;gap:15px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary" id="rvPosSaveBtn"><i class="fa-solid fa-plus"></i> Adicionar Reserva</button>
+                    <button type="button" class="btn btn-sm" id="rvPosCancelBtn" style="display:none; background: var(--error);" onclick="cancelEditReservaPosicao()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Formulário: Atualizar Mês -->
+        <div class="form-panel" id="rvMensalPanel" style="display:none; border: 1px solid var(--primary);">
+            <h3><i class="fa-solid fa-calendar-check" style="margin-right:10px;"></i> Atualizar Mês — <span id="rv_mu_pos_label"></span></h3>
+            <form id="rvMensalForm" onsubmit="saveReservaMensal(event)">
+                <input type="hidden" id="rv_mu_pos_id" value="">
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-calendar"></i> Mês de Referência</label>
+                        <input type="month" id="rv_mu_mes_referencia" class="auth-input" required>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-chart-line"></i> Valor Atual (total)</label>
+                        <input type="number" step="0.01" id="rv_mu_valor_mercado" class="auth-input" placeholder="0,00" oninput="calcReservaMuPreview()" required>
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-hand-holding-dollar"></i> Aporte no Mês</label>
+                        <input type="number" step="0.01" id="rv_mu_aporte_mes" class="auth-input" value="0" oninput="calcReservaMuPreview()">
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-money-bill-transfer"></i> Resgate no Mês</label>
+                        <input type="number" step="0.01" id="rv_mu_resgate_mes" class="auth-input" value="0" oninput="calcReservaMuPreview()">
+                    </div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-receipt"></i> Taxas do Mês</label>
+                        <input type="number" step="0.01" id="rv_mu_taxa_mes" class="auth-input" value="0">
+                    </div>
+                    <div class="form-field">
+                        <label><i class="fa-solid fa-calculator"></i> P&amp;L do Mês (prévia)</label>
+                        <input type="text" id="rv_mu_pnl_preview" class="auth-input" style="opacity:0.8; background: rgba(0,0,0,0.2);" readonly>
+                    </div>
+                </div>
+                <div style="display:flex;gap:15px;margin-top:1.5rem;align-items:center;">
+                    <button type="submit" class="btn btn-sm secondary"><i class="fa-solid fa-floppy-disk"></i> Salvar Mês</button>
+                    <button type="button" class="btn btn-sm" style="background: var(--error);" onclick="closeReservaMensalPanel()">
+                        <i class="fa-solid fa-xmark"></i> Fechar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela de Reservas -->
+        <h3 style="margin: 2.5rem 0 1.5rem; display: flex; align-items: center; gap: 12px;"><i class="fa-solid fa-list-check"></i> Reservas</h3>
+
+        <div class="search-area" style="margin-bottom: 1.5rem; display: flex; gap: 15px; align-items: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+            <div style="flex:1; position:relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+                <input type="text" class="auth-input" style="padding-left:40px; margin:0;" placeholder="Pesquisar em bancos ou tipos..." oninput="filterTableGeneric('rvPosicoesTable', this.value)">
+            </div>
+            <button class="btn btn-sm secondary" onclick="exportReservas()"><i class="fa-solid fa-file-excel"></i> Exportar Excel (XLSX)</button>
+        </div>
+
+        <div class="table-container table-full">
+            <table id="rvPosicoesTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTableGeneric('rvPosicoesTable', 0)">Banco <i class="sort-icon fa-solid fa-sort" data-col="0"></i></th>
+                        <th onclick="sortTableGeneric('rvPosicoesTable', 1)">Tipo de Reserva <i class="sort-icon fa-solid fa-sort" data-col="1"></i></th>
+                        <th style="text-align:center;">Moeda</th>
+                        <th onclick="sortTableGeneric('rvPosicoesTable', 3)">Início <i class="sort-icon fa-solid fa-sort" data-col="3"></i></th>
+                        <th style="text-align:right;">Valor Inicial</th>
+                        <th style="text-align:right;">Valor Atual</th>
+                        <th style="text-align:right;">P&amp;L Mês</th>
+                        <th style="text-align:right;">P&amp;L Total</th>
+                        <th style="text-align:right;">% Rent.</th>
+                        <th style="text-align:center;">Último Mês</th>
+                        <th style="width:190px;text-align:center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="rvPosicoesTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Upload e Export -->
+        <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 1rem; margin-top: 1.5rem;">
+            <div class="upload-area" id="rv_dropZone" style="flex: 1;">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <div class="upload-text">Arraste uma planilha ou clique para <b>Sobrescrever todas as reservas</b></div>
+                <div class="upload-subtext">CSV, Excel</div>
+                <input type="file" id="rv_file" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" accept=".csv,.xls,.xlsx" onchange="uploadReservasFile(this)">
+                <div id="rv_upload_status" style="color: var(--warning); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Módulo Avançado -->
     <div class="container module-container module-fullscreen" id="avancadoModule" style="display:none;">
         <h1 style="text-align:center; margin-bottom:0.5rem;"><i class="fa-solid fa-gear"></i> Avançado</h1>
-        
+
         <!-- Limpar Dados de Lançamentos -->
         <div class="form-panel">
             <h3 style="margin-bottom:1rem;">Limpar Dados de Lançamentos</h3>
@@ -4673,6 +4821,7 @@
             'receitas': 'Atualizar Receitas',
             'investimentos': 'Atualizar Investimentos',
             'lcto_investimentos': 'Lançamentos de Investimentos',
+            'reservas': 'Reservas',
             'relatorio_mes': 'Relatório Mensal',
             'relatorio_ano': 'Relatório Anual',
             'relatorio_dinamico': 'Relatório Dinâmico',
@@ -4762,6 +4911,7 @@
                 'budget':            () => { document.getElementById('budgetModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initBudget(); },
                 'trader':            () => { document.getElementById('traderModule').style.display = 'block'; nav.style.maxWidth = '1550px'; initTrader(); },
                 'lcto_investimentos': () => { document.getElementById('lctoInvestimentosModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadLctoInvestimentos(); },
+                'reservas': () => { document.getElementById('reservasModule').style.display = 'block'; nav.style.maxWidth = '1550px'; loadReservas(); },
                 'avancado':          () => { document.getElementById('avancadoModule').style.display = 'block'; nav.style.maxWidth = '800px'; },
                 'ai_agent':          () => { document.getElementById('aiAgentModule').style.display = 'block'; nav.style.maxWidth = '1400px'; initAiAgent(); },
                 'guia_uso':          () => { document.getElementById('guiaUsoModule').style.display = 'block'; nav.style.maxWidth = '1300px'; initGuiaUso(); },
@@ -8430,10 +8580,14 @@
 
         function formatCurrency(val, currency = null) {
             const num = parseFloat(val) || 0;
-            const formatted = num.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            if(currency === 'BRL') return 'R$ ' + formatted;
-            if(currency === 'EUR') return '€ ' + formatted;
-            return formatted;
+            if (!currency) {
+                return num.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            try {
+                return num.toLocaleString('pt-BR', {style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2});
+            } catch (e) {
+                return `${currency} ${num.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
         }
 
         function parseCurrencyBR(str) {
@@ -9613,6 +9767,349 @@
 
         function exportLctoInvestimentos() {
             window.location.href = '/api/export_lcto_investimentos';
+        }
+
+        // ── Reservas (módulo independente, multimoeda) ─────────────────────────────
+        // Tipo de Reserva reaproveita o catálogo de "Tipos de Investimentos" já existente
+        // (loadInvestTypesIntoSelect / window.INVEST_TYPES_CACHE, definidos no módulo Investimentos).
+        let rvPosicoesData = [];
+
+        function formatDataReserva(dateStr) {
+            if (!dateStr) return '';
+            const [y, m, d] = String(dateStr).slice(0, 10).split('-');
+            if (!y || !m || !d) return dateStr;
+            return `${d}-${m}-${y}`;
+        }
+        let rvHistorico = {};
+        let RV_MOEDAS = [];
+
+        async function loadReservasMoedaOptions() {
+            const res = await fetch('/api/settings');
+            const cfg = await res.json();
+            RV_MOEDAS = cfg.moedas_suportadas || ['EUR', 'USD', 'BRL'];
+            const opts = RV_MOEDAS.map(m => `<option value="${m}">${m}</option>`).join('');
+
+            const selMoeda = document.getElementById('rv_moeda');
+            if (selMoeda && !selMoeda.options.length) selMoeda.innerHTML = opts;
+
+            const selBase = document.getElementById('rvMoedaBase');
+            if (selBase) {
+                selBase.innerHTML = opts;
+                selBase.value = cfg.moeda_base || 'EUR';
+            }
+        }
+
+        async function saveReservasMoedaBase() {
+            const moeda = document.getElementById('rvMoedaBase').value;
+            await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ moeda_base: moeda })
+            });
+            loadReservas();
+        }
+
+        async function loadReservas() {
+            try {
+                await Promise.all([
+                    loadContasIntoSelect('rv_banco'),
+                    loadInvestTypesIntoSelect('rv_tipo'),
+                    loadReservasMoedaOptions(),
+                ]);
+                const res = await fetch('/api/reservas/resumo');
+                const resumo = await res.json();
+                rvPosicoesData = resumo.posicoes || [];
+                rvHistorico = {};
+                renderReservasPosicoesTable();
+                renderReservasSummaryCards(resumo.por_moeda || []);
+                renderReservasTotalConsolidado(resumo.total_consolidado);
+            } catch(e) { console.error(e); }
+        }
+
+        function renderReservasTotalConsolidado(total) {
+            if (!total) return;
+            const cls = v => (v || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+            document.getElementById('rvTotalConsolidado').innerText = formatCurrency(total.valor_atual, total.moeda);
+            document.getElementById('rvTotalPnl').innerHTML =
+                `P&amp;L: <span class="${cls(total.pnl_total)}">${formatCurrency(total.pnl_total, total.moeda)}</span>
+                 (<span class="${cls(total.pct_rentabilidade)}">${(total.pct_rentabilidade || 0).toFixed(2)}%</span>)`;
+        }
+
+        function renderReservasSummaryCards(porMoedaList) {
+            const container = document.getElementById('rvSummaryCards');
+            if (!porMoedaList || !porMoedaList.length) {
+                container.innerHTML = '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Nenhuma reserva cadastrada ainda.</p>';
+                return;
+            }
+            container.innerHTML = porMoedaList.map(s => {
+                const m = s.moeda;
+                const cls = v => (v || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+                return `
+                <h4 style="margin: 0 0 0.8rem; color: var(--text-muted); font-size: 0.9rem; letter-spacing: 0.03em;">${m}</h4>
+                <div class="summary-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <div class="stat-value">${formatCurrency(s.custo_acumulado, m)}</div>
+                        <div class="stat-label">Custo Acumulado</div>
+                        <i class="fa-solid fa-sack-dollar stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${formatCurrency(s.valor_atual, m)}</div>
+                        <div class="stat-label">Valor Atual</div>
+                        <i class="fa-solid fa-vault stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(s.pnl_mensal)}">${formatCurrency(s.pnl_mensal, m)}</span></div>
+                        <div class="stat-label">P&amp;L do Mês</div>
+                        <i class="fa-solid fa-calendar-check stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(s.pnl_total)}">${formatCurrency(s.pnl_total, m)}</span></div>
+                        <div class="stat-label">P&amp;L Total</div>
+                        <i class="fa-solid fa-arrow-trend-up stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span class="${cls(s.pct_rentabilidade)}">${(s.pct_rentabilidade || 0).toFixed(2)}%</span></div>
+                        <div class="stat-label">% Rentabilidade</div>
+                        <i class="fa-solid fa-percent stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderReservasPosicoesTable() {
+            const tbody = document.getElementById('rvPosicoesTableBody');
+            tbody.innerHTML = '';
+            if (!rvPosicoesData.length) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);">Nenhuma reserva cadastrada.</td></tr>';
+                return;
+            }
+            rvPosicoesData.forEach(d => {
+                const cls = v => (v || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+                tbody.innerHTML += `<tr>
+                    <td>${d.banco || ''}</td>
+                    <td>${d.tp_reserva || ''}</td>
+                    <td style="text-align:center;"><span class="currency-badge">${d.moeda}</span></td>
+                    <td>${formatDataReserva(d.data_inicio)}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_investido_inicial, d.moeda)}</td>
+                    <td style="text-align:right;">${formatCurrency(d.valor_atual, d.moeda)}</td>
+                    <td style="text-align:right;"><span class="${cls(d.pnl_mensal)}">${formatCurrency(d.pnl_mensal, d.moeda)}</span></td>
+                    <td style="text-align:right;"><span class="${cls(d.pnl_total)}">${formatCurrency(d.pnl_total, d.moeda)}</span></td>
+                    <td style="text-align:right;"><span class="${cls(d.pct_rentabilidade)}">${(d.pct_rentabilidade || 0).toFixed(2)}%</span></td>
+                    <td style="text-align:center;">${d.ultimo_mes || '—'}</td>
+                    <td style="text-align:center;">
+                        ${d.origem === 'manual' ? `
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="openReservaMensalPanel(${d.id})" title="Atualizar mês">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </button>
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="toggleReservaHistorico(${d.id})" title="Ver histórico mensal">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </button>
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;margin-right:3px;"
+                            onclick="editReservaPosicao(${d.id})" title="Editar reserva">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn" style="padding:0.3rem 0.5rem;font-size:0.75rem;background:var(--error);"
+                            onclick="deleteReservaPosicao(${d.id})" title="Excluir reserva">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        ` : `
+                        <button class="btn secondary" style="padding:0.3rem 0.5rem;font-size:0.75rem;"
+                            onclick="openModule('lcto_investimentos')" title="Editar em Investimentos">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </button>
+                        `}
+                    </td>
+                </tr>
+                ${d.origem === 'manual' ? `
+                <tr id="rv_hist_row_${d.id}" style="display:none;">
+                    <td colspan="11" style="background: rgba(0,0,0,0.15);"><div id="rv_hist_${d.id}">Carregando...</div></td>
+                </tr>` : ''}`;
+            });
+        }
+
+        async function toggleReservaHistorico(posId) {
+            const row = document.getElementById(`rv_hist_row_${posId}`);
+            const isHidden = row.style.display === 'none';
+            row.style.display = isHidden ? 'table-row' : 'none';
+            if (isHidden && !rvHistorico[posId]) {
+                const res = await fetch(`/api/reservas/posicoes/${posId}/mensal`);
+                rvHistorico[posId] = await res.json();
+                renderReservaHistorico(posId);
+            }
+        }
+
+        function renderReservaHistorico(posId) {
+            const snaps = rvHistorico[posId] || [];
+            const container = document.getElementById(`rv_hist_${posId}`);
+            if (!snaps.length) {
+                container.innerHTML = '<p style="color:var(--text-muted);padding:0.5rem;">Nenhum mês lançado ainda.</p>';
+                return;
+            }
+            const cls = v => (v || 0) >= 0 ? 'val-badge' : 'val-badge debit';
+            container.innerHTML = `<table style="width:100%;">
+                <thead><tr>
+                    <th>Mês</th><th style="text-align:right;">Valor Atual</th>
+                    <th style="text-align:right;">Aporte</th><th style="text-align:right;">Resgate</th>
+                    <th style="text-align:right;">Custo Acumulado</th><th style="text-align:right;">P&amp;L Mês</th>
+                    <th style="width:50px;"></th>
+                </tr></thead>
+                <tbody>
+                ${snaps.slice().reverse().map(s => `<tr>
+                    <td>${s.mes_referencia}</td>
+                    <td style="text-align:right;">${formatCurrency(s.valor_mercado)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.aporte_mes)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.resgate_mes)}</td>
+                    <td style="text-align:right;">${formatCurrency(s.custo_acumulado)}</td>
+                    <td style="text-align:right;"><span class="${cls(s.pnl_mensal)}">${formatCurrency(s.pnl_mensal)}</span></td>
+                    <td style="text-align:center;"><button class="btn" style="padding:0.2rem 0.4rem;font-size:0.7rem;background:var(--error);" onclick="deleteReservaMensal(${s.id}, ${posId})"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`).join('')}
+                </tbody>
+            </table>`;
+        }
+
+        async function deleteReservaMensal(snapshotId, posId) {
+            if(!confirm('Remover este mês do histórico?')) return;
+            await fetch(`/api/reservas/mensal/${snapshotId}`, { method: 'DELETE' });
+            delete rvHistorico[posId];
+            await loadReservas();
+            await toggleReservaHistorico(posId);
+        }
+
+        async function saveReservaPosicao(e) {
+            e.preventDefault();
+            const id = document.getElementById('rv_id').value;
+            const data = {
+                banco: document.getElementById('rv_banco').value,
+                tp_reserva: document.getElementById('rv_tipo').value,
+                moeda: document.getElementById('rv_moeda').value,
+                data_inicio: document.getElementById('rv_data_inicio').value,
+                valor_investido_inicial: parseFloat(document.getElementById('rv_valor_inicial').value) || 0
+            };
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/reservas/posicoes/${id}` : '/api/reservas/posicoes';
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if(res.ok) {
+                cancelEditReservaPosicao();
+                loadReservas();
+            }
+        }
+
+        function editReservaPosicao(id) {
+            const d = rvPosicoesData.find(x => x.id === id && x.origem === 'manual');
+            if(!d) return;
+            document.getElementById('rv_id').value = d.id;
+            document.getElementById('rv_banco').value = d.banco || '';
+            document.getElementById('rv_tipo').value = d.tp_reserva || '';
+            document.getElementById('rv_moeda').value = d.moeda || 'BRL';
+            document.getElementById('rv_data_inicio').value = d.data_inicio || '';
+            document.getElementById('rv_valor_inicial').value = d.valor_investido_inicial || '';
+            document.getElementById('rvPosSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+            document.getElementById('rvPosCancelBtn').style.display = 'inline-block';
+        }
+
+        function cancelEditReservaPosicao() {
+            document.getElementById('rv_id').value = '';
+            document.getElementById('rvPosForm').reset();
+            loadContasIntoSelect('rv_banco');
+            loadInvestTypesIntoSelect('rv_tipo');
+            document.getElementById('rvPosSaveBtn').innerHTML = '<i class="fa-solid fa-plus"></i> Adicionar Reserva';
+            document.getElementById('rvPosCancelBtn').style.display = 'none';
+        }
+
+        async function deleteReservaPosicao(id) {
+            const d = rvPosicoesData.find(x => x.id === id && x.origem === 'manual');
+            if (!d) return;
+            if(!confirm('Excluir esta reserva e todo o histórico mensal dela?')) return;
+            await fetch(`/api/reservas/posicoes/${id}`, { method: 'DELETE' });
+            loadReservas();
+        }
+
+        function openReservaMensalPanel(posId) {
+            const d = rvPosicoesData.find(x => x.id === posId && x.origem === 'manual');
+            if(!d) return;
+            document.getElementById('rv_mu_pos_id').value = posId;
+            document.getElementById('rv_mu_pos_label').innerText = `${d.banco || ''} - ${d.tp_reserva || ''}`;
+            const now = new Date();
+            document.getElementById('rv_mu_mes_referencia').value = d.ultimo_mes && d.ultimo_mes > now.toISOString().slice(0,7)
+                ? d.ultimo_mes : now.toISOString().slice(0, 7);
+            document.getElementById('rv_mu_valor_mercado').value = d.valor_atual || '';
+            document.getElementById('rv_mu_aporte_mes').value = 0;
+            document.getElementById('rv_mu_resgate_mes').value = 0;
+            document.getElementById('rv_mu_taxa_mes').value = 0;
+            document.getElementById('rvMensalPanel').style.display = 'block';
+            document.getElementById('rvMensalPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            calcReservaMuPreview();
+        }
+
+        function closeReservaMensalPanel() {
+            document.getElementById('rvMensalPanel').style.display = 'none';
+            document.getElementById('rvMensalForm').reset();
+        }
+
+        function calcReservaMuPreview() {
+            const posId = parseInt(document.getElementById('rv_mu_pos_id').value);
+            const d = rvPosicoesData.find(x => x.id === posId && x.origem === 'manual');
+            if(!d) return;
+            const valorAnterior = d.valor_atual || 0;
+            const valorMercado = parseFloat(document.getElementById('rv_mu_valor_mercado').value) || 0;
+            const aporte = parseFloat(document.getElementById('rv_mu_aporte_mes').value) || 0;
+            const resgate = parseFloat(document.getElementById('rv_mu_resgate_mes').value) || 0;
+            const pnlMes = valorMercado - valorAnterior - aporte + resgate;
+            document.getElementById('rv_mu_pnl_preview').value = formatCurrency(pnlMes, d.moeda);
+        }
+
+        async function saveReservaMensal(e) {
+            e.preventDefault();
+            const posId = document.getElementById('rv_mu_pos_id').value;
+            const data = {
+                mes_referencia: document.getElementById('rv_mu_mes_referencia').value,
+                valor_mercado: parseFloat(document.getElementById('rv_mu_valor_mercado').value) || 0,
+                aporte_mes: parseFloat(document.getElementById('rv_mu_aporte_mes').value) || 0,
+                resgate_mes: parseFloat(document.getElementById('rv_mu_resgate_mes').value) || 0,
+                taxa_mes: parseFloat(document.getElementById('rv_mu_taxa_mes').value) || 0
+            };
+            const res = await fetch(`/api/reservas/posicoes/${posId}/mensal`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if(res.ok) {
+                delete rvHistorico[posId];
+                closeReservaMensalPanel();
+                loadReservas();
+            }
+        }
+
+        async function uploadReservasFile(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            const status = document.getElementById('rv_upload_status');
+            status.innerText = 'Processando...';
+            try {
+                const res = await fetch('/api/upload_reservas', { method: 'POST', body: formData });
+                if(res.ok) {
+                    status.innerText = 'Importado com sucesso!';
+                    loadReservas();
+                } else {
+                    const data = await res.json();
+                    status.innerText = 'Erro: ' + (data.error || 'Erro desconhecido');
+                }
+            } catch(e) {
+                status.innerText = 'Erro: ' + e.message;
+            }
+            setTimeout(() => status.innerText = '', 3000);
+        }
+
+        function exportReservas() {
+            window.location.href = '/api/export_reservas';
         }
 
         // ── Relatório Dinâmico ─────────────────────────────────────────────────
